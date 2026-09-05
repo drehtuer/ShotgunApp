@@ -1,0 +1,98 @@
+name: Documentation
+
+# Publishes the GitHub Pages site. Releases only - the site should describe a
+# released version, not whatever is currently on main.
+on:
+  release:
+    types: [published]
+  # Kept so the site can be republished without cutting a release.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; do not cancel a run that is mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate API documentation
+        run: ./gradlew :app:dokkaGenerate --stacktrace
+
+      # Pages serves this artifact as-is - there is no Jekyll step in the
+      # Actions-based flow - so Markdown has to be rendered to HTML here or it
+      # would be served as raw text.
+      - name: Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pandoc
+
+      - name: Assemble the site
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          REF: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p site/docs site/api
+
+          render() {
+            pandoc --standalone --from gfm --to html5 \
+              --metadata title="$2" \
+              --output "$3" "$1"
+          }
+
+          render README.md "Player Picker" site/index.html
+          for md in docs/*.md; do
+            [ -e "$md" ] || continue
+            render "$md" "$(basename "${md%.md}")" "site/docs/$(basename "${md%.md}").html"
+          done
+
+          cp -r app/build/dokka/html/. site/api/
+
+          # Links to files that live in the repo but not on the site would 404,
+          # so point them at GitHub instead.
+          find site -name '*.html' -maxdepth 2 -print0 | xargs -0 sed -i -E \
+            "s#href=\"(app/|design/|\.claude/|\.devcontainer/|gradle/)#href=\"${REPO_URL}/blob/${REF}/\1#g"
+
+          # Cross-link the generated API docs from the landing page.
+          sed -i 's#</body>#<hr><p><a href="api/index.html">API documentation</a></p></body>#' site/index.html
+
+          # Guards the legacy Pages path, which would otherwise drop Dokka's
+          # underscore-prefixed directories.
+          touch site/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to Pages
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

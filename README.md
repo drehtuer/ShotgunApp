@@ -4,10 +4,11 @@ An Android app for settling *who goes first*. Everyone puts a finger on the
 screen, a countdown runs, and the app draws — a starting player, a full player
 order, or teams.
 
-The design lives in [`Player Picker.dc.html`](Player%20Picker.dc.html), exported
-from a Claude Design project. It is the spec for this implementation: screens,
-copy, palette and interaction behaviour all come from there. `_ds/` is the bound
-copy of the **Modernist** design system the export was built against.
+The design lives in [`design/Player Picker.dc.html`](design/Player%20Picker.dc.html),
+exported from a Claude Design project. It is the spec for this implementation:
+screens, copy, palette and interaction behaviour all come from there.
+`design/_ds/` is the bound copy of the **Modernist** design system the export
+was built against.
 
 ## Status
 
@@ -57,8 +58,13 @@ rebuilds are fast.
 
 ```bash
 ./gradlew assembleDebug          # build
+./gradlew testDebugUnitTest      # unit tests
+./gradlew lint                   # static analysis
 ./gradlew installDebug           # install on the connected device
 ```
+
+Contributor workflow, testing rules and the emulator/device recipes are in
+[`.claude/CLAUDE.md`](.claude/CLAUDE.md).
 
 ### Emulator
 
@@ -92,6 +98,11 @@ including the older `adb tcpip 5555` route.
 ## Layout
 
 ```
+app/           the Android app
+design/        the Claude Design export (the spec) + bound Modernist system
+docs/          documentation
+.devcontainer/ Android SDK, emulator and adb helpers
+
 app/src/main/java/de/drehtuer/playerpicker/
   MainActivity.kt
   ui/
@@ -99,6 +110,8 @@ app/src/main/java/de/drehtuer/playerpicker/
     navigation/  Destination, DrawMode, PlayerPickerNavHost
     components/  Rule, ScreenHeader, NotBuiltYet
     screens/     Home, Draw, Result, Settings
+
+app/src/test/    JVM unit tests
 ```
 
 ## Requirements
