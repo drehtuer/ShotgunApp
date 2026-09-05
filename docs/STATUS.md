@@ -1,0 +1,114 @@
+# Status
+
+A running record of work done and how it turned out. Newest first. Add an entry
+when a task lands; keep it factual, including the parts that went wrong.
+
+See [`TODO.md`](TODO.md) for what is still open.
+
+## Current state
+
+**Skeleton + theme.** The project builds, runs on device and in CI, navigation
+works end to end, and the design tokens are in place. The four screens are
+stubs.
+
+| Area | State |
+| --- | --- |
+| Gradle project, Compose setup | done |
+| Modernist theme: colour, type, dimensions | done |
+| Navigation shell across all four screens | done |
+| Appearance setting (system / light / dark) | done, not persisted |
+| Devcontainer: SDK, emulator, adb over Wi-Fi | done |
+| CI: build, unit tests, lint | done |
+| Docs: Pages on release | done, needs Pages enabled |
+| Home: mode cards, team stepper | stub |
+| Draw surface: multi-touch, countdown, reveal | stub |
+| Result: fairness heatmap | stub |
+| Settings: haptics, sound, dim, countdown, timing | stub |
+| Settings persistence | not started |
+
+---
+
+## 2026-09-05 — Documentation set
+
+**Outcome: done.**
+
+Added `docs/design.md` (the design export translated to Markdown),
+`docs/build-environment.md`, `TODO.md` and this file. Added the
+documentation-stays-in-sync rule to `.claude/CLAUDE.md`.
+
+`design.md` is a translation, not a replacement: the `.dc.html` export stays the
+source of truth because it holds the executable state machine.
+
+Two gaps surfaced while translating: **`sound` and `dim` appear in the design's
+settings but have no behaviour defined anywhere in the export.** They need a
+decision before those toggles can be implemented rather than merely displayed.
+
+## 2026-09-05 — Restructure, contributor guide and CI (PR #2)
+
+**Outcome: done.**
+
+Moved the design export to `design/` and documentation to `docs/`; the
+`.dc.html` references its siblings relatively, so they moved together and the
+links still resolve. Added `.claude/CLAUDE.md`, the first 11 unit tests, and the
+two workflows.
+
+Verified: `assembleDebug`, `testDebugUnitTest` (11 passed) and `lintDebug` all
+green; `dokkaGenerate` produces `app/build/dokka/html`; the Pages site assembly
+was dry-run end to end.
+
+**Found and fixed while building it:** the first version of the docs workflow
+would have served the landing page as raw Markdown. Pages serves the uploaded
+artifact as-is - there is no Jekyll step in the Actions-based flow - so the
+workflow now renders Markdown with pandoc and rewrites repo-file links to
+GitHub URLs.
+
+Neither workflow could run on its own PR, since workflows must exist on `main`
+first. Their first real exercise is the following PR.
+
+## 2026-09-05 — Retarget to the Pixel 10a
+
+**Outcome: done, and it forced a toolchain jump.**
+
+The target device was confirmed as a **Pixel 10a on Android 17 (API 37)**.
+
+Raising `compileSdk` to 36 failed immediately: current AndroidX
+(`navigation-compose` 2.10.0) requires **compileSdk 37 and AGP 9.1+**. So the
+whole toolchain moved - AGP 8.7.3 → 9.4.0, Gradle 8.11.1 → 9.7.1, Kotlin
+2.0.21 → 2.4.10, compileSdk/targetSdk 35 → 37.
+
+**AGP 9 has built-in Kotlin support: the `kotlin-android` plugin now fails the
+build and had to be removed.** This is recorded in several places because it is
+easy to re-add by reflex.
+
+The emulator has no `pixel_10a` device profile; `pixel_9a` on an API 37 image is
+the closest match. Verified on that emulator, which reported
+`ro.build.version.release=17`.
+
+## 2026-09-05 — Android skeleton and Modernist theme (PR #1)
+
+**Outcome: done.**
+
+Set up the Gradle project, the theme transcribed from the design's `--pp-*`
+tokens, the navigation shell and stub screens, and the devcontainer.
+
+Verified on an emulator: renders correctly in both palettes, navigation works,
+no crashes.
+
+**Two bugs found only by running it**, both fixed:
+
+1. System bar icons followed `uiMode` rather than the app's palette, so the
+   clock was unreadable when the app's theme was overridden.
+2. The settings option dividers used a hardcoded height instead of the row's
+   intrinsic height.
+
+Several devcontainer problems also only appeared under use: `/dev/kvm` arrives
+owned by a nonexistent group; AVDs and the debug keystore vanished on rebuild
+until they were moved into named volumes.
+
+## 2026-09-05 — Design export imported
+
+**Outcome: done.**
+
+The repository began as an export from a Claude Design project, with no commits
+on `main`. `/design-sync` does not apply here - the repo is a *consumer* of a
+design system, not the source of one, and there was nothing to convert.

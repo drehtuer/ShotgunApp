@@ -10,11 +10,18 @@ defined there.
 ## Layout
 
 ```
-app/          the Android app
-design/       the Claude Design export (spec) + the bound Modernist system
-docs/         all documentation except README.md
+app/            the Android app
+design/         the Claude Design export (spec) + the bound Modernist system
+docs/           all documentation except README.md
 .devcontainer/  Android SDK, emulator, adb helpers
 ```
+
+| Document | What it is for |
+| --- | --- |
+| [`docs/design.md`](../docs/design.md) | The design, in Markdown: tokens, screens, state model, behaviour |
+| [`docs/build-environment.md`](../docs/build-environment.md) | Building, testing, emulator and device, CI, troubleshooting |
+| [`docs/TODO.md`](../docs/TODO.md) | Open work and the decisions that block it |
+| [`docs/STATUS.md`](../docs/STATUS.md) | What has been done and how it turned out |
 
 ## Non-negotiables
 
@@ -25,6 +32,8 @@ docs/         all documentation except README.md
   value or a corner radius. Modernist is flat: zero radius, 2px rules.
 - **Portrait only.** The draw surface is a fixed field players reach across;
   rotating mid-draw would move every finger's ring.
+- **Documentation stays in sync with the implementation.** Docs are part of the
+  change, not a follow-up - see below.
 
 ## Task workflow
 
@@ -37,7 +46,8 @@ Every task follows the same loop. Do not skip the middle step.
    ```
 2. **Implement, then test before committing** - see *Testing* below. Both the
    static checks and the unit tests must be green.
-3. **Commit and open a PR** once the task is done and tests pass.
+3. **Update the documentation in the same commit** - see *Documentation* below.
+4. **Commit and open a PR** once the task is done and tests pass.
    ```bash
    git push -u origin <branch>
    gh pr create --base main --fill
@@ -46,6 +56,32 @@ Every task follows the same loop. Do not skip the middle step.
 
 CI runs the same checks on the PR. A red PR does not get merged - fix it rather
 than merging around it.
+
+## Documentation
+
+**Documentation is kept in sync with the implementation, always.** A change that
+makes a document wrong is not finished. Update it in the *same* commit as the
+code - never as a follow-up, because follow-ups do not happen and stale docs are
+worse than none: they get trusted.
+
+Work out which of these your change touches, and update it:
+
+| If you changed... | Update |
+| --- | --- |
+| Screen behaviour, tokens, copy, state | [`docs/design.md`](../docs/design.md) |
+| Toolchain, Gradle tasks, CI, devcontainer, emulator/device setup | [`docs/build-environment.md`](../docs/build-environment.md) |
+| Anything on the open list, or found new work | [`docs/TODO.md`](../docs/TODO.md) |
+| Finished a task | [`docs/STATUS.md`](../docs/STATUS.md) - what you did **and how it turned out**, including what went wrong |
+| Project layout, commands, status table | [`README.md`](../README.md) |
+| The rules themselves | this file |
+
+Two specific rules:
+
+- **The design export wins.** `design/Player Picker.dc.html` is the source of
+  truth; `docs/design.md` is a translation of it. If they disagree, fix the
+  translation, not the export.
+- **Record outcomes honestly in `STATUS.md`.** A bug you hit and fixed is worth
+  more to the next person than a clean summary that hides it.
 
 ## Testing
 
@@ -141,3 +177,5 @@ adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
 - [ ] Ran on the emulator; checked light and dark
 - [ ] Ran on the phone if you touched multi-touch, haptics or timing
 - [ ] `./gradlew assembleRelease` still builds (R8 is on for release)
+- [ ] Documentation updated in the same commit (see *Documentation*)
+- [ ] `docs/STATUS.md` has an entry, and `docs/TODO.md` reflects reality
