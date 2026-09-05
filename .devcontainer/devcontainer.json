@@ -1,0 +1,44 @@
+{
+  "name": "Player Picker (Android)",
+  "build": { "dockerfile": "Dockerfile" },
+
+  // /dev/kvm gives the emulator hardware acceleration. Bridge networking is
+  // kept (not host) because `adb connect <phone-ip>:5555` is an outbound
+  // connection and works fine through NAT.
+  "runArgs": ["--device=/dev/kvm"],
+
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "ANDROID_HOME": "/opt/android-sdk",
+    "ANDROID_SDK_ROOT": "/opt/android-sdk",
+    "ANDROID_AVD_HOME": "/opt/android-sdk/.avd",
+    "GRADLE_USER_HOME": "/home/vscode/.gradle"
+  },
+
+  // Named volumes: SDK packages, the Gradle cache and ~/.android (which holds
+  // the debug keystore) survive image rebuilds. Keeping the keystore matters -
+  // a regenerated one makes `installDebug` fail with a signature mismatch.
+  "mounts": [
+    "source=playerpicker-android-sdk,target=/opt/android-sdk,type=volume",
+    "source=playerpicker-gradle,target=/home/vscode/.gradle,type=volume",
+    "source=playerpicker-dotandroid,target=/home/vscode/.android,type=volume"
+  ],
+
+  "onCreateCommand": "sudo chown -R vscode:vscode /opt/android-sdk /home/vscode/.gradle /home/vscode/.android",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "fwcd.kotlin",
+        "vscjava.vscode-gradle",
+        "mathiasfrohlich.Kotlin"
+      ],
+      "settings": {
+        "java.configuration.runtimes": [
+          { "name": "JavaSE-21", "path": "/usr/local/sdkman/candidates/java/current", "default": true }
+        ]
+      }
+    }
+  }
+}

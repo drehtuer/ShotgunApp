@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The app's motif: one filled mark inside a heavy ring - a finger on glass. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:strokeColor="#F3F2F2"
+        android:strokeWidth="6"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M26,54 a28,28 0 1,0 56,0 a28,28 0 1,0 -56,0 Z" />
+
+    <path
+        android:fillColor="#FF563C"
+        android:pathData="M41,54 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0 Z" />
+</vector>

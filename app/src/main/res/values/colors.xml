@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the window background needs a platform colour: it is painted before
+     Compose starts. Every other colour comes from PPTheme.colors. -->
+<resources>
+    <color name="pp_bg">#F3F2F2</color>
+</resources>
