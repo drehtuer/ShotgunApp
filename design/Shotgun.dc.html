@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/modernist-f7022762-4cb9-409e-a6ce-7116795bae5b/styles.css">
+<script src="_ds/modernist-f7022762-4cb9-409e-a6ce-7116795bae5b/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pp-bg:#201e1d; --pp-surface:#2d2b2b; --pp-surface2:#444141;
+  --pp-ink:#f3f2f2; --pp-dim:#9b9797; --pp-line:#605d5d;
+  --pp-accent:#ff563c; --pp-accent-ink:#201e1d; --pp-accent-soft:rgba(255,86,60,.14);
+}
+@media (prefers-color-scheme: light){
+  :root{ --pp-bg:#f3f2f2; --pp-surface:#eae9e9; --pp-surface2:#d7d3d3;
+    --pp-ink:#201e1d; --pp-dim:#7d7979; --pp-line:#bab6b6;
+    --pp-accent:#ec3013; --pp-accent-ink:#f3f2f2; --pp-accent-soft:rgba(236,48,19,.12); }
+}
+[data-theme="dark"]{ --pp-bg:#201e1d; --pp-surface:#2d2b2b; --pp-surface2:#444141; --pp-ink:#f3f2f2; --pp-dim:#9b9797; --pp-line:#605d5d; --pp-accent:#ff563c; --pp-accent-ink:#201e1d; --pp-accent-soft:rgba(255,86,60,.14); }
+[data-theme="light"]{ --pp-bg:#f3f2f2; --pp-surface:#eae9e9; --pp-surface2:#d7d3d3; --pp-ink:#201e1d; --pp-dim:#7d7979; --pp-line:#bab6b6; --pp-accent:#ec3013; --pp-accent-ink:#f3f2f2; --pp-accent-soft:rgba(236,48,19,.12); }
+body{ margin:0; background:#141312; font-family:"Archivo",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+a{ color:var(--pp-accent); text-decoration:none; }
+a:hover{ color:var(--pp-ink); }
+@keyframes pp-churn{ from{ transform:translate(-50%,-50%) scale(.94); } to{ transform:translate(-50%,-50%) scale(1.06); } }
+@keyframes pp-bloom{ 0%{ transform:translate(-50%,-50%) scale(.8); } 60%{ transform:translate(-50%,-50%) scale(1.24); } 100%{ transform:translate(-50%,-50%) scale(1.14); } }
+@keyframes pp-breathe{ from{ opacity:.4; } to{ opacity:.85; } }
+</style>
+</helmet>
+<div data-theme="{{ theme }}" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:#141312;font-family:'Archivo',system-ui,sans-serif">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+
+<div style="position:relative;width:100%;height:100%;background:var(--pp-bg);color:var(--pp-ink);overflow:hidden;touch-action:none;user-select:none">
+
+<!-- ══ HOME ══ -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;box-sizing:border-box">
+  <div style="display:flex;align-items:stretch;justify-content:space-between;border-bottom:2px solid var(--pp-line)">
+    <div style="padding:20px 16px 16px;flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:26px;height:26px;flex:0 0 auto;position:relative">
+          <div style="position:absolute;left:1px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--pp-accent)"></div>
+          <div style="position:absolute;left:8px;top:2px;width:6px;height:6px;border-radius:50%;border:2px solid var(--pp-dim);box-sizing:border-box"></div>
+          <div style="position:absolute;left:18px;top:6px;width:5px;height:5px;border-radius:50%;border:2px solid var(--pp-dim);box-sizing:border-box"></div>
+          <div style="position:absolute;left:12px;top:16px;width:6px;height:6px;border-radius:50%;border:2px solid var(--pp-dim);box-sizing:border-box"></div>
+        </div>
+        <div style="font-size:20px;letter-spacing:-.02em;color:var(--pp-ink);font-weight:800">SHOTGUN<span style="color:var(--pp-accent)">!</span></div>
+      </div>
+      <div style="font-size:30px;font-weight:800;line-height:1.05;margin-top:10px;letter-spacing:-.01em">PICK A MODE.<br>HANDS ON GLASS.</div>
+    </div>
+    <div role="button" onClick="{{ goSettings }}" style="width:60px;flex:0 0 auto;border-left:2px solid var(--pp-line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--pp-dim);writing-mode:vertical-rl" style-hover="color:var(--pp-accent);background:var(--pp-surface)">SETTINGS</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;flex:1;min-height:0">
+
+    <div role="button" onClick="{{ startStarter }}" style="flex:1;border-bottom:2px solid var(--pp-line);background:var(--pp-surface);padding:16px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;box-sizing:border-box" style-hover="background:var(--pp-surface2)">
+      <div style="display:flex;gap:8px">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--pp-accent)"></div>
+        <div style="width:26px;height:26px;border-radius:50%;border:2px solid var(--pp-line);box-sizing:border-box"></div>
+        <div style="width:26px;height:26px;border-radius:50%;border:2px solid var(--pp-line);box-sizing:border-box"></div>
+        <div style="width:26px;height:26px;border-radius:50%;border:2px solid var(--pp-line);box-sizing:border-box"></div>
+      </div>
+      <div>
+        <div style="font-size:25px;font-weight:800;letter-spacing:-.01em">STARTING PLAYER</div>
+        <div style="font-size:15px;color:var(--pp-dim);margin-top:2px">One finger wins the draw</div>
+      </div>
+    </div>
+
+    <div role="button" onClick="{{ startOrder }}" style="flex:1;border-bottom:2px solid var(--pp-line);background:var(--pp-surface);padding:16px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;box-sizing:border-box" style-hover="background:var(--pp-surface2)">
+      <div style="display:flex;gap:8px">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--pp-accent);color:var(--pp-accent-ink);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center">1</div>
+        <div style="width:26px;height:26px;border-radius:50%;border:2px solid var(--pp-line);box-sizing:border-box;color:var(--pp-dim);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">2</div>
+        <div style="width:26px;height:26px;border-radius:50%;border:2px solid var(--pp-line);box-sizing:border-box;color:var(--pp-dim);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">3</div>
+        <div style="width:26px;height:26px;border-radius:50%;border:2px solid var(--pp-line);box-sizing:border-box;color:var(--pp-dim);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">4</div>
+      </div>
+      <div>
+        <div style="font-size:25px;font-weight:800;letter-spacing:-.01em">PLAYER ORDER</div>
+        <div style="font-size:15px;color:var(--pp-dim);margin-top:2px">Every finger gets a number</div>
+      </div>
+    </div>
+
+    <div style="flex:1.2;background:var(--pp-surface);display:flex;flex-direction:column;box-sizing:border-box;border-bottom:2px solid var(--pp-line)">
+      <div role="button" onClick="{{ startTeams }}" style="flex:1;padding:16px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;min-height:0" style-hover="background:var(--pp-surface2)">
+        <div style="display:flex;gap:8px">
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--pp-accent);color:var(--pp-accent-ink);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center">A</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--pp-ink);color:var(--pp-bg);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center">B</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--pp-accent);color:var(--pp-accent-ink);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center">A</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:var(--pp-dim);color:var(--pp-bg);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center">C</div>
+        </div>
+        <div>
+          <div style="font-size:25px;font-weight:800;letter-spacing:-.01em">TEAMS</div>
+          <div style="font-size:15px;color:var(--pp-dim);margin-top:2px">Uneven sizes allowed</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:stretch;border-top:2px solid var(--pp-line)">
+        <div style="flex:1;min-width:0;display:flex;align-items:center;padding:0 16px;font-size:12px;letter-spacing:.18em;font-weight:700;color:var(--pp-dim)">TEAMS</div>
+        <div role="button" onClick="{{ decTeams }}" style="width:56px;height:56px;flex:0 0 auto;border-left:2px solid var(--pp-line);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;cursor:pointer;line-height:1" style-hover="background:var(--pp-surface2);color:var(--pp-accent)">−</div>
+        <div style="width:64px;flex:0 0 auto;border-left:2px solid var(--pp-line);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums">{{ teamCount }}</div>
+        <div role="button" onClick="{{ incTeams }}" style="width:56px;height:56px;flex:0 0 auto;border-left:2px solid var(--pp-line);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;cursor:pointer;line-height:1" style-hover="background:var(--pp-surface2);color:var(--pp-accent)">+</div>
+      </div>
+    </div>
+  </div>
+
+  <div role="button" onClick="{{ goDetails }}" style="padding:14px 16px;font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--pp-dim);cursor:pointer" style-hover="color:var(--pp-accent)">LAST RESULT &amp; FAIRNESS HEATMAP →</div>
+</div>
+</sc-if>
+
+<!-- ══ DRAW SURFACE ══ -->
+<sc-if value="{{ isDraw }}" hint-placeholder-val="{{ false }}">
+<div onPointerDown="{{ onSurfaceDown }}" onPointerMove="{{ onSurfaceMove }}" onPointerUp="{{ onSurfaceUp }}" style="position:absolute;inset:0;background:var(--pp-bg);cursor:crosshair">
+
+  <div style="position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 56px 0 var(--pp-accent);opacity:{{ glow }};transition:opacity .12s linear"></div>
+  <div style="position:absolute;inset:0;pointer-events:none;border:2px solid var(--pp-accent);opacity:{{ frameOpacity }};transition:opacity .12s linear"></div>
+
+  <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:stretch;justify-content:space-between;border-bottom:2px solid var(--pp-line);opacity:{{ chromeOpacity }};transition:opacity .3s">
+    <div role="button" onClick="{{ goHome }}" style="font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--pp-dim);padding:14px 16px;cursor:pointer;pointer-events:auto">← MODES</div>
+    <div style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--pp-accent);font-weight:700;padding:14px 16px">{{ modeLabel }}</div>
+  </div>
+
+  <sc-for list="{{ fingerViews }}" as="f" hint-placeholder-count="0">
+    <div onPointerDown="{{ f.onDown }}" onDoubleClick="{{ f.onLift }}" style="position:absolute;left:{{ f.x }}px;top:{{ f.y }}px;width:{{ ringD }}px;height:{{ ringD }}px;border-radius:50%;box-sizing:border-box;border:4px solid {{ f.ring }};background:{{ f.fill }};opacity:{{ f.opacity }};transform:translate(-50%,-50%) scale({{ f.scale }});animation:{{ f.anim }};display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .35s ease,border-color .35s ease,background .35s ease">
+      <sc-if value="{{ f.hasLabel }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:{{ f.labelSize }}px;font-weight:800;color:{{ f.labelColor }};line-height:1;font-variant-numeric:tabular-nums">{{ f.label }}</div>
+      </sc-if>
+      <sc-if value="{{ f.hasSub }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12px;font-weight:700;color:{{ f.labelColor }};margin-top:4px;letter-spacing:.16em">{{ f.sub }}</div>
+      </sc-if>
+    </div>
+  </sc-for>
+
+  <sc-if value="{{ showHint }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);padding:0 24px;pointer-events:none;animation:pp-breathe 2.4s ease-in-out infinite alternate">
+      <div style="font-size:29px;font-weight:800;line-height:1.1;text-wrap:pretty;color:var(--pp-ink);letter-spacing:-.01em">{{ hintTitle }}</div>
+      <div style="font-size:15px;color:var(--pp-dim);margin-top:10px;max-width:300px;text-wrap:pretty">{{ hintSub }}</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:0;right:0;bottom:0;background:var(--pp-accent);padding:16px;pointer-events:none">
+      <div style="font-size:12px;letter-spacing:.18em;font-weight:700;color:var(--pp-accent-ink);opacity:.75">CAN’T DRAW</div>
+      <div style="font-size:19px;font-weight:800;color:var(--pp-accent-ink);margin-top:4px">{{ errorText }}</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isRevealed }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:0;right:0;bottom:0;display:flex;align-items:stretch;border-top:2px solid var(--pp-line);background:var(--pp-bg)">
+      <div style="flex:1;min-width:0;padding:16px;font-size:13px;letter-spacing:.12em;font-weight:700;color:var(--pp-dim);display:flex;align-items:center">LIFT ALL FINGERS TO CLEAR</div>
+      <div role="button" onClick="{{ goDetails }}" style="pointer-events:auto;padding:16px 20px;background:var(--pp-accent);color:var(--pp-accent-ink);font-size:15px;font-weight:800;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center">DETAILS</div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<!-- ══ DETAILS ══ -->
+<sc-if value="{{ isDetails }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:stretch;justify-content:space-between;border-bottom:2px solid var(--pp-line);flex:0 0 auto">
+    <div style="padding:14px 16px;font-size:27px;font-weight:800;letter-spacing:-.01em">RESULT</div>
+    <div role="button" onClick="{{ goHome }}" style="padding:18px 16px;font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--pp-dim);cursor:pointer" style-hover="color:var(--pp-accent)">CLOSE</div>
+  </div>
+
+  <sc-if value="{{ hasResult }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:stretch;justify-content:space-between;border-bottom:2px solid var(--pp-line);flex:0 0 auto">
+    <div style="padding:9px 16px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--pp-accent);font-weight:700">{{ resultModeLabel }}</div>
+    <div style="padding:9px 16px;font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--pp-dim)">{{ resultSummary }}</div>
+  </div>
+  </sc-if>
+
+  <div style="display:flex;align-items:stretch;justify-content:space-between;border-bottom:2px solid var(--pp-line);flex:0 0 auto">
+    <div style="padding:11px 16px;font-size:19px;font-weight:800;letter-spacing:-.01em">FAIRNESS</div>
+    <div style="padding:13px 16px;font-size:12px;letter-spacing:.14em;font-weight:700;color:var(--pp-dim)">{{ heatCount }}</div>
+  </div>
+
+  <div style="position:relative;flex:1 1 0;min-height:0;background:var(--pp-surface);border-bottom:2px solid var(--pp-line)">
+    <canvas ref="{{ setCanvas }}" width="260" height="440" style="display:block;width:100%;height:100%"></canvas>
+    <sc-for list="{{ mapDots }}" as="d" hint-placeholder-count="0">
+      <div style="position:absolute;left:{{ d.left }}%;top:{{ d.top }}%;transform:translate(-50%,-50%);display:flex;flex-direction:{{ d.dir }};align-items:center;gap:8px">
+        <div style="width:{{ d.size }}px;height:{{ d.size }}px;flex:0 0 auto;border-radius:50%;box-sizing:border-box;background:{{ d.bg }};border:3px solid {{ d.ring }};color:{{ d.ink }};font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center">{{ d.label }}</div>
+        <sc-if value="{{ d.hasText }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:13px;font-weight:800;letter-spacing:.1em;white-space:nowrap;color:{{ d.textColor }};background:var(--pp-bg);padding:3px 6px">{{ d.text }}</div>
+        </sc-if>
+      </div>
+    </sc-for>
+    <sc-if value="{{ noResult }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:16px;top:16px;max-width:250px">
+        <div style="font-size:21px;font-weight:800;background:var(--pp-bg);padding:4px 8px;display:inline-block">NO DRAWS YET</div>
+        <div style="font-size:15px;color:var(--pp-ink);margin-top:6px;background:var(--pp-bg);padding:4px 8px;display:inline-block;text-wrap:pretty">Run a draw — it lands on top of this field.</div>
+      </div>
+    </sc-if>
+    <div style="position:absolute;left:12px;right:12px;bottom:10px;display:flex;align-items:center;gap:10px">
+      <div style="font-size:10px;letter-spacing:.16em;font-weight:700;color:var(--pp-ink);background:var(--pp-bg);padding:2px 5px">COLD</div>
+      <div style="flex:1;height:6px;background:{{ heatGradient }}"></div>
+      <div style="font-size:10px;letter-spacing:.16em;font-weight:700;color:var(--pp-ink);background:var(--pp-bg);padding:2px 5px">HOT</div>
+    </div>
+  </div>
+
+  <div style="padding:11px 16px;font-size:13px;color:var(--pp-dim);line-height:1.4;text-wrap:pretty;flex:0 0 auto">{{ heatCaption }}</div>
+</div>
+</sc-if>
+
+<!-- ══ SETTINGS ══ -->
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;overflow-y:auto;box-sizing:border-box">
+  <div style="display:flex;align-items:stretch;justify-content:space-between;border-bottom:2px solid var(--pp-line)">
+    <div style="padding:18px 16px;font-size:27px;font-weight:800;letter-spacing:-.01em">SETTINGS</div>
+    <div role="button" onClick="{{ goHome }}" style="padding:18px 16px;font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--pp-accent);cursor:pointer">DONE</div>
+  </div>
+
+  <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="2">
+    <div role="button" onClick="{{ t.onToggle }}" style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border-bottom:2px solid var(--pp-line);cursor:pointer" style-hover="background:var(--pp-surface)">
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:700">{{ t.title }}</div>
+        <div style="font-size:14px;color:var(--pp-dim);margin-top:2px;text-wrap:pretty">{{ t.sub }}</div>
+      </div>
+      <div style="width:56px;height:30px;flex:0 0 auto;box-sizing:border-box;border:2px solid {{ t.trackLine }};background:{{ t.trackBg }};position:relative;transition:background .18s,border-color .18s">
+        <div style="position:absolute;top:2px;left:{{ t.knobLeft }}px;width:22px;height:22px;background:{{ t.knobBg }};transition:left .18s"></div>
+      </div>
+    </div>
+  </sc-for>
+
+  <div style="border-bottom:2px solid var(--pp-line)">
+    <div style="padding:16px 16px 10px">
+      <div style="font-size:17px;font-weight:700">APPEARANCE</div>
+      <div style="font-size:14px;color:var(--pp-dim);margin-top:2px">Follows the system theme unless you pick one</div>
+    </div>
+    <div style="display:flex;border-top:2px solid var(--pp-line)">
+      <sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3">
+        <div role="button" onClick="{{ o.onPick }}" style="flex:1;padding:16px 0 16px 14px;font-size:17px;font-weight:700;cursor:pointer;border-left:2px solid var(--pp-line);background:{{ o.bg }};color:{{ o.ink }}">{{ o.label }}</div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="border-bottom:2px solid var(--pp-line)">
+    <div style="padding:16px 16px 10px">
+      <div style="font-size:17px;font-weight:700">COUNTDOWN</div>
+      <div style="font-size:14px;color:var(--pp-dim);margin-top:2px">Each new finger adds one second</div>
+    </div>
+    <div style="display:flex;align-items:stretch;border-top:2px solid var(--pp-line)">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;padding:0 16px;font-size:12px;letter-spacing:.18em;font-weight:700;color:var(--pp-dim)">SECONDS</div>
+      <div role="button" onClick="{{ decCountdown }}" style="width:56px;height:56px;flex:0 0 auto;border-left:2px solid var(--pp-line);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;cursor:pointer;line-height:1" style-hover="background:var(--pp-surface2);color:var(--pp-accent)">−</div>
+      <div style="width:64px;flex:0 0 auto;border-left:2px solid var(--pp-line);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums">{{ countdown }}</div>
+      <div role="button" onClick="{{ incCountdown }}" style="width:56px;height:56px;flex:0 0 auto;border-left:2px solid var(--pp-line);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;cursor:pointer;line-height:1" style-hover="background:var(--pp-surface2);color:var(--pp-accent)">+</div>
+    </div>
+  </div>
+
+  <div style="border-bottom:2px solid var(--pp-line)">
+    <div style="padding:16px 16px 10px">
+      <div style="font-size:17px;font-weight:700">REVEAL</div>
+      <div style="font-size:14px;color:var(--pp-dim);margin-top:2px">Show order and teams at once, or after a beat</div>
+    </div>
+    <div style="display:flex;border-top:2px solid var(--pp-line)">
+      <sc-for list="{{ timingOpts }}" as="o" hint-placeholder-count="2">
+        <div role="button" onClick="{{ o.onPick }}" style="flex:1;padding:16px 0 16px 14px;font-size:17px;font-weight:700;cursor:pointer;border-left:2px solid var(--pp-line);background:{{ o.bg }};color:{{ o.ink }}">{{ o.label }}</div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="padding:16px;font-size:13px;color:var(--pp-dim);line-height:1.5;text-wrap:pretty">Mode lives on the home screen so the draw surface stays bare. Moving a finger never counts as a new player. Team count has no ceiling — the screen is the limit.</div>
+</div>
+</sc-if>
+
+</div>
+</x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:476,&quot;height&quot;:956},&quot;ringDiameter&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:112,&quot;min&quot;:88,&quot;max&quot;:140,&quot;step&quot;:4,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;heatSamples&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:320,&quot;min&quot;:40,&quot;max&quot;:320,&quot;step&quot;:20,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Fairness field&quot;}}">
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const TEAM_FILLS = [
+  { bg: 'var(--pp-accent)', ink: 'var(--pp-accent-ink)' },
+  { bg: 'var(--pp-ink)', ink: 'var(--pp-bg)' },
+  { bg: 'var(--pp-dim)', ink: 'var(--pp-bg)' },
+  { bg: '#ae1800', ink: '#f3f2f2' },
+  { bg: '#ffc4b8', ink: '#201e1d' },
+  { bg: 'var(--pp-surface2)', ink: 'var(--pp-ink)' },
+];
+const ALLTIME = (() => {
+  let s = 20260905, out = [];
+  const r = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  for (let i = 0; i < 320; i++) out.push({ x: r(), y: r() });
+  return out;
+})();
+const HEAT_DARK = [[0,[45,43,43]],[.3,[77,23,14]],[.58,[174,24,0]],[.82,[255,86,60]],[1,[255,196,184]]];
+const HEAT_LIGHT = [[0,[234,233,233]],[.3,[255,196,184]],[.58,[255,86,60]],[.82,[221,43,15]],[1,[124,20,5]]];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'home', mode: 'starter', teamCount: 3,
+    fingers: [], nextId: 1, phase: 'idle', progress: 0,
+    result: null, error: '', themePref: 'system',
+    haptics: true, dim: true, countdown: 3, timing: 'suspense',
+  };
+
+  componentWillUnmount() { this._stop(); clearTimeout(this._rev); clearTimeout(this._err); }
+  _stop() { if (this._raf) cancelAnimationFrame(this._raf); this._raf = null; }
+
+  _tick = () => {
+    const now = performance.now();
+    const span = Math.max(1, this._deadline - this._startAt);
+    const p = Math.min(1, (now - this._startAt) / span);
+    this.setState({ progress: p });
+    if (p >= 1) { this._stop(); this._draw(); }
+    else this._raf = requestAnimationFrame(this._tick);
+  };
+
+  _arm(extend) {
+    const now = performance.now();
+    if (!this._raf) {
+      this._startAt = now; this._deadline = now + this.state.countdown * 1000;
+      this._raf = requestAnimationFrame(this._tick);
+    } else if (extend) this._deadline += 1000;
+    this.setState({ phase: 'counting' });
+  }
+
+  _cancel() { this._stop(); this.setState({ phase: 'idle', progress: 0 }); }
+
+  _flash(msg) {
+    clearTimeout(this._err);
+    this.setState({ error: msg });
+    this._err = setTimeout(() => this.setState({ error: '' }), 2400);
+  }
+
+  _draw() {
+    const { fingers, mode, teamCount } = this.state;
+    if (mode === 'teams' && fingers.length < teamCount) {
+      this._flash(fingers.length + ' fingers can\u2019t fill ' + teamCount + ' teams');
+      this.setState({ phase: 'idle', progress: 0 });
+      return;
+    }
+    const order = fingers.map(f => f.id);
+    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    const assign = {};
+    order.forEach((id, i) => { assign[id] = mode === 'teams' ? (i % teamCount) : (i + 1); });
+    const winnerId = order[0];
+    const w = fingers.find(f => f.id === winnerId);
+    const W = this._w || 412, H = this._h || 840;
+    const result = { mode, teamCount, assign, winnerId, fingers: fingers.map(f => ({ ...f })), w: W, h: H };
+    this._buzz(mode === 'starter' ? [90] : [90, 60, 90]);
+    const instant = this.state.timing === 'instant' || mode === 'starter';
+    this.setState({ result, phase: instant ? 'revealed' : 'suspense', progress: 1 });
+    if (!instant) { clearTimeout(this._rev); this._rev = setTimeout(() => this.setState({ phase: 'revealed' }), 600); }
+  }
+
+  _pos(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    this._w = r.width; this._h = r.height;
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  _buzz(pattern) {
+    if (this.state.haptics && navigator.vibrate) navigator.vibrate(pattern);
+  }
+
+  onSurfaceDown = (e) => {
+    if (this._dragId != null) return;
+    const { phase } = this.state;
+    if (phase === 'revealed' || phase === 'suspense') return;
+    const p = this._pos(e);
+    this._buzz(12);
+    this.setState(s => ({ fingers: s.fingers.concat([{ id: s.nextId, x: p.x, y: p.y }]), nextId: s.nextId + 1 }), () => {
+      if (this.state.fingers.length >= 2) this._arm(this.state.phase === 'counting');
+    });
+  };
+
+  onSurfaceMove = (e) => {
+    if (this._dragId == null) return;
+    const p = this._pos(e);
+    this.setState(s => ({ fingers: s.fingers.map(f => f.id === this._dragId ? { ...f, x: p.x, y: p.y } : f) }));
+  };
+
+  onSurfaceUp = () => { this._dragId = null; };
+
+  _down(id) { return (e) => { e.stopPropagation(); this._dragId = id; }; }
+
+  _lift(id) {
+    return (e) => {
+      e.stopPropagation();
+      this._dragId = null;
+      this.setState(s => ({ fingers: s.fingers.filter(f => f.id !== id) }), () => {
+        const n = this.state.fingers.length;
+        const ph = this.state.phase;
+        if (ph === 'revealed' || ph === 'suspense') {
+          if (n === 0) { clearTimeout(this._rev); this.setState({ phase: 'idle', progress: 0 }); }
+        } else if (n < 2) this._cancel();
+      });
+    };
+  }
+
+  _go(screen, mode) {
+    return () => {
+      this._stop(); clearTimeout(this._rev);
+      this.setState({ screen, phase: 'idle', progress: 0, error: '', fingers: mode ? [] : this.state.fingers, ...(mode ? { mode } : {}) });
+    };
+  }
+
+  _points() { return ALLTIME.slice(0, this.props.heatSamples ?? 320); }
+
+  setCanvas = (el) => {
+    this._canvas = el;
+    if (el) requestAnimationFrame(() => this._drawHeat());
+  };
+
+  componentDidUpdate() { if (this.state.screen === 'details') this._drawHeat(); }
+
+  _isDark() {
+    const t = this.state.themePref;
+    if (t === 'dark') return true;
+    if (t === 'light') return false;
+    return !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+  }
+
+  _drawHeat() {
+    const c = this._canvas;
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const W = Math.max(80, Math.round(c.clientWidth || c.width));
+    const H = Math.max(80, Math.round(c.clientHeight || c.height));
+    if (c.width !== W) c.width = W;
+    if (c.height !== H) c.height = H;
+    const stops = this._isDark() ? HEAT_DARK : HEAT_LIGHT;
+    const pts = this._points();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgb(' + stops[0][1].join(',') + ')';
+    ctx.fillRect(0, 0, W, H);
+    if (!pts.length) return;
+    const R = Math.max(18, Math.min(W, H) * 0.13);
+    const R2 = R * R;
+    const dens = new Float32Array(W * H);
+    const spread = [];
+    pts.forEach(p => {
+      const px = p.x * W, py = p.y * H;
+      const xs = [px];
+      if (px < R) xs.push(-px);
+      if (W - px < R) xs.push(2 * W - px);
+      const ys = [py];
+      if (py < R) ys.push(-py);
+      if (H - py < R) ys.push(2 * H - py);
+      xs.forEach(x => ys.forEach(y => spread.push([x, y])));
+    });
+    spread.forEach(pt => {
+      const cx = pt[0], cy = pt[1];
+      const x0 = Math.max(0, Math.floor(cx - R)), x1 = Math.min(W - 1, Math.ceil(cx + R));
+      const y0 = Math.max(0, Math.floor(cy - R)), y1 = Math.min(H - 1, Math.ceil(cy + R));
+      for (let y = y0; y <= y1; y++) {
+        const dy = y - cy, row = y * W;
+        for (let x = x0; x <= x1; x++) {
+          const dx = x - cx, q = (dx * dx + dy * dy) / R2;
+          if (q < 1) { const k = 1 - q; dens[row + x] += k * k; }
+        }
+      }
+    });
+    let peak = 0;
+    for (let i = 0; i < dens.length; i++) if (dens[i] > peak) peak = dens[i];
+    if (peak <= 0) return;
+    const img = ctx.getImageData(0, 0, W, H);
+    const d = img.data;
+    for (let i = 0, px = 0; i < d.length; i += 4, px++) {
+      const v = Math.min(1, Math.pow(dens[px] / peak, 0.9));
+      let a = stops[0], b = stops[stops.length - 1];
+      for (let k = 0; k < stops.length - 1; k++) { if (v >= stops[k][0] && v <= stops[k + 1][0]) { a = stops[k]; b = stops[k + 1]; break; } }
+      const t = b[0] === a[0] ? 0 : (v - a[0]) / (b[0] - a[0]);
+      d[i] = a[1][0] + (b[1][0] - a[1][0]) * t;
+      d[i + 1] = a[1][1] + (b[1][1] - a[1][1]) * t;
+      d[i + 2] = a[1][2] + (b[1][2] - a[1][2]) * t;
+      d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const ringD = this.props.ringDiameter ?? 112;
+    const revealed = s.phase === 'revealed';
+    const suspense = s.phase === 'suspense';
+    const res = s.result;
+    const assign = revealed && res ? res.assign : null;
+
+    const fingerViews = s.fingers.map(f => {
+      const v = {
+        x: Math.round(f.x), y: Math.round(f.y), onDown: this._down(f.id), onLift: this._lift(f.id),
+        ring: 'var(--pp-ink)', fill: 'transparent', opacity: 1, scale: 1, anim: 'none',
+        hasLabel: false, hasSub: false, label: '', sub: '', labelSize: 40, labelColor: 'var(--pp-ink)',
+      };
+      if (s.phase === 'counting') v.ring = 'var(--pp-ink)';
+      if (suspense) { v.anim = 'pp-churn .34s ease-in-out infinite alternate'; v.ring = 'var(--pp-accent)'; v.opacity = 0.85; }
+      if (!assign) return v;
+      const a = assign[f.id];
+      if (res.mode === 'starter') {
+        const win = f.id === res.winnerId;
+        v.ring = win ? 'var(--pp-accent)' : 'var(--pp-line)';
+        v.opacity = win ? 1 : 0.2;
+        v.scale = win ? 1.14 : 0.88;
+        if (win) { v.fill = 'var(--pp-accent-soft)'; v.anim = 'pp-bloom .5s ease-out both'; }
+      } else if (res.mode === 'order') {
+        const first = a === 1;
+        const total = res.fingers.length;
+        const t = total > 1 ? (a - 1) / (total - 1) : 0;
+        v.ring = 'var(--pp-accent)';
+        v.opacity = +(1 - t * 0.7).toFixed(3);
+        v.scale = first ? 1.12 : 1;
+        v.hasLabel = true; v.label = String(a);
+        v.labelSize = first ? 46 : 32;
+        v.labelColor = 'var(--pp-accent)';
+        if (first) v.fill = 'var(--pp-accent-soft)';
+      } else {
+        const t = TEAM_FILLS[a % TEAM_FILLS.length];
+        v.ring = t.bg; v.fill = t.bg;
+        v.hasLabel = true; v.label = LETTERS[a % 26] || String(a + 1);
+        v.labelSize = 40; v.labelColor = t.ink;
+        v.hasSub = true; v.sub = 'TEAM';
+      }
+      return v;
+    });
+
+    const modeLabel = s.mode === 'starter' ? 'Starting player' : s.mode === 'order' ? 'Player order' : s.teamCount + ' teams';
+    const n = s.fingers.length;
+    const hint = n === 0
+      ? { t: 'EVERYONE, ONE FINGER DOWN.', s: 'Hold still — the edge glow is the countdown. Drag to reposition; a moving finger is not a new player.' }
+      : { t: 'ONE MORE FINGER.', s: 'At least two players are needed to draw.' };
+
+    const ord = (i) => i + (i === 1 ? 'ST' : i === 2 ? 'ND' : i === 3 ? 'RD' : 'TH');
+    const mapDots = res ? res.fingers.map(f => {
+      const a = res.assign[f.id];
+      const left = Math.round((f.x / res.w) * 100);
+      const top = Math.round((f.y / res.h) * 100);
+      const dir = left > 55 ? 'row-reverse' : 'row';
+      if (res.mode === 'teams') {
+        const fill = TEAM_FILLS[a % TEAM_FILLS.length];
+        return { left, top, dir, size: 32, bg: fill.bg, ring: 'var(--pp-ink)', ink: fill.ink, label: LETTERS[a % 26] || String(a + 1), hasText: false, text: '', textColor: 'var(--pp-ink)' };
+      }
+      const win = res.mode === 'starter' ? f.id === res.winnerId : a === 1;
+      return {
+        left, top, dir, size: win ? 36 : 28,
+        bg: win ? 'var(--pp-ink)' : 'var(--pp-bg)',
+        ring: 'var(--pp-ink)',
+        ink: win ? 'var(--pp-bg)' : 'var(--pp-ink)',
+        label: res.mode === 'order' ? String(a) : (win ? '1' : ''),
+        hasText: win, text: win ? 'WINNER' : '',
+        textColor: 'var(--pp-ink)',
+      };
+    }) : [];
+    const resultSummary = res
+      ? (res.mode === 'starter' ? res.fingers.length + ' PLAYERS'
+        : res.mode === 'order' ? res.fingers.length + ' IN ORDER'
+        : res.teamCount + ' TEAMS · ' + res.fingers.length + ' PLAYERS')
+      : '';
+
+    const pts = this._points();
+    const heatCaption = res
+      ? 'Your last draw sits on top of ' + pts.length + ' logged winners. The field stays flat edge to edge — where you put your finger changes nothing.'
+      : pts.length + ' logged winners, flat edge to edge — no corner of the screen wins more often.';
+
+    const pill = (on) => ({ bg: on ? 'var(--pp-accent)' : 'transparent', ink: on ? 'var(--pp-accent-ink)' : 'var(--pp-dim)' });
+    const tog = (key, title, sub) => ({
+      title, sub, onToggle: () => this.setState({ [key]: !s[key] }),
+      trackBg: s[key] ? 'var(--pp-accent)' : 'transparent',
+      trackLine: s[key] ? 'var(--pp-accent)' : 'var(--pp-line)',
+      knobBg: s[key] ? 'var(--pp-accent-ink)' : 'var(--pp-dim)', knobLeft: s[key] ? 28 : 2,
+    });
+
+    return {
+      theme: s.themePref, ringD,
+      themeOpts: [
+        { label: 'System', v: 'system' }, { label: 'Light', v: 'light' }, { label: 'Dark', v: 'dark' },
+      ].map(o => ({ label: o.label, onPick: () => this.setState({ themePref: o.v }), bg: pill(s.themePref === o.v).bg, ink: pill(s.themePref === o.v).ink })),
+      isHome: s.screen === 'home', isDraw: s.screen === 'draw', isDetails: s.screen === 'details', isSettings: s.screen === 'settings',
+      teamCount: s.teamCount,
+      incTeams: () => this.setState({ teamCount: s.teamCount + 1 }),
+      decTeams: () => this.setState({ teamCount: Math.max(2, s.teamCount - 1) }),
+      startStarter: this._go('draw', 'starter'), startOrder: this._go('draw', 'order'), startTeams: this._go('draw', 'teams'),
+      goHome: this._go('home'), goSettings: this._go('settings'), goDetails: () => this.setState({ screen: 'details' }),
+      onSurfaceDown: this.onSurfaceDown, onSurfaceMove: this.onSurfaceMove, onSurfaceUp: this.onSurfaceUp,
+      fingerViews, modeLabel,
+      glow: s.phase === 'counting' ? (0.1 + s.progress * 0.4).toFixed(3) : (revealed || suspense ? '0.08' : '0'),
+      frameOpacity: s.phase === 'counting' ? (0.2 + s.progress * 0.8).toFixed(3) : '0',
+      chromeOpacity: n > 0 ? '0' : '1',
+      showHint: n < 2 && s.phase === 'idle', hintTitle: hint.t, hintSub: hint.s,
+      hasError: !!s.error, errorText: s.error,
+      isRevealed: revealed,
+      hasResult: !!res, noResult: !res,
+      resultModeLabel: res ? (res.mode === 'starter' ? 'Starting player' : res.mode === 'order' ? 'Player order' : res.teamCount + ' teams') : '',
+      mapDots, resultSummary, mapRatio: res ? res.w + '/' + res.h : '412/840',
+      setCanvas: this.setCanvas, heatCaption,
+      heatGradient: 'linear-gradient(90deg,' + (this._isDark() ? HEAT_DARK : HEAT_LIGHT).map(st => 'rgb(' + st[1].join(',') + ')').join(',') + ')',
+      heatCount: pts.length + ' WINNERS PLOTTED',
+      toggles: [
+        tog('haptics', 'HAPTICS', 'A tick per finger, a stronger buzz on the result'),
+        tog('dim', 'DIM MODE', 'Lowers screen brightness, like an alarm clock'),
+      ],
+      countdown: s.countdown + 's',
+      incCountdown: () => this.setState({ countdown: s.countdown + 1 }),
+      decCountdown: () => this.setState({ countdown: Math.max(1, s.countdown - 1) }),
+      timingOpts: [
+        { label: 'Suspense', onPick: () => this.setState({ timing: 'suspense' }), bg: pill(s.timing === 'suspense').bg, ink: pill(s.timing === 'suspense').ink },
+        { label: 'Instant', onPick: () => this.setState({ timing: 'instant' }), bg: pill(s.timing === 'instant').bg, ink: pill(s.timing === 'instant').ink },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -69,11 +69,17 @@ specified in [`design.md`](design.md):
 - [ ] Cut a first release once there is something to release, which is also the
       first real exercise of the docs workflow.
 - [ ] `docs/github.md` is Claude Design's repo-sync note and was moved from the
-      root. If that sync expects it at the root, it needs repointing.
+      root. It still refers to the app by its old name. If that sync expects it
+      at the root, it needs repointing.
+- [ ] **Behaviour decisions live in this repo, but re-exports come from Claude
+      Design and overwrite them** (it has happened twice). Either mirror the
+      haptics and toggle-copy changes upstream, or accept the export as
+      visuals-only and stop hand-editing it.
 
 ## Polish
 
-- [ ] App icon is a placeholder built from the ring motif.
+- [ ] The in-app mark is drawn from the logo geometry; check it optically
+      against `assets/logo/` on a real screen at small sizes.
 - [ ] No app-level tests for accessibility: the design leans on colour and
       scale, and the draw surface has no text alternative.
 - [ ] Decide what happens on very large finger counts - the design says the

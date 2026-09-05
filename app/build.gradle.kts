@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "de.drehtuer.playerpicker"
+    namespace = "de.drehtuer.shotgun"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "de.drehtuer.playerpicker"
+        applicationId = "de.drehtuer.shotgun"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
