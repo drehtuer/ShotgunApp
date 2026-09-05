@@ -15,6 +15,7 @@ browser prototype cannot express, and it is specified here:
 | Layout, tokens, copy, state machine, reveal | the export |
 | Haptic patterns | the export, and *Haptics* below |
 | Dim mode | here - the prototype has the toggle but no behaviour |
+| Keeping the screen awake | here - a browser prototype cannot express it |
 | Recording draws to a database | here - the prototype uses a fixed sample set |
 
 If the export and this file disagree on **visuals**, the export wins and this
@@ -259,6 +260,25 @@ Starter mode always reveals instantly - there is nothing to stagger.
 
 During `suspense` every ring churns (`scale .94 ↔ 1.06`) in accent at 85%
 opacity — the tell that something is being decided.
+
+## Keeping the screen awake
+
+**The screen must not dim, sleep or lock while the draw surface is open.**
+
+This is not covered by Android's normal behaviour. The idle timer is reset by
+touch *events*, and players hold their fingers still through the countdown,
+which produces none - so a draw can be interrupted by the screen dimming or the
+lock screen appearing at the worst possible moment.
+
+- Implemented with `FLAG_KEEP_SCREEN_ON`, held for as long as the draw surface
+  is shown and released when leaving it.
+- Scoped to that screen, not the whole app: Home, Result and Settings should
+  time out normally.
+- It holds for the *whole* draw screen, not only while fingers are down. A
+  group gathering around the phone before the first finger lands should not
+  have the screen go dark on them either.
+- No wake lock permission is needed - the flag is a window attribute, and the
+  system releases it if the app leaves the foreground.
 
 ## Haptics
 

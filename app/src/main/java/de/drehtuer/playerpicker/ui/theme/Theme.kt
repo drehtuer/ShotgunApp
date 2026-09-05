@@ -1,8 +1,5 @@
 package de.drehtuer.playerpicker.ui.theme
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +14,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import de.drehtuer.playerpicker.ui.util.findActivity
 
 /** Which palette to use. Mirrors the `themePref` setting in the design. */
 enum class ThemePreference { SYSTEM, LIGHT, DARK }
@@ -106,10 +104,4 @@ fun PlayerPickerTheme(
             content = content,
         )
     }
-}
-
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
 }

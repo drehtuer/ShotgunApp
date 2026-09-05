@@ -23,12 +23,39 @@ stubs.
 | Specification: all open questions answered | done |
 | Home: mode cards, team stepper | stub |
 | Draw surface: multi-touch, countdown, reveal | stub |
+| Draw surface: keeps the screen awake | done |
 | Result: fairness heatmap | stub |
 | Settings: haptics, dim, countdown, timing | stub |
 | Draw history database | not started |
 | Settings persistence | not started |
 
 ---
+
+## 2026-09-05 — Keep the screen awake during a draw
+
+**Outcome: done and verified on device.**
+
+The screen could dim or lock mid-draw. Android resets its idle timer on touch
+*events*, and a finger held still through the countdown produces none - so the
+one moment the screen must stay on is exactly the moment the system counts as
+idle.
+
+Fixed with `FLAG_KEEP_SCREEN_ON`, held by a `KeepScreenOn()` composable for as
+long as the draw surface is in the composition and released on the way out.
+Scoped to that screen so the flag cannot leak into Home, Result or Settings.
+
+Also extracted the `Context.findActivity()` helper that `Theme.kt` already had
+into `ui/util/`, rather than writing it a second time.
+
+Verified with `dumpsys window` on the emulator, walking the whole navigation
+graph: absent on Home, **present on the draw surface**, released on navigating
+back, re-acquired on entering it again, released again on Result, and
+re-acquired on returning to the draw surface. No crashes.
+
+The first attempt to verify this reported a false negative - `grep -A3` after
+the window line stopped short of the `fl=` line it needed. Worth remembering:
+the flag shows up as `fl=KEEP_SCREEN_ON ...` about five lines into the window
+block.
 
 ## 2026-09-05 — Specification decisions
 
