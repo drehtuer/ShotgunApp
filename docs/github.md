@@ -1,4 +1,4 @@
-repo: drehtuer/PlayerPickerApp
+repo: drehtuer/ShotgunApp
 branch: main
 
 ## Last sync
