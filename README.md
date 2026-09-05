@@ -66,6 +66,18 @@ rebuilds are fast.
 Contributor workflow, testing rules and the emulator/device recipes are in
 [`.claude/CLAUDE.md`](.claude/CLAUDE.md).
 
+## Documentation
+
+| Document | What it covers |
+| --- | --- |
+| [`docs/design.md`](docs/design.md) | The design in Markdown: tokens, screens, state model, behaviour |
+| [`docs/build-environment.md`](docs/build-environment.md) | Building, testing, emulator and device, CI, troubleshooting |
+| [`docs/TODO.md`](docs/TODO.md) | Open work and the decisions that block it |
+| [`docs/STATUS.md`](docs/STATUS.md) | What has been done and how it turned out |
+
+Documentation is kept in sync with the implementation - see
+[`.claude/CLAUDE.md`](.claude/CLAUDE.md).
+
 ### Emulator
 
 ```bash
