@@ -3,9 +3,9 @@
 Player Picker is an Android app (Kotlin + Jetpack Compose) built from a Claude
 Design export. The design is the spec, not a mood board: `design/Player
 Picker.dc.html` carries the real state machine in its embedded
-`<script type="text/x-dc">` block. **Read it before implementing any screen
-behaviour** - countdown timing, reveal rules and the fairness field are all
-defined there.
+`<script type="text/x-dc">` block. **Read [`docs/design.md`](../docs/design.md)
+and the export before implementing any screen behaviour** - countdown timing,
+reveal rules, haptics and the fairness field are all defined between them.
 
 ## Layout
 
@@ -77,9 +77,12 @@ Work out which of these your change touches, and update it:
 
 Two specific rules:
 
-- **The design export wins.** `design/Player Picker.dc.html` is the source of
-  truth; `docs/design.md` is a translation of it. If they disagree, fix the
-  translation, not the export.
+- **Know which source wins.** `design/Player Picker.dc.html` is the authority on
+  *visuals* - layout, tokens, copy, the interaction model. `docs/design.md` is
+  the specification of record for *behaviour*, including the parts a browser
+  prototype cannot express (dim mode, the draw database). Disagree on visuals ->
+  fix `docs/design.md`. New behaviour decided -> specify it in `docs/design.md`,
+  and update the export too if it can express it.
 - **Record outcomes honestly in `STATUS.md`.** A bug you hit and fixed is worth
   more to the next person than a clean summary that hides it.
 

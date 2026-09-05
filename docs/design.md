@@ -1,12 +1,25 @@
 # Design
 
-A markdown translation of [`design/Player Picker.dc.html`](../design/Player%20Picker.dc.html),
-the Claude Design export. **That file remains the source of truth** - its
-embedded `<script type="text/x-dc">` block holds the working state machine.
-This document exists so the design can be read, reviewed and diffed alongside
-the rest of the documentation.
+The specification for the app, derived from
+[`design/Player Picker.dc.html`](../design/Player%20Picker.dc.html), the Claude
+Design export.
 
-If the two ever disagree, the export wins and this file is the thing to fix.
+**This document is the specification of record.** The export remains the
+authority on *visuals* - layout, tokens, copy, and the interaction model in its
+embedded `<script type="text/x-dc">` block - and it is still the thing to read
+for how a screen should look. But some behaviour has since been decided that a
+browser prototype cannot express, and it is specified here:
+
+| Behaviour | Where it lives |
+| --- | --- |
+| Layout, tokens, copy, state machine, reveal | the export |
+| Haptic patterns | the export, and *Haptics* below |
+| Dim mode | here - the prototype has the toggle but no behaviour |
+| Recording draws to a database | here - the prototype uses a fixed sample set |
+
+If the export and this file disagree on **visuals**, the export wins and this
+file is what gets fixed. Where this file specifies behaviour the export does
+not implement, that is deliberate and marked as such.
 
 ## The app in one paragraph
 
@@ -147,7 +160,7 @@ Copy for the hint:
 ├──────────────────────────┼─────────────┤
 │ Starting player          │  5 PLAYERS  │   mode + summary
 ├──────────────────────────┼─────────────┤
-│ FAIRNESS                 │ 320 WINNERS │
+│ FAIRNESS                 │   N WINNERS │
 ├──────────────────────────┴─────────────┤
 │                                        │
 │      the fairness field (canvas),      │
@@ -167,9 +180,8 @@ lands on top of this field."
 
 | Setting | Type | Default |
 | --- | --- | --- |
-| HAPTICS — *A short buzz when the draw fires* | toggle | on |
-| SOUND — *Off by default — most tables are loud* | toggle | off |
-| DIM MODE — *Caps brightness for dark rooms* | toggle | on |
+| HAPTICS — *A tick per finger, a stronger buzz on the result* | toggle | on |
+| DIM MODE — *Lowers screen brightness, like an alarm clock* | toggle | on |
 | APPEARANCE — *Follows the system theme unless you pick one* | System / Light / Dark | System |
 | COUNTDOWN — *Each new finger adds one second* | stepper, min 1 | 3s |
 | REVEAL — *Show order and teams at once, or after a beat* | Suspense / Instant | Suspense |
@@ -186,6 +198,7 @@ mode        starter | order | teams
 phase       idle → counting → (suspense) → revealed
 fingers     [{ id, x, y }]
 result      { mode, teamCount, assign, winnerId, fingers, w, h } | null
+settings    { haptics, dim, countdown, timing, themePref }
 ```
 
 ### Phases
@@ -217,6 +230,8 @@ result      { mode, teamCount, assign, winnerId, fingers, w, h } | null
 | Double-tap a ring | Lifts that player |
 | Press during suspense/revealed | Ignored |
 
+Every press that adds a player fires a short haptic tick — see *Haptics*.
+
 That second rule is the one users notice: a hand that shifts on the glass must
 not silently join the draw twice.
 
@@ -227,7 +242,8 @@ not silently join the draw twice.
 2. Fisher-Yates shuffle of the finger ids.
 3. Assign — `teams`: `index % teamCount`; otherwise rank `index + 1`.
 4. Winner is the first of the shuffled order.
-5. Haptics, if enabled: `40ms` for starter, `[20, 40, 20]` otherwise.
+5. Haptics, if enabled: a **stronger** buzz than the per-finger tick —
+   `[90]` for starter, `[90, 60, 90]` otherwise (see *Haptics*).
 6. Reveal immediately if timing is `instant` **or** mode is `starter`;
    otherwise 600 ms of `suspense` first.
 
@@ -244,23 +260,73 @@ Starter mode always reveals instantly - there is nothing to stagger.
 During `suspense` every ring churns (`scale .94 ↔ 1.06`) in accent at 85%
 opacity — the tell that something is being decided.
 
+## Haptics
+
+Two distinct strengths, so the phone tells you what happened without looking:
+
+| Event | Pattern | Feel |
+| --- | --- | --- |
+| A finger lands | `12 ms` | A keyboard-style tick, once per player added |
+| Result revealed — starter | `[90]` | One firm buzz |
+| Result revealed — order / teams | `[90, 60, 90]` | A heavier double buzz |
+
+The tick fires on **finger down only** — never on drag, and never on lift.
+Dragging is repositioning, not joining, and buzzing on it would contradict
+that. Both are suppressed entirely when HAPTICS is off.
+
+On Android this is `VibratorManager` / `VibrationEffect`; the app already
+declares `android.permission.VIBRATE`.
+
+## Dim mode
+
+**Lowers the screen brightness, the way an alarm clock does.** The app is used
+on a table in a dark room and a phone at full brightness is unpleasant there.
+
+- Applies to the app's own window only, by lowering
+  `WindowManager.LayoutParams.screenBrightness` — it must not change the
+  system-wide setting, and the previous value must return on leaving the app.
+- On by default.
+- It is a *brightness* change, not a palette change: the theme is chosen
+  separately under APPEARANCE, and dim must not silently darken the colours.
+
 ## The fairness field
 
-A density heatmap of logged winner positions, drawn on a canvas.
+A density heatmap of **real recorded winner positions**, drawn on a canvas.
+Every draw appends its finger positions to a local database, and this screen
+plots the accumulated history.
 
-- **320 sample points**, from a seeded LCG so the field is stable between runs.
+The point of the screen is trust, and it only earns that if the data is real:
+a seeded sample set would be a picture of fairness rather than evidence of it.
+
+### What gets recorded
+
+Every completed draw records, for each finger:
+
+- its position, **normalised to 0..1** against the surface it was captured on,
+  so records stay comparable across devices and orientations
+- whether it won (starter) or its assigned rank / team
+- the mode, and when the draw happened
+
+Normalising at write time is what makes old records still usable after a screen
+size change. Storing raw pixels would silently skew the field.
+
+### Rendering
+
 - Density kernel: radius `max(18, min(W,H) × 0.13)`, quartic falloff
   `(1 − d²/r²)²`.
-- **Edge mirroring** - points near a border are reflected outward, so corners
+- **Edge mirroring** — points near a border are reflected outward, so corners
   do not read as artificially cold.
 - Normalised against the peak, gamma `0.9`, then mapped through the ramp.
+- `heatSamples` caps how many records are drawn, newest first, so the field
+  stays cheap to render as history grows.
 
-The last draw's positions are plotted on top as dots, positioned by percentage
-of the surface they were captured on. Labels flip to the left of the dot past
-55% width so they never run off screen.
+The last draw's positions are plotted on top as dots, re-projected from their
+normalised coordinates. Labels flip to the left of the dot past 55% width so
+they never run off screen.
 
-Caption, with a result: *"Your last draw sits on top of 320 logged winners. The
-field stays flat edge to edge — where you put your finger changes nothing."*
+Copy adapts to the real count — with a result: *"Your last draw sits on top of
+N logged winners. The field stays flat edge to edge — where you put your finger
+changes nothing."* With no history at all, the field reads "NO DRAWS YET".
 
 ## Tunable parameters
 
@@ -269,7 +335,7 @@ Exposed as editor props in the design:
 | Prop | Default | Range |
 | --- | --- | --- |
 | `ringDiameter` | 112 px | 88–140, step 4 |
-| `heatSamples` | 320 | 40–320, step 20 |
+| `heatSamples` | 320 | 40–320, step 20 - caps how many records are drawn |
 
 ## Implementation notes
 
@@ -277,5 +343,11 @@ Exposed as editor props in the design:
   Pixel 10a.
 - Result positions are stored with the surface dimensions they were captured
   on (`w`, `h`) so the Result screen can re-project them proportionally.
-- `dim` (brightness cap) and `sound` are in the design's settings but have no
-  behaviour defined in the export - they need a decision before implementation.
+- Recorded positions are normalised to 0..1 at write time, so history survives
+  a device or surface-size change. The export instead keeps raw pixels with the
+  captured `w`/`h`, which works for a single session but not for a stored
+  history.
+- The export's fairness field draws a fixed, seeded sample set. That is
+  scaffolding for the visual only - the implementation reads the database.
+- A SOUND toggle was in the original design and has been removed: it is not
+  needed.

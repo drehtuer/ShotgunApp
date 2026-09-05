@@ -205,7 +205,7 @@ a:hover{ color:var(--pp-ink); }
     <div role="button" onClick="{{ goHome }}" style="padding:18px 16px;font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--pp-accent);cursor:pointer">DONE</div>
   </div>
 
-  <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="3">
+  <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="2">
     <div role="button" onClick="{{ t.onToggle }}" style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border-bottom:2px solid var(--pp-line);cursor:pointer" style-hover="background:var(--pp-surface)">
       <div style="min-width:0">
         <div style="font-size:17px;font-weight:700">{{ t.title }}</div>
@@ -287,7 +287,7 @@ class Component extends DCLogic {
     screen: 'home', mode: 'starter', teamCount: 3,
     fingers: [], nextId: 1, phase: 'idle', progress: 0,
     result: null, error: '', themePref: 'system',
-    haptics: true, sound: false, dim: true, countdown: 3, timing: 'suspense',
+    haptics: true, dim: true, countdown: 3, timing: 'suspense',
   };
 
   componentWillUnmount() { this._stop(); clearTimeout(this._rev); clearTimeout(this._err); }
@@ -334,7 +334,7 @@ class Component extends DCLogic {
     const w = fingers.find(f => f.id === winnerId);
     const W = this._w || 412, H = this._h || 840;
     const result = { mode, teamCount, assign, winnerId, fingers: fingers.map(f => ({ ...f })), w: W, h: H };
-    if (this.state.haptics && navigator.vibrate) navigator.vibrate(mode === 'starter' ? 40 : [20, 40, 20]);
+    this._buzz(mode === 'starter' ? [90] : [90, 60, 90]);
     const instant = this.state.timing === 'instant' || mode === 'starter';
     this.setState({ result, phase: instant ? 'revealed' : 'suspense', progress: 1 });
     if (!instant) { clearTimeout(this._rev); this._rev = setTimeout(() => this.setState({ phase: 'revealed' }), 600); }
@@ -346,11 +346,16 @@ class Component extends DCLogic {
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
 
+  _buzz(pattern) {
+    if (this.state.haptics && navigator.vibrate) navigator.vibrate(pattern);
+  }
+
   onSurfaceDown = (e) => {
     if (this._dragId != null) return;
     const { phase } = this.state;
     if (phase === 'revealed' || phase === 'suspense') return;
     const p = this._pos(e);
+    this._buzz(12);
     this.setState(s => ({ fingers: s.fingers.concat([{ id: s.nextId, x: p.x, y: p.y }]), nextId: s.nextId + 1 }), () => {
       if (this.state.fingers.length >= 2) this._arm(this.state.phase === 'counting');
     });
@@ -578,9 +583,8 @@ class Component extends DCLogic {
       heatGradient: 'linear-gradient(90deg,' + (this._isDark() ? HEAT_DARK : HEAT_LIGHT).map(st => 'rgb(' + st[1].join(',') + ')').join(',') + ')',
       heatCount: pts.length + ' WINNERS PLOTTED',
       toggles: [
-        tog('haptics', 'HAPTICS', 'A short buzz when the draw fires'),
-        tog('sound', 'SOUND', 'Off by default — most tables are loud'),
-        tog('dim', 'DIM MODE', 'Caps brightness for dark rooms'),
+        tog('haptics', 'HAPTICS', 'A tick per finger, a stronger buzz on the result'),
+        tog('dim', 'DIM MODE', 'Lowers screen brightness, like an alarm clock'),
       ],
       countdown: s.countdown + 's',
       incCountdown: () => this.setState({ countdown: s.countdown + 1 }),
