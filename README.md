@@ -24,7 +24,8 @@ and the design tokens are in place. The screens themselves are stubs.
 | Home: mode cards, team stepper | stub |
 | Draw surface: multi-touch, countdown, reveal | stub |
 | Result: fairness heatmap | stub |
-| Settings: haptics, sound, dim, countdown, timing | stub |
+| Settings: haptics, dim, countdown, timing | stub |
+| Draw history database | not started |
 | Settings persistence | not started |
 
 ## Design tokens

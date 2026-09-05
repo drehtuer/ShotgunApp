@@ -19,14 +19,44 @@ stubs.
 | Appearance setting (system / light / dark) | done, not persisted |
 | Devcontainer: SDK, emulator, adb over Wi-Fi | done |
 | CI: build, unit tests, lint | done |
-| Docs: Pages on release | done, needs Pages enabled |
+| Docs: Pages on release | done, never run yet |
+| Specification: all open questions answered | done |
 | Home: mode cards, team stepper | stub |
 | Draw surface: multi-touch, countdown, reveal | stub |
 | Result: fairness heatmap | stub |
-| Settings: haptics, sound, dim, countdown, timing | stub |
+| Settings: haptics, dim, countdown, timing | stub |
+| Draw history database | not started |
 | Settings persistence | not started |
 
 ---
+
+## 2026-09-05 — Specification decisions
+
+**Outcome: done. All three open questions answered; no code changed yet.**
+
+- **SOUND removed.** Not needed. Taken out of the design export (state field and
+  settings row) and out of the documentation.
+- **DIM MODE defined** as lowering screen brightness like an alarm clock -
+  the app's own window only, restored on leave, and explicitly *not* a palette
+  change.
+- **Haptics redefined.** Was a single buzz when the draw fired. Now a `12 ms`
+  keyboard-style tick per finger down, and a stronger `[90]` / `[90, 60, 90]`
+  on the result. The tick deliberately does **not** fire on drag or lift -
+  dragging is repositioning, not joining, and buzzing on it would contradict
+  the rule the hint text teaches.
+- **Draw history to a database.** The heatmap plots real recorded positions
+  rather than the export's seeded sample set. Positions are normalised to 0..1
+  at write time so history survives a device or surface-size change.
+
+The export was edited directly for sound and haptics; its script was
+syntax-checked after each change. Dim mode and the database cannot be expressed
+in a browser prototype, which forced a question about which document wins.
+Resolved by splitting authority: **the export owns visuals, `docs/design.md`
+owns behaviour**, recorded in both files and in `.claude/CLAUDE.md`.
+
+GitHub Pages has been enabled with Source: GitHub Actions, so the docs workflow
+can now deploy. It has still never run - the first release will be its first
+real exercise.
 
 ## 2026-09-05 — Documentation set
 
@@ -40,8 +70,8 @@ documentation-stays-in-sync rule to `.claude/CLAUDE.md`.
 source of truth because it holds the executable state machine.
 
 Two gaps surfaced while translating: **`sound` and `dim` appear in the design's
-settings but have no behaviour defined anywhere in the export.** They need a
-decision before those toggles can be implemented rather than merely displayed.
+settings but have no behaviour defined anywhere in the export.** Both were
+answered the same day - see the entry above.
 
 ## 2026-09-05 — Restructure, contributor guide and CI (PR #2)
 

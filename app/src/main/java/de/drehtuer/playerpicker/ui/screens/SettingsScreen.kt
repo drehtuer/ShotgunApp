@@ -25,8 +25,8 @@ import de.drehtuer.playerpicker.ui.theme.ThemePreference
 /**
  * Scaffold for settings. Appearance is wired up already - it is the one setting
  * that exercises the theme, so it is worth having on device from the start.
- * Haptics, sound, dim mode, countdown length and reveal timing follow, together
- * with persistence.
+ * Haptics, dim mode, countdown length and reveal timing follow, together with
+ * persistence.
  */
 @Composable
 fun SettingsScreen(
@@ -77,7 +77,7 @@ fun SettingsScreen(
             Rule()
         }
 
-        NotBuiltYet("Haptics, sound, dim mode, countdown and reveal timing land here.")
+        NotBuiltYet("Haptics, dim mode, countdown and reveal timing land here.")
     }
 }
 
