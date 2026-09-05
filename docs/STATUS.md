@@ -27,9 +27,38 @@ stubs.
 | Result: fairness heatmap | stub |
 | Settings: haptics, dim, countdown, timing | stub |
 | Draw history database | not started |
+| Identity: name, logo, launcher icon | done |
 | Settings persistence | not started |
 
 ---
+
+## 2026-09-06 — Renamed to Shotgun!, new identity
+
+**Outcome: done.**
+
+The app is now **Shotgun!**. The design was re-exported as
+`design/Shotgun.dc.html` (the old `Player Picker.dc.html` is removed), a logo
+was added in `assets/logo/`, and SOUND is gone from the settings screen.
+
+Code: package and `applicationId` moved from `de.drehtuer.playerpicker` to
+`de.drehtuer.shotgun`, `PlayerPickerTheme` -> `ShotgunTheme`,
+`PlayerPickerNavHost` -> `ShotgunNavHost`, launcher label "Shotgun!".
+
+The `PP*` prefix on the theme types was **kept deliberately**: it mirrors the
+`--pp-*` token names the design still uses, so a colour can be traced between
+design and code by name. Renaming it would have broken that link for no gain.
+
+Home's accent eyebrow is replaced by the mark plus wordmark, so the `kicker`
+type role became `wordmark`. The mark and the launcher icon are both generated
+from the same normalised dot geometry in the logo spec, so they cannot drift.
+
+**The re-export had been branched from the original design, not from the edited
+copy in this repo, so it silently reverted decisions made on 2026-09-05:**
+haptics went back to a single buzz on fire, and the HAPTICS/DIM MODE copy went
+back to the old text. Those decisions still stand, so they were re-applied to
+the new export and re-verified. This is the second time hand-edits have been at
+risk; the durable fix is to make behaviour changes in the Claude Design project
+itself.
 
 ## 2026-09-05 — Keep the screen awake during a draw
 

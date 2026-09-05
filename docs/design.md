@@ -1,7 +1,7 @@
 # Design
 
 The specification for the app, derived from
-[`design/Player Picker.dc.html`](../design/Player%20Picker.dc.html), the Claude
+[`design/Shotgun.dc.html`](../design/Shotgun.dc.html), the Claude
 Design export.
 
 **This document is the specification of record.** The export remains the
@@ -28,6 +28,38 @@ Everyone puts a finger on the screen. Once at least two fingers are down a
 countdown runs, shown as a glow around the screen edge. When it expires the app
 draws: a starting player, a full running order, or teams. The result lands on
 the fingers themselves - no list, no names, nothing typed in.
+
+## Identity
+
+The app is **Shotgun!** — the exclamation mark is part of the name and is never
+dropped. Specified in [`design/Shotgun Logo.dc.html`](../design/Shotgun%20Logo.dc.html),
+with rendered assets in [`assets/logo/`](../assets/logo/).
+
+**The mark is the game itself:** four fingers on the glass, one of them called.
+One filled dot in accent, three outlined ones that missed, placed where fingers
+actually land — not a grid, and deliberately not a firearm.
+
+| | |
+| --- | --- |
+| Wordmark | Archivo 800, `-0.03em`, all caps, `!` in accent |
+| Icon — dark | `#201E1D` plate, `#EC3013` claimed dot, `#605D5D` rings |
+| Icon — red | `#EC3013` plate, `#F3F2F2` claimed dot, `#7C1405` rings |
+| Tagline | FINGERS DECIDE |
+| Don't | No rounded icon corners, no firearm imagery, no third colour, no drop shadow |
+
+Dot geometry, normalised to the plate — centre, relative size, and which one is
+claimed:
+
+| | x | y | size | |
+| --- | --- | --- | --- | --- |
+| 1 | 0.19 | 0.44 | 1.00 | **claimed** |
+| 2 | 0.44 | 0.19 | 0.90 | missed |
+| 3 | 0.79 | 0.33 | 0.84 | missed |
+| 4 | 0.56 | 0.74 | 0.95 | missed |
+
+Dot diameter is `0.25 × plate × size`; ring stroke is `0.0365 × plate`, drawn
+*inside* the diameter. The launcher icon and the in-app mark are both generated
+from exactly these numbers, so they cannot drift apart.
 
 ## Design system
 
@@ -85,7 +117,7 @@ All Archivo. The design has its own vocabulary rather than Material's slots.
 
 | Role | Size | Weight | Tracking | Used for |
 | --- | --- | --- | --- | --- |
-| `kicker` | 12 | 700 | `.2em` | "PLAYER PICKER" eyebrow, in accent |
+| `wordmark` | 20 | 800 | `-.02em` | The "SHOTGUN!" wordmark on Home |
 | `display` | 30 | 800 | `-.01em` | Home headline |
 | `screenTitle` | 27 | 800 | `-.01em` | RESULT, SETTINGS |
 | `cardTitle` | 25 | 800 | `-.01em` | Mode card titles |
@@ -106,7 +138,7 @@ bare.
 
 ```
 ┌────────────────────────────────┬─────┐
-│ PLAYER PICKER            (kicker)│  S  │
+│ ●∘∘∘ SHOTGUN!          (wordmark)│  S  │
 │ PICK A MODE.                     │  E  │  ← vertical tab,
 │ HANDS ON GLASS.        (display) │  T  │    opens Settings
 ├──────────────────────────────────┴─────┤
@@ -128,8 +160,9 @@ bare.
 └────────────────────────────────────────┘
 ```
 
-Each mode card carries a four-dot motif previewing what that mode does. The
-team stepper has a **floor of 2 and no ceiling** - "the screen is the limit".
+The header carries the mark and the SHOTGUN! wordmark. Each mode card carries a
+four-dot motif previewing what that mode does. The team stepper has a **floor of
+2 and no ceiling** - "the screen is the limit".
 
 ### Draw surface
 

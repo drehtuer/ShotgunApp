@@ -1,6 +1,6 @@
 # Working in this repo
 
-Player Picker is an Android app (Kotlin + Jetpack Compose) built from a Claude
+Shotgun! is an Android app (Kotlin + Jetpack Compose) built from a Claude
 Design export. The design is the spec, not a mood board: `design/Player
 Picker.dc.html` carries the real state machine in its embedded
 `<script type="text/x-dc">` block. **Read [`docs/design.md`](../docs/design.md)
@@ -77,7 +77,7 @@ Work out which of these your change touches, and update it:
 
 Two specific rules:
 
-- **Know which source wins.** `design/Player Picker.dc.html` is the authority on
+- **Know which source wins.** `design/Shotgun.dc.html` is the authority on
   *visuals* - layout, tokens, copy, the interaction model. `docs/design.md` is
   the specification of record for *behaviour*, including the parts a browser
   prototype cannot express (dim mode, the draw database). Disagree on visuals ->
@@ -127,7 +127,7 @@ emulator or a connected phone (below).
 ./.devcontainer/emulator-start.sh          # boots pixel9a-api37 headless
 adb devices                                # confirm it attached
 ./gradlew installDebug
-adb shell am start -n de.drehtuer.playerpicker/.MainActivity
+adb shell am start -n de.drehtuer.shotgun/.MainActivity
 ```
 
 Screenshot what you changed, and check for crashes:

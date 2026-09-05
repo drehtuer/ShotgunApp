@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Player Picker"
+rootProject.name = "Shotgun"
 include(":app")

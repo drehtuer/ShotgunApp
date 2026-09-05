@@ -1,10 +1,12 @@
-# Player Picker
+# Shotgun!
 
 An Android app for settling *who goes first*. Everyone puts a finger on the
 screen, a countdown runs, and the app draws — a starting player, a full player
 order, or teams.
 
-The design lives in [`design/Player Picker.dc.html`](design/Player%20Picker.dc.html),
+The mark is the game itself: four fingers on the glass, one of them called.
+
+The design lives in [`design/Shotgun.dc.html`](design/Shotgun.dc.html),
 exported from a Claude Design project. It is the spec for this implementation:
 screens, copy, palette and interaction behaviour all come from there.
 `design/_ds/` is the bound copy of the **Modernist** design system the export
@@ -26,24 +28,25 @@ and the design tokens are in place. The screens themselves are stubs.
 | Result: fairness heatmap | stub |
 | Settings: haptics, dim, countdown, timing | stub |
 | Draw history database | not started |
+| Identity: name, logo, launcher icon | done |
 | Settings persistence | not started |
 
 ## Design tokens
 
 The `--pp-*` custom properties from the export are transcribed into
-[`ui/theme/Color.kt`](app/src/main/java/de/drehtuer/playerpicker/ui/theme/Color.kt)
+[`ui/theme/Color.kt`](app/src/main/java/de/drehtuer/shotgun/ui/theme/Color.kt)
 as a `PPColors` palette, with light and dark variants, the team ring fills and
-the heatmap ramp. Type roles from the design (kicker, display, card title, micro
-label…) are in [`Type.kt`](app/src/main/java/de/drehtuer/playerpicker/ui/theme/Type.kt);
+the heatmap ramp. Type roles from the design (wordmark, display, card title, micro
+label…) are in [`Type.kt`](app/src/main/java/de/drehtuer/shotgun/ui/theme/Type.kt);
 Archivo ships bundled in `res/font`.
 
 Read them through `PPTheme`:
 
 ```kotlin
 Text(
-    text = "PLAYER PICKER",
-    style = PPTheme.typography.kicker,
-    color = PPTheme.colors.accent,
+    text = "SHOTGUN!",
+    style = PPTheme.typography.wordmark,
+    color = PPTheme.colors.ink,
 )
 ```
 
@@ -112,11 +115,12 @@ including the older `adb tcpip 5555` route.
 
 ```
 app/           the Android app
+assets/logo/   rendered logo assets
 design/        the Claude Design export (the spec) + bound Modernist system
 docs/          documentation
 .devcontainer/ Android SDK, emulator and adb helpers
 
-app/src/main/java/de/drehtuer/playerpicker/
+app/src/main/java/de/drehtuer/shotgun/
   MainActivity.kt
   ui/
     theme/       PPColors, PPTypography, PPDimens, PlayerPickerTheme

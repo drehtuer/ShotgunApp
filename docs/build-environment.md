@@ -1,6 +1,6 @@
 # Build environment
 
-How to build, test and run Player Picker. The short version lives in
+How to build, test and run Shotgun!. The short version lives in
 [`README.md`](../README.md); the working rules live in
 [`.claude/CLAUDE.md`](../.claude/CLAUDE.md).
 
@@ -38,9 +38,9 @@ so later rebuilds are fast:
 
 | Volume | Holds | Why it is a volume |
 | --- | --- | --- |
-| `playerpicker-android-sdk` | SDK packages + AVDs | avoids re-downloading |
-| `playerpicker-gradle` | Gradle cache | avoids re-resolving |
-| `playerpicker-dotandroid` | `~/.android` | **the debug keystore** |
+| `shotgun-android-sdk` | SDK packages + AVDs | avoids re-downloading |
+| `shotgun-gradle` | Gradle cache | avoids re-resolving |
+| `shotgun-dotandroid` | `~/.android` | **the debug keystore** |
 
 That last one matters more than it looks: a regenerated debug keystore makes
 `installDebug` fail with `INSTALL_FAILED_UPDATE_INCOMPATIBLE` until you
@@ -107,7 +107,7 @@ Pixel 10a, which has no profile in the emulator's device catalogue yet, so
 Useful while checking a change:
 
 ```bash
-adb shell am start -n de.drehtuer.playerpicker/.MainActivity
+adb shell am start -n de.drehtuer.shotgun/.MainActivity
 adb shell screencap -p /sdcard/s.png && adb pull /sdcard/s.png
 adb logcat -d -b crash | tail -20
 
@@ -168,6 +168,6 @@ settings, or the deploy step fails.
 | `The 'org.jetbrains.kotlin.android' plugin is no longer required` | Someone re-added the plugin. Remove it. |
 | `NoClassDefFoundError: ProjectTypeBinding` on any task | Gradle is older than 9. Use the wrapper. |
 | `requires ... compile against version 37 or later` | `compileSdk` was lowered, or AndroidX was bumped past the toolchain. |
-| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Debug keystore changed. `adb uninstall de.drehtuer.playerpicker`, then reinstall. |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Debug keystore changed. `adb uninstall de.drehtuer.shotgun`, then reinstall. |
 | `x86_64 emulation currently requires hardware acceleration` | `/dev/kvm` missing or not writable. |
 | Emulator says `Unknown AVD name` | `ANDROID_AVD_HOME` is not set; the AVD lives in the SDK volume. |

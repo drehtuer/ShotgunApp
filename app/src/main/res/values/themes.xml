@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Minimal platform theme. Its only real job is painting the window
      background in the app's ground colour so there is no flash before the
-     first Compose frame; all styling lives in PlayerPickerTheme. -->
+     first Compose frame; all styling lives in ShotgunTheme. -->
 <resources>
-    <style name="Theme.PlayerPicker" parent="@android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.Shotgun" parent="@android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/pp_bg</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
