@@ -17,6 +17,7 @@ import de.drehtuer.playerpicker.ui.components.NotBuiltYet
 import de.drehtuer.playerpicker.ui.components.Rule
 import de.drehtuer.playerpicker.ui.navigation.DrawMode
 import de.drehtuer.playerpicker.ui.theme.PPTheme
+import de.drehtuer.playerpicker.ui.util.KeepScreenOn
 
 /**
  * Scaffold for the draw surface - the heart of the app, and the only screen
@@ -31,6 +32,10 @@ fun DrawScreen(
     onOpenResult: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Players hold still through the countdown, which produces no touch events
+    // for Android's idle timer to see.
+    KeepScreenOn()
+
     Column(
         modifier
             .fillMaxSize()

@@ -44,6 +44,7 @@ specified in [`design.md`](design.md):
   - [ ] haptics: a `12 ms` tick per finger down (not on drag, not on lift),
         then `[90]` / `[90, 60, 90]` on the result
   - [ ] write the draw to the history database
+  - [x] keep the screen awake while the draw surface is open
 - [ ] **Result** — the fairness field on a Canvas (density kernel, edge
       mirroring, ramp interpolation), fed from the history database, with the
       last draw plotted over it.
