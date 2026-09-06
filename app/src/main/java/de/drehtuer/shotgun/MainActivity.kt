@@ -24,6 +24,9 @@ class MainActivity : ComponentActivity() {
             val viewModel = shotgunViewModel()
             val settings by viewModel.settings.collectAsStateWithLifecycle()
             val teamCount by viewModel.teamCount.collectAsStateWithLifecycle()
+            val winners by viewModel.winners.collectAsStateWithLifecycle()
+            val latestDraw by viewModel.latestDraw.collectAsStateWithLifecycle()
+            val drawCount by viewModel.drawCount.collectAsStateWithLifecycle()
 
             ShotgunTheme(preference = settings.themePreference) {
                 ShotgunNavHost(
@@ -33,6 +36,9 @@ class MainActivity : ComponentActivity() {
                     onTeamCountChange = viewModel::setTeamCount,
                     settings = settings,
                     onDrawComplete = viewModel::recordDraw,
+                    winners = winners,
+                    latestDraw = latestDraw,
+                    drawCount = drawCount,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(PPTheme.colors.bg)
