@@ -3,8 +3,12 @@ name: Documentation
 # Publishes the GitHub Pages site. Releases only - the site should describe a
 # released version, not whatever is currently on main.
 on:
-  release:
-    types: [published]
+  # The release tag, *not* `release: published`. A release published by a
+  # workflow using the default GITHUB_TOKEN does not trigger further workflow
+  # runs, so a `release` trigger here would simply never fire - the site would
+  # silently never publish. The tag is pushed by a person, so it does.
+  push:
+    tags: ['v*']
   # Kept so the site can be republished without cutting a release.
   workflow_dispatch:
 

@@ -276,7 +276,7 @@ adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
 | --- | --- | --- |
 | [`pr.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/pr.yml) | **any** pull request, push to `main` | builds debug, then unit tests and lint |
 | [`release.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/release.yml) | **a `v*` tag only** | builds and signs the release APK and AAB, drafts the release with them, then publishes it |
-| [`docs.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/docs.yml) | `release: published`, manual | builds the Pages site with Jekyll plus Dokka, and deploys it |
+| [`docs.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/docs.yml) | **a `v*` tag only**, manual | builds the Pages site with Jekyll plus Dokka, and deploys it |
 
 Releases are cut by tagging. Nothing in `release.yml` runs for ordinary pushes
 or pull requests:
@@ -293,9 +293,17 @@ only once the upload has finished. Attaching to an already-published release
 would fail, and a release published empty could never be corrected - the tag
 would have to be abandoned.
 
-Publishing is also what emits `release: published`, which is what starts the
-documentation workflow. The order is therefore load-bearing: build, verify the
-signature, attach, publish, and the site follows.
+### Why the docs workflow watches the tag, not the release
+
+It would read better as `release: published` - the site describes a release, so
+it should follow one. It would also never run. **A release published by a
+workflow using the default `GITHUB_TOKEN` does not trigger further workflow
+runs**, which is GitHub's guard against workflows setting each other off in a
+loop. The documentation would simply never publish, with nothing in any log to
+say why.
+
+So both workflows watch the same `v*` tag and run independently. The tag is
+pushed by a person, so it triggers as expected.
 
 Building in CI rather than locally is what makes the immutability worth
 anything. The artifacts come from a clean checkout of the tag, so what is

@@ -57,7 +57,11 @@ jobs:
       - name: Verify the artifacts are signed
         run: |
           set -euo pipefail
-          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1 || true)
+          if [ -z "$apksigner" ]; then
+            echo "::error::apksigner not found under $ANDROID_HOME/build-tools."
+            exit 1
+          fi
           apk=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
           echo "Verifying $apk"
           "$apksigner" verify --print-certs "$apk"

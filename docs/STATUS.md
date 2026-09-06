@@ -111,6 +111,17 @@ Found by checking claims against the code rather than by reading for sense:
 - `build.gradle.kts` and `release.yml` both still said the release key was
   "deliberately not on GitHub".
 
+### The docs workflow would never have fired
+
+Caught while preparing the first release rather than by the first release
+failing. `docs.yml` triggered on `release: published`, and `release.yml`
+publishes the release itself using the default `GITHUB_TOKEN` - and **an event
+raised by that token does not start another workflow run**. The site would never
+have published, silently, with nothing in any log pointing at the cause.
+
+Both workflows now watch the `v*` tag directly. The tag is pushed by a person,
+so it triggers.
+
 ### What is still unproven
 
 Both workflows are verified as far as they can be without running: the site was
