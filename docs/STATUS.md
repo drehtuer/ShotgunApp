@@ -28,6 +28,41 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-06 — The keystore backup is only half a backup
+
+**Outcome: a wrong assumption caught before it mattered.**
+
+The release keystore was backed up to a password manager as a file, on the
+understanding that the keystores have no password. **They do** - 24 characters
+each - so the file alone cannot be opened, and the backup as it stands would not
+restore anything.
+
+Checked rather than assumed, and worth the two commands:
+
+```
+keytool -list -keystore keystore/release.keystore -storepass ""
+  -> keystore password was incorrect
+keytool -list -keystore keystore/release.keystore -storepass "<real>"
+  -> shotgun-release, PrivateKeyEntry
+```
+
+Within each keystore the store and key passwords are the same value; debug and
+release differ from each other. The release key is 4096-bit RSA, `SHA384withRSA`,
+valid until 2056 - so expiry is not the risk.
+
+**The only readable copy of the password is `keystore.properties` on the build
+machine.** The GitHub secret is write-only by design, so it is not a second
+copy. That makes the password, not the file, the single point of failure -
+`build-environment.md` now says so explicitly, with a table of what a backup has
+to contain.
+
+Merge queue is dropped from the open list. The rulesets API rejected the rule at
+the type level however it was sent, the `main` ruleset never carried one, and it
+is not worth more archaeology - stacked PRs chained by hand have worked
+throughout.
+
+---
+
 ## 2026-09-06 — Polish: Lint clean, and a decision about how many fingers
 
 **Outcome: done. Lint is at zero findings, and "how many players" has an answer
