@@ -109,10 +109,10 @@ specified in [`design.md`](design.md):
 - [ ] **Back the release keystore up off this machine.** It is gitignored, and
       a GitHub secret is write-only, so the local file is the only readable
       copy. Losing it means no future build can ever update an installed app.
-- [ ] Cut a first release - `v0.1.0` - which is also the first real exercise of
-      the release and docs workflows. Both have been rebuilt but **neither has
-      ever run**: the release path is checked by reading, the docs path by
-      building the site locally with the same container image CI uses.
+- [x] Cut a first release - **`v0.1.0`**, signed, with the APK and AAB attached.
+      The release workflow worked first time.
+- [ ] Publish the documentation site. The first run failed on a permission
+      error; fixed, but the site has not been deployed yet.
 - [ ] Consider `actions/attest-build-provenance` on the release artifacts. It
       pairs with immutable releases - the release cannot change, and the
       attestation says which workflow and commit produced it - but it is not

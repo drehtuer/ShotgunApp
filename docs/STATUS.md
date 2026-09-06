@@ -122,6 +122,25 @@ have published, silently, with nothing in any log pointing at the cause.
 Both workflows now watch the `v*` tag directly. The tag is pushed by a person,
 so it triggers.
 
+### The first release, and the one thing local testing hid
+
+`v0.1.0` was tagged and the release workflow **worked**: signed APK and AAB,
+attached to a draft, published. `apksigner` confirmed
+`CN=Shotgun!, OU=Release, O=drehtuer` on the artifact.
+
+The docs workflow failed, on `mkdir: cannot create directory '_site/api'`.
+`jekyll-build-pages` is a **container action running as root**, so `_site`
+belongs to root while the job does not, and the next step could not write into
+it. Local testing had hidden this exactly: the container had been run with
+`--user "$(id -u)"` to keep the output writable, which made the local run
+*differ from CI in the one way that mattered*. A convenience added to avoid
+cleaning up root-owned files removed the failure being tested for.
+
+The site is now assembled in a fresh directory instead - copying *out* of
+`_site` needs only read - and the fix was verified by reproducing the failure
+first: run the container as root, watch the old step fail, watch the new one
+succeed.
+
 ### What is still unproven
 
 Both workflows are verified as far as they can be without running: the site was
