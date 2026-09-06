@@ -186,10 +186,30 @@ secret being present.
 Every workflow deletes the restored keystore in an `always()` step, so it never
 survives into a later step or an uploaded artifact.
 
-**Back the release key up somewhere off this machine and off GitHub.** A secret
-can be read back by no one, including you - it is write-only once set. If the
-local copy is lost, the key is gone, and no future build can update an
-installed app.
+### Backing the release key up
+
+**Both keystores are password-protected, so the file on its own is not a
+backup.** A backup has to hold two things, and both are now off this machine:
+
+| Piece | Where it lives |
+| --- | --- |
+| `keystore/release.keystore` | the build machine, and a password manager |
+| The password | `keystore.properties` on the build machine, and the same password manager |
+
+Within each keystore the store password and the key password are the same
+value; the debug and release passwords differ from each other.
+
+A GitHub secret is **write-only** - it can be read back by no one, including
+you - so it is not a copy of either piece, and never counts towards this.
+
+**Keep the two together.** With the file but not the password the key is
+unusable, and then no future build can ever update an installed app: Android
+identifies an app by its signature and there is no recovery. If the key is ever
+rotated, the password manager has to be updated in the same pass as
+`keystore.properties` and the GitHub secrets.
+
+The release key is 4096-bit RSA, `SHA384withRSA`, valid until **2056-08-29**, so
+the expiry is not the thing to worry about. Losing the password was.
 
 ## Persistence
 
