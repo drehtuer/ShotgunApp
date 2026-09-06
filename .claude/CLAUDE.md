@@ -94,6 +94,13 @@ Three specific rules:
   publish - source under `app/`, `design/`, `.github/`, `.claude/`, `gradle/` -
   must be an **absolute GitHub URL**, or it will 404 on the site. Mermaid
   diagrams are fine; the site renders them.
+- **Never hand-edit the design export.** `design/Shotgun.dc.html` is
+  regenerated from Claude Design, and an edit made here is silently reverted by
+  the next re-export - it has happened twice. Visual changes go upstream in the
+  Design project; behaviour goes in [`docs/design.md`](../docs/design.md), which
+  no export touches. `DesignTokenTest` enforces the visual half: the palette is
+  read out of the export at test time, so a re-export that changes a colour
+  fails the build instead of disagreeing quietly.
 - **Know which source wins.** `design/Shotgun.dc.html` is the authority on
   *visuals* - layout, tokens, copy, the interaction model. `docs/design.md` is
   the specification of record for *behaviour*, including the parts a browser

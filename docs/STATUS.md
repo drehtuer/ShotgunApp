@@ -28,6 +28,66 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-06 — Binding the palette to the design export
+
+**Outcome: done, and the first version of it was useless in a way that only a
+mutation test could show.**
+
+`PPColors` opens by saying it is "transcribed verbatim from the `--pp-*` custom
+properties in the design export". **Nothing checked that.** `PPColorsTest`
+asserts invariants - ink differs from ground, the palettes invert, the heat ramp
+runs cold to hot - and every one of them holds just as well for the *wrong*
+colours. Since the export is regenerated from Claude Design and has twice come
+back with decisions reverted, the gap was not hypothetical.
+
+`DesignTokenTest` now reads the export at test time and asserts all nine tokens
+against both palettes, plus two things worth having:
+
+- **The token set must be exactly the nine the app maps.** A token added by a
+  re-export is a design decision that has not reached the app, and silence is
+  how it would stay that way.
+- **The export must agree with itself.** It writes each palette twice - once for
+  the system preference, once for an explicit `data-theme` - and those can
+  drift apart, after which the app matches one and not the other.
+
+### The test passed, and caught nothing
+
+Three deliberate mutations of the export - a changed accent, an added token, the
+two dark blocks disagreeing - **all three passed**, in about a second each.
+
+`testDebugUnitTest` was `UP-TO-DATE`. Gradle fingerprints a task from its
+declared inputs, and a file read at runtime is invisible to that, so changing
+*only* the export - which is precisely what a re-export does - did not re-run
+the one test written to catch it. It would have sat green in CI forever.
+
+The export is declared as a task input now, and the same three mutations fail,
+naming the token and both values:
+
+```
+--pp-accent disagrees between the export and the dark palette
+  expected:<#FFFF0000> but was:<#FFFF563C>
+```
+
+**Lesson: a test that has never failed has not been shown to work.** This one
+was written, run, and passing while detecting nothing at all - and the reason
+was not in the test.
+
+### Where this leaves Claude Design
+
+`/design-sync` does not apply here, and it is worth writing down why rather than
+re-deciding it: it syncs design-*system* projects, pushing a local component
+library up to one. This repo *consumes* a design system - Modernist, bound as
+`design/_ds/modernist-f7022762-…/`, the only project id anywhere in the export -
+and the app is Kotlin, not a component library.
+
+So the integration is a contract, not a tool: **the export is never hand-edited**
+- now a rule in `.claude/CLAUDE.md` - visuals go upstream, behaviour lives in
+`design.md`, and the palette half of that is enforced by a test rather than by
+good intentions. Two hand-edits made before the rule still need mirroring
+upstream; they are in `TODO.md`.
+
+---
+
 ## 2026-09-06 — v0.1.1, and one number fewer to get wrong
 
 **Outcome: a patch release, and `versionCode` taken out of human hands.**

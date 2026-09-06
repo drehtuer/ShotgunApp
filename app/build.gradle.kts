@@ -1,4 +1,5 @@
 import com.android.build.api.variant.impl.VariantOutputImpl
+import org.gradle.api.tasks.PathSensitivity
 import java.util.Properties
 
 /**
@@ -148,6 +149,21 @@ android {
  * an output that is not one leaves the default name instead of failing the
  * build.
  */
+/**
+ * The design export is an input to the unit tests, and Gradle has to be told
+ * so. `DesignTokenTest` reads `design/Shotgun.dc.html` at runtime, which is
+ * invisible to task fingerprinting: without this, changing *only* the export -
+ * which is exactly what a re-export does - leaves `testDebugUnitTest`
+ * UP-TO-DATE, and the one test written to catch that change never runs.
+ *
+ * Found by mutating the export and watching all three checks pass in a second.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.file(rootProject.file("design/Shotgun.dc.html"))
+        .withPropertyName("designExport")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 androidComponents {
     onVariants { variant ->
         val suffix = if (variant.buildType == "debug") "-debug" else ""

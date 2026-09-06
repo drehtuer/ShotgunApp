@@ -436,6 +436,30 @@ serve it from that path rather than opening the files directly.
 | `x86_64 emulation currently requires hardware acceleration` | `/dev/kvm` missing or not writable. |
 | Emulator says `Unknown AVD name` | `ANDROID_AVD_HOME` is not set; the AVD lives in the SDK volume. |
 
+## The design export
+
+`design/Shotgun.dc.html` is regenerated from Claude Design, so **it is never
+hand-edited**: an edit made here is reverted by the next re-export, which has
+happened twice. Visual changes belong upstream in the Design project; behaviour
+belongs in [`design.md`](design.md), which no export touches.
+
+`DesignTokenTest` holds the visual half of that to account. It reads the nine
+`--pp-*` tokens out of the export at test time and asserts they match
+`PPColors`, in both palettes - so a re-export that changes a colour **fails the
+build** rather than leaving the app quietly disagreeing with its own design. It
+also fails on a token the app does not map, because a new token is a decision
+that has not reached the app yet.
+
+The export is declared as an input of the test task. Without that, changing
+*only* the export - exactly what a re-export does - leaves `testDebugUnitTest`
+`UP-TO-DATE` and the test never runs.
+
+Claude Design's `/design-sync` does **not** apply to this repository. It syncs
+design-*system* projects, pushing a local component library up to one. This repo
+consumes a design system - Modernist, bound as
+`design/_ds/modernist-f7022762-…/` - and the app is Kotlin, not a component
+library. There is nothing here to push.
+
 ## Security
 
 | Piece | Where |
