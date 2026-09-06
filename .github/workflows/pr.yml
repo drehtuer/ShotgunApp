@@ -2,8 +2,10 @@ name: PR
 
 # Builds the app, then runs the static checks and unit tests against it.
 on:
+  # Every pull request, whatever its base. Stacked PRs are based on the branch
+  # below them rather than on main, and a base filter would leave each one in
+  # the stack unverified.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 

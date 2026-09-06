@@ -17,21 +17,20 @@ specified in [`design.md`](design.md):
 
 ## Persistence and data
 
-- [ ] **Draw history database.** Every completed draw records each finger's
-      position **normalised to 0..1**, its outcome (winner / rank / team), the
-      mode and a timestamp. Room is the obvious fit.
-  - [ ] Schema and DAO, with a migration story from the start
-  - [ ] Repository that the Result screen reads and the draw writes
-  - [ ] Cap or prune history so the field stays cheap to render
-  - [ ] Unit-test the normalisation - storing raw pixels would silently skew
-        the field, and that failure is invisible until a screen size changes
-- [ ] Persist settings. Theme preference is currently hoisted state in
-      `MainActivity` and resets on process death; the rest are not stored at
-      all. DataStore is the obvious fit.
+- [x] **Draw history database** - Room, schema v1 exported to `app/schemas/`.
+  - [x] Schema and DAO, with the schema committed so a migration can be written
+        against a real diff
+  - [x] `DrawHistory` repository - the draw writes, the Result screen reads
+  - [x] Pruning on write, capped at `MAX_RETAINED_DRAWS`
+  - [x] Unit-tested normalisation
+  - [ ] Wire the write into the draw surface once that screen exists
+- [x] Persist settings - DataStore. Theme preference now survives process
+      death; the remaining toggles are stored but not yet surfaced by the
+      settings screen.
 
 ## Screens
 
-- [ ] **Home** — mode cards with their four-dot motifs, the team stepper
+- [x] **Home** — mode cards with their four-dot motifs, the team stepper
       (floor 2, no ceiling), and the footer link.
 - [ ] **Draw surface** — the core of the app, and the hardest part:
   - [ ] one ring per pointer, tracked by pointer id

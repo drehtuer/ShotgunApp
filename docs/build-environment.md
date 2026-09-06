@@ -170,6 +170,30 @@ can be read back by no one, including you - it is write-only once set. If the
 local copy is lost, the key is gone, and no future build can update an
 installed app.
 
+## Persistence
+
+Two stores, both under `app/src/main/java/de/drehtuer/shotgun/data/`:
+
+| Store | Backed by | Holds |
+| --- | --- | --- |
+| `DrawHistory` | Room (`shotgun.db`) | every completed draw, for the fairness field |
+| `SettingsRepository` | DataStore (`settings.preferences_pb`) | theme, haptics, dim, countdown, reveal timing |
+
+**Room schemas are committed** to `app/schemas/`. Bump `version` in
+`ShotgunDatabase` and add a `Migration` for every schema change; the exported
+JSON gives a real before-and-after to write it against.
+
+`fallbackToDestructiveMigration` is deliberately not set. History is what makes
+the fairness field evidence rather than decoration, so a schema change must
+migrate it, not discard it.
+
+Inspecting either on a device:
+
+```bash
+adb shell run-as de.drehtuer.shotgun ls -l files/datastore databases
+adb exec-out run-as de.drehtuer.shotgun cat databases/shotgun.db > shotgun.db
+```
+
 ## Testing
 
 Two layers run without a device, one needs one.
@@ -245,7 +269,7 @@ adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
 
 | Workflow | Trigger | Does |
 | --- | --- | --- |
-| [`pr.yml`](../.github/workflows/pr.yml) | PR to `main`, push to `main` | builds debug, then unit tests and lint |
+| [`pr.yml`](../.github/workflows/pr.yml) | **any** pull request, push to `main` | builds debug, then unit tests and lint |
 | [`release.yml`](../.github/workflows/release.yml) | **a `v*` tag only** | builds the release APK and AAB and attaches them to the release |
 | [`docs.yml`](../.github/workflows/docs.yml) | `release: published`, manual | builds and deploys the Pages site |
 
@@ -258,6 +282,10 @@ git tag v0.1.0 && git push origin v0.1.0
 
 Test and lint reports are uploaded as artifacts, including on failure, so a red
 run can be diagnosed without reproducing it locally.
+
+`pr.yml` deliberately has **no base-branch filter**. Stacked pull requests are
+based on the branch below them rather than on `main`, and a filter of
+`branches: [main]` would leave every PR in a stack unverified.
 
 The docs workflow renders Markdown with pandoc and generates API docs with
 Dokka. Pages serves the uploaded artifact **as-is** - there is no Jekyll step in

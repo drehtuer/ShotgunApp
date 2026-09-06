@@ -32,6 +32,68 @@ stubs.
 
 ---
 
+## 2026-09-06 — Home screen
+
+**Outcome: done.**
+
+Mode cards with their four-dot motifs, the team stepper and the footer link.
+The motifs are drawn from the palette rather than hard-coded, so team colours
+stay in step with `PPColors.teamFills`.
+
+The team count deliberately lives in the ViewModel rather than in settings: the
+design keeps it beside the draw, not among the preferences, so it resets with
+the app the way the mode does. Its clamp is a pure function so the floor is
+unit-tested rather than only observed.
+
+**Two bugs found by looking at it on a device**, neither visible from the code:
+
+- The vertical SETTINGS tab wrapped mid-word - "SETTIN / GS". Compose has no
+  `writing-mode`, and my first attempt measured the rotated label against the
+  tab's 60dp width. Fixed by measuring it unbounded and rotating only for
+  drawing.
+- The stepper's minus stayed at full contrast at the floor, so it looked live
+  while doing nothing. It now dims.
+
+Verified on an API 37 emulator in both palettes: motifs, stepper floor (3 → 2,
+then held), and navigation from each card into the right draw mode.
+
+## 2026-09-06 — Signing, build variants, persistence
+
+**Outcome: done, in two stacked PRs.**
+
+**Signing and build variants.** `debug` carries full debug data; `release` is
+R8-minified, resource-shrunk and symbol-stripped - 1.2 MB against 12 MB. Both
+keys are generated locally and held as encrypted Actions secrets; nothing
+signing-related is ever committed, because this repository is public. A new
+`release.yml` fires only on a `v*` tag.
+
+Two deliberate omissions in `debug`, both easy to add by reflex and both wrong
+here: no `applicationIdSuffix` (it would break every documented adb command) and
+no `enableAndroidTestCoverage` (it instruments the APK, and this app is judged
+on touch and countdown timing).
+
+**Persistence.** Room for draw history, DataStore for settings.
+
+The integration risk was KSP: it has moved to independent versioning, and AGP 9
+supplies its own Kotlin, so the two could easily have disagreed. KSP 2.3.11
+works against Kotlin 2.4.10 under AGP 9 - checked before building anything on
+top of it.
+
+Positions are normalised to 0..1 **at write time**, not stored as pixels. That
+is the one thing in this layer that can corrupt data silently: raw pixels would
+skew the fairness field, and the damage is invisible until a screen size
+changes. It has tests, including the degenerate zero-sized surface that would
+otherwise divide by zero.
+
+`fallbackToDestructiveMigration` is deliberately **not** set: history is the
+whole point of the fairness field, and wiping it on a schema change would make
+that screen lie.
+
+Verified on an API 37 emulator: settings picked in the app survive a
+`force-stop` - the system was in light mode and the app relaunched dark, so the
+value came from disk rather than memory - and `settings.preferences_pb` exists
+on disk.
+
 ## 2026-09-06 — Documentation reference audit
 
 **Outcome: done. Found more wrong than missing.**

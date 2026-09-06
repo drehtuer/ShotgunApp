@@ -18,6 +18,8 @@ import de.drehtuer.shotgun.ui.theme.ThemePreference
 fun ShotgunNavHost(
     themePreference: ThemePreference,
     onThemePreferenceChange: (ThemePreference) -> Unit,
+    teamCount: Int,
+    onTeamCountChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -28,6 +30,8 @@ fun ShotgunNavHost(
     ) {
         composable(Destination.Home.route) {
             HomeScreen(
+                teamCount = teamCount,
+                onTeamCountChange = onTeamCountChange,
                 onStartDraw = { mode -> navController.navigate(Destination.Draw.routeFor(mode)) },
                 onOpenSettings = { navController.navigate(Destination.Settings.route) },
                 onOpenResult = { navController.navigate(Destination.Result.route) },

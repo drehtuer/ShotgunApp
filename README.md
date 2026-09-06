@@ -25,13 +25,13 @@ and the design tokens are in place. The screens themselves are stubs.
 | Modernist theme: colour, type, dimensions | done |
 | Navigation shell across all four screens | done |
 | Appearance setting (system / light / dark) | done |
-| Home: mode cards, team stepper | stub |
+| Home: mode cards, team stepper | done |
 | Draw surface: multi-touch, countdown, reveal | stub |
 | Result: fairness heatmap | stub |
 | Settings: haptics, dim, countdown, timing | stub |
-| Draw history database | not started |
+| Draw history database | done, not yet written to |
 | Identity: name, logo, launcher icon | done |
-| Settings persistence | not started |
+| Settings persistence | done |
 
 ## Design tokens
 
@@ -130,7 +130,7 @@ Documentation is kept in sync with the implementation - see
 
 | Workflow | Runs on | Does |
 | --- | --- | --- |
-| [`pr.yml`](.github/workflows/pr.yml) | PR to `main`, push to `main` | builds debug, then unit tests and Android Lint |
+| [`pr.yml`](.github/workflows/pr.yml) | any PR, push to `main` | builds debug, then unit tests and Android Lint |
 | [`release.yml`](.github/workflows/release.yml) | a `v*` tag only | builds the release APK and AAB, attaches them to the release |
 | [`docs.yml`](.github/workflows/docs.yml) | `release: published`, manual | builds the GitHub Pages site (Dokka API docs + these documents) |
 
