@@ -269,7 +269,7 @@ adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
 
 | Workflow | Trigger | Does |
 | --- | --- | --- |
-| [`pr.yml`](../.github/workflows/pr.yml) | PR to `main`, push to `main` | builds debug, then unit tests and lint |
+| [`pr.yml`](../.github/workflows/pr.yml) | **any** pull request, push to `main` | builds debug, then unit tests and lint |
 | [`release.yml`](../.github/workflows/release.yml) | **a `v*` tag only** | builds the release APK and AAB and attaches them to the release |
 | [`docs.yml`](../.github/workflows/docs.yml) | `release: published`, manual | builds and deploys the Pages site |
 
@@ -282,6 +282,10 @@ git tag v0.1.0 && git push origin v0.1.0
 
 Test and lint reports are uploaded as artifacts, including on failure, so a red
 run can be diagnosed without reproducing it locally.
+
+`pr.yml` deliberately has **no base-branch filter**. Stacked pull requests are
+based on the branch below them rather than on `main`, and a filter of
+`branches: [main]` would leave every PR in a stack unverified.
 
 The docs workflow renders Markdown with pandoc and generates API docs with
 Dokka. Pages serves the uploaded artifact **as-is** - there is no Jekyll step in
