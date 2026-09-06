@@ -16,8 +16,9 @@ was built against.
 
 ## Status
 
-**Skeleton + theme.** The project builds and runs, navigation works end to end,
-and the design tokens are in place. The screens themselves are stubs.
+**All four screens are built.** What remains is judgement that needs the phone:
+how the draw surface feels under real fingers, and whether the dim level is
+right for a dark room.
 
 | Piece | State |
 | --- | --- |
@@ -28,7 +29,7 @@ and the design tokens are in place. The screens themselves are stubs.
 | Home: mode cards, team stepper | done |
 | Draw surface: multi-touch, countdown, reveal | done, unverified on real fingers |
 | Result: fairness heatmap | done |
-| Settings: haptics, dim, countdown, timing | stub |
+| Settings: haptics, dim, countdown, timing | done |
 | Draw history database | done |
 | Identity: name, logo, launcher icon | done |
 | Settings persistence | done |

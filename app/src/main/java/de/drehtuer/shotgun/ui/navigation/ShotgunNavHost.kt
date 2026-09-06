@@ -14,14 +14,18 @@ import de.drehtuer.shotgun.ui.screens.ResultScreen
 import de.drehtuer.shotgun.ui.screens.SettingsScreen
 import de.drehtuer.shotgun.data.DrawPoint
 import de.drehtuer.shotgun.data.DrawRecord
+import de.drehtuer.shotgun.data.settings.RevealTiming
 import de.drehtuer.shotgun.data.settings.Settings
 import de.drehtuer.shotgun.draw.DrawOutcome
 import de.drehtuer.shotgun.ui.theme.ThemePreference
 
 @Composable
 fun ShotgunNavHost(
-    themePreference: ThemePreference,
     onThemePreferenceChange: (ThemePreference) -> Unit,
+    onHapticsChange: (Boolean) -> Unit,
+    onDimChange: (Boolean) -> Unit,
+    onCountdownChange: (Int) -> Unit,
+    onRevealTimingChange: (RevealTiming) -> Unit,
     teamCount: Int,
     onTeamCountChange: (Int) -> Unit,
     settings: Settings,
@@ -73,8 +77,12 @@ fun ShotgunNavHost(
         }
         composable(Destination.Settings.route) {
             SettingsScreen(
-                themePreference = themePreference,
+                settings = settings,
                 onThemePreferenceChange = onThemePreferenceChange,
+                onHapticsChange = onHapticsChange,
+                onDimChange = onDimChange,
+                onCountdownChange = onCountdownChange,
+                onRevealTimingChange = onRevealTimingChange,
                 onDone = { navController.popBackStack() },
             )
         }

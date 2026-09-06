@@ -32,6 +32,29 @@ stubs.
 
 ---
 
+## 2026-09-06 — Settings screen and dim mode
+
+**Outcome: done. Every screen in the design is now built.**
+
+The two toggles, the appearance picker, the countdown stepper and the reveal
+timing picker, all reading and writing the persisted settings from the earlier
+PR rather than local state.
+
+**Dim mode** lowers `screenBrightness` on the app's own window and restores the
+previous value on the way out. It deliberately does not touch the system-wide
+setting: leaving a phone dimmed after the app closes would be a bug the user
+could not explain, and could not easily undo. It is applied in `MainActivity`
+rather than on the settings screen, because brightness is an app-wide property,
+not a property of the screen that happens to toggle it.
+
+Verified on an API 37 emulator by changing three settings, force-stopping, and
+reopening: dim off, countdown 5s and Instant reveal all came back. Eight
+instrumented tests cover the controls, including that the countdown stepper
+refuses to go below one second and that SOUND does not reappear.
+
+50 unit tests and 24 instrumented tests pass, and the release build still
+compiles under R8.
+
 ## 2026-09-06 — Result screen and the fairness field
 
 **Outcome: done, and the field is real history rather than a picture of one.**
