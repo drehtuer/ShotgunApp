@@ -27,7 +27,7 @@ and the design tokens are in place. The screens themselves are stubs.
 | Appearance setting (system / light / dark) | done |
 | Home: mode cards, team stepper | done |
 | Draw surface: multi-touch, countdown, reveal | done, unverified on real fingers |
-| Result: fairness heatmap | stub |
+| Result: fairness heatmap | done |
 | Settings: haptics, dim, countdown, timing | stub |
 | Draw history database | done |
 | Identity: name, logo, launcher icon | done |

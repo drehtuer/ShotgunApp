@@ -23,7 +23,6 @@ specified in [`design.md`](design.md):
   - [x] `DrawHistory` repository - the draw writes, the Result screen reads
   - [x] Pruning on write, capped at `MAX_RETAINED_DRAWS`
   - [x] Unit-tested normalisation
-  - [ ] Wire the write into the draw surface once that screen exists
 - [x] Persist settings - DataStore. Theme preference now survives process
       death; the remaining toggles are stored but not yet surfaced by the
       settings screen.
@@ -50,9 +49,11 @@ specified in [`design.md`](design.md):
         the rings do not pulse during it.
   - [ ] Lifting a finger removes its ring, so the design's double-tap-to-lift
         has no purpose on a touchscreen and is deliberately absent.
-- [ ] **Result** — the fairness field on a Canvas (density kernel, edge
-      mirroring, ramp interpolation), fed from the history database, with the
+- [x] **Result** — the fairness field, fed from the history database, with the
       last draw plotted over it.
+  - [ ] The field is recomputed on the main thread when history changes. It is
+        fast at the sizes involved, but belongs off the main thread before the
+        history gets large.
 - [ ] **Settings** — the two toggles, the countdown stepper and the reveal
       timing picker. Appearance is already wired.
   - [ ] DIM MODE — lower `WindowManager.LayoutParams.screenBrightness` for the

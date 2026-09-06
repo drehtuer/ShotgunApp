@@ -33,6 +33,27 @@ class ShotgunViewModel(
     val history: DrawHistory,
 ) : ViewModel() {
 
+    /** Winning positions for the fairness field, newest first. */
+    val winners: StateFlow<List<DrawPoint>> = history.winners().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyList(),
+    )
+
+    /** The most recent draw, plotted on top of the field. */
+    val latestDraw: StateFlow<DrawRecord?> = history.latest().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = null,
+    )
+
+    /** How many draws have been recorded in total. */
+    val drawCount: StateFlow<Int> = history.count().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = 0,
+    )
+
     val settings: StateFlow<Settings> = repository.settings.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

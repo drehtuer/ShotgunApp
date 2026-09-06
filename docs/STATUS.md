@@ -32,6 +32,38 @@ stubs.
 
 ---
 
+## 2026-09-06 — Result screen and the fairness field
+
+**Outcome: done, and the field is real history rather than a picture of one.**
+
+The density maths lives in a plain `HeatField` object with no Android types, so
+it is unit-tested - eleven tests. That mattered more here than usual: the screen
+makes a claim about fairness, and "it looks about right" is not a check of a
+claim.
+
+The test worth keeping is **a corner win registering as hot as a centre win**.
+Without edge mirroring a win in the corner spreads into a quarter of the
+kernel's area instead of all of it, so the corners read as permanently cold -
+the screen would libel the draw as unfair when it is not.
+
+The field is computed at 160px wide and scaled up. It is a blur either way, and
+this keeps a large history cheap to draw.
+
+**Verified by seeding 241 draws into the real on-device database** and looking
+at it: the field covers the panel with no cold corners, the last draw's dots sit
+on top with the winner marked, and the mode line and caption read correctly.
+
+Two things that cost time and are worth remembering:
+
+- `gradle connectedAndroidTest` **uninstalls the app afterwards**, which deletes
+  its database. Seeding through it and then looking at the app shows an empty
+  screen. Running the instrumentation directly with `adb shell am instrument`
+  leaves the data in place.
+- `--tests` is not a valid option for `connectedAndroidTest`; the filter is
+  `-Pandroid.testInstrumentationRunnerArguments.class=…`.
+
+50 unit tests and 16 instrumented tests pass.
+
 ## 2026-09-06 — Draw surface
 
 **Outcome: built and tested as far as this hardware allows. Not yet touched by
