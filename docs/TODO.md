@@ -32,18 +32,24 @@ specified in [`design.md`](design.md):
 
 - [x] **Home** — mode cards with their four-dot motifs, the team stepper
       (floor 2, no ceiling), and the footer link.
-- [ ] **Draw surface** — the core of the app, and the hardest part:
-  - [ ] one ring per pointer, tracked by pointer id
-  - [ ] countdown arming on the 2nd finger, **+1 s per further finger**
-  - [ ] edge glow and frame driven by countdown progress
-  - [ ] drag to reposition without counting as a new player
-  - [ ] double-tap to lift a player
-  - [ ] the "N fingers can't fill M teams" guard
-  - [ ] suspense churn, then reveal per mode
-  - [ ] haptics: a `12 ms` tick per finger down (not on drag, not on lift),
+- [x] **Draw surface** — built.
+  - [x] one ring per pointer, tracked by pointer id
+  - [x] countdown arming on the 2nd finger, **+1 s per further finger**
+  - [x] edge glow and frame driven by countdown progress
+  - [x] drag to reposition without counting as a new player
+  - [x] the "N fingers can't fill M teams" guard
+  - [x] reveal per mode
+  - [x] haptics: a `12 ms` tick per finger down (not on drag, not on lift),
         then `[90]` / `[90, 60, 90]` on the result
-  - [ ] write the draw to the history database
+  - [x] write the draw to the history database
   - [x] keep the screen awake while the draw surface is open
+  - [ ] **Verify on the Pixel 10a.** Compose pointer injection covers the
+        tracking, but nothing here has been touched by real fingers - feel,
+        timing and haptic strength are unjudged.
+  - [ ] The suspense churn animation is not implemented; the pause happens but
+        the rings do not pulse during it.
+  - [ ] Lifting a finger removes its ring, so the design's double-tap-to-lift
+        has no purpose on a touchscreen and is deliberately absent.
 - [ ] **Result** — the fairness field on a Canvas (density kernel, edge
       mirroring, ramp interpolation), fed from the history database, with the
       last draw plotted over it.
@@ -55,20 +61,26 @@ specified in [`design.md`](design.md):
 
 ## Testing
 
-- [ ] Unit-test the draw logic once it exists: shuffle fairness, team
-      assignment, countdown extension arithmetic, heatmap density, and position
-      normalisation.
-- [ ] Instrumented tests for navigation and the Compose UI.
-- [ ] Decide whether CI should run instrumented tests on an emulator - it is
-      slow, and it still cannot cover multi-touch.
+- [x] Unit-test the draw logic: shuffle fairness, team assignment, countdown
+      extension arithmetic and position normalisation. Heatmap density follows
+      with the Result screen.
+- [x] Instrumented tests for multi-touch and the Room DAO.
+- [ ] Instrumented tests for navigation.
+- [ ] Decide whether CI should run instrumented tests on an emulator. They pass
+      locally but nothing runs them automatically, so they will rot.
 
 ## Infrastructure
 
 - [x] Branch protection on `main` - a ruleset now requires a PR.
-- [ ] Add the required status checks to the `main` ruleset. Protection requires
-      a PR but does not yet require the PR checks to pass.
-- [ ] Consider enabling the **merge queue** on the `main` ruleset - stacked PRs
-      are currently chained by hand.
+- [x] Required status checks on the `main` ruleset - Build, Unit tests and
+      Static analysis must pass before a merge into `main`.
+- [ ] **Merge queue is not available for this repository.** GitHub offers it
+      only for **organization-owned** repositories; this one is owned by a user
+      account, so the setting is absent from the UI and the API rejects the
+      rule outright (`Invalid rule 'merge_queue'`). To get one, transfer the
+      repository to an organisation. Until then, stacked PRs are chained by
+      hand: each branches from the one below it, and GitHub retargets them to
+      `main` as they merge.
 - [x] Signing keys configured as repository secrets - both dev and release.
 - [ ] **Back the release keystore up off this machine.** It is gitignored, and
       a GitHub secret is write-only, so the local file is the only readable

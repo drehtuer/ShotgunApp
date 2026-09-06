@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
                     onThemePreferenceChange = viewModel::setThemePreference,
                     teamCount = teamCount,
                     onTeamCountChange = viewModel::setTeamCount,
+                    settings = settings,
+                    onDrawComplete = viewModel::recordDraw,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(PPTheme.colors.bg)

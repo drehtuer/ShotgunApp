@@ -12,6 +12,8 @@ import de.drehtuer.shotgun.ui.screens.DrawScreen
 import de.drehtuer.shotgun.ui.screens.HomeScreen
 import de.drehtuer.shotgun.ui.screens.ResultScreen
 import de.drehtuer.shotgun.ui.screens.SettingsScreen
+import de.drehtuer.shotgun.data.settings.Settings
+import de.drehtuer.shotgun.draw.DrawOutcome
 import de.drehtuer.shotgun.ui.theme.ThemePreference
 
 @Composable
@@ -20,6 +22,8 @@ fun ShotgunNavHost(
     onThemePreferenceChange: (ThemePreference) -> Unit,
     teamCount: Int,
     onTeamCountChange: (Int) -> Unit,
+    settings: Settings,
+    onDrawComplete: (DrawOutcome, Float, Float) -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -47,8 +51,11 @@ fun ShotgunNavHost(
                 ?: DrawMode.STARTER
             DrawScreen(
                 mode = mode,
+                teamCount = teamCount,
+                settings = settings,
                 onBack = { navController.popBackStack() },
                 onOpenResult = { navController.navigate(Destination.Result.route) },
+                onDrawComplete = onDrawComplete,
             )
         }
         composable(Destination.Result.route) {
