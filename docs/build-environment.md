@@ -420,8 +420,15 @@ signing-key handling and the release path, which is where a mistake is least
 visible and, with immutable releases, least recoverable. It runs weekly as well
 as per PR, so new queries reach existing code and not only changed code.
 
-It uses `build-mode: none`, analysing the sources without compiling them. The
-alternative is a full Android build inside the scanning job - SDK, Gradle and R8
-- for no extra coverage at this size. **Code scanning is not a required check**:
-its findings are advisory, and a required one would block unrelated merges on an
-alert nobody has triaged yet.
+The two languages need different treatment. **Kotlin is extracted by the
+compiler as it runs, so it needs a real build** - `build-mode: manual` with
+`assembleDebug`. `build-mode: none` is Java-only: it was tried first, completed
+without error and produced an empty database, failing at the finalize step with
+"CodeQL could not process any code written in Java/Kotlin". Workflows are YAML,
+so `actions` uses `build-mode: none` and skips the toolchain entirely.
+
+It builds `debug` rather than `release`: the same sources, without R8 rewriting
+them into something the analysis has to see through.
+
+**Code scanning is not a required check**: its findings are advisory, and a
+required one would block unrelated merges on an alert nobody has triaged yet.

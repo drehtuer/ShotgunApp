@@ -27,19 +27,48 @@ jobs:
       # One language failing should not hide the other's findings.
       fail-fast: false
       matrix:
-        language: [java-kotlin, actions]
+        include:
+          # Kotlin is extracted by the compiler as it runs, so it needs a real
+          # build. `build-mode: none` is Java-only: it completed here and
+          # produced an empty database - "CodeQL could not process any code
+          # written in Java/Kotlin" - which fails at the finalize step rather
+          # than reporting nothing.
+          - language: java-kotlin
+            build-mode: manual
+          # Workflows are YAML. Nothing to build.
+          - language: actions
+            build-mode: none
 
     steps:
       - uses: actions/checkout@v4
 
-      # `build-mode: none` analyses the sources without compiling them. The
-      # alternative would be a full Android build inside the scanning job -
-      # the SDK, Gradle and R8 - for no extra coverage of code this size.
+      - name: Set up JDK 21
+        if: matrix.build-mode == 'manual'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        if: matrix.build-mode == 'manual'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up the Android SDK
+        if: matrix.build-mode == 'manual'
+        uses: android-actions/setup-android@v3
+
       - name: Initialise CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          build-mode: none
+          build-mode: ${{ matrix.build-mode }}
+
+      # Debug rather than release: the same sources, without R8 rewriting them
+      # into something the analysis would have to see through. Unsigned is
+      # fine - nothing here is installed.
+      - name: Build
+        if: matrix.build-mode == 'manual'
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Analyse
         uses: github/codeql-action/analyze@v3

@@ -63,8 +63,14 @@ releases least recoverable. It runs weekly as well as per PR so new queries
 reach existing code. It is deliberately **not** a required check: findings are
 advisory, and a required one blocks unrelated merges on an untriaged alert.
 
-`build-mode: none` analyses the sources without compiling, avoiding a full
-Android build inside the scanning job for no extra coverage at this size.
+**`build-mode: none` does not work for Kotlin**, which was worth finding out
+the noisy way. The first run completed a dependency scan, reported
+`BUILD SUCCESSFUL`, and then failed at the finalize step with "CodeQL could not
+process any code written in Java/Kotlin" - an empty database rather than an
+error at the point of the mistake. Kotlin is extracted by the compiler as it
+runs, so it needs `build-mode: manual` and a real `assembleDebug`. The `actions`
+language has nothing to build and keeps `none`, so the two now differ by
+design.
 
 **Two settings would not enable.** `secret_scanning_non_provider_patterns` and
 `secret_scanning_validity_checks` stay `disabled` after a `PATCH` the API
