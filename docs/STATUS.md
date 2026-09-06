@@ -28,6 +28,69 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-06 — Security policy, Dependabot and code scanning
+
+**Outcome: done. Most of the value was in deciding what *not* to automate.**
+
+`SECURITY.md`, a Dependabot configuration and a CodeQL workflow, plus the
+repository settings that make them mean anything: private vulnerability
+reporting, Dependabot alerts and security updates, all now on. Secret scanning
+and push protection were already enabled.
+
+**The policy is bounded by what the app can actually do**, which is little: one
+permission, `VIBRATE`; **no `INTERNET` permission at all**, so nothing can leave
+the device even by mistake; and a local database holding finger positions and
+nothing else. Stating that plainly is more useful to a reporter than a page of
+process, and it is checkable - the manifest is three lines.
+
+The part worth spelling out is signing material. **A leaked release key is the
+one unrecoverable failure here**: Android identifies an app by its signature, so
+whoever holds the key can ship an "update" to everyone who installed it. So the
+policy says explicitly that finding a keystore or key password anywhere in the
+repository *is* the vulnerability.
+
+**Dependabot deliberately does not raise AGP or the Gradle wrapper.** They move
+together with `compileSdk` and the Kotlin version - and AGP 9 removed the
+`kotlin-android` plugin - so an automated bump breaks the build rather than
+updating it. AndroidX and Compose are grouped into one PR each, because they are
+released in step and a per-artifact PR could not pass CI on its own. Both are
+cases where the default configuration produces PRs that are guaranteed to be
+red, which teaches people to ignore Dependabot.
+
+**CodeQL scans the workflows as well as the Kotlin**, because that is where the
+signing keys and the release path live - least visible, and with immutable
+releases least recoverable. It runs weekly as well as per PR so new queries
+reach existing code. It is deliberately **not** a required check: findings are
+advisory, and a required one blocks unrelated merges on an untriaged alert.
+
+**`build-mode: none` does not work for Kotlin**, which was worth finding out
+the noisy way. The first run completed a dependency scan, reported
+`BUILD SUCCESSFUL`, and then failed at the finalize step with "CodeQL could not
+process any code written in Java/Kotlin" - an empty database rather than an
+error at the point of the mistake. Kotlin is extracted by the compiler as it
+runs, so it needs `build-mode: manual` and a real `assembleDebug`. The `actions`
+language has nothing to build and keeps `none`, so the two now differ by
+design.
+
+That was not the end of it. With a real build the run failed **the same way**,
+and for a completely different reason: `39 actionable tasks: 22 executed, 17
+from cache`. **CodeQL extracts Kotlin by tracing the compiler as it runs**, so
+tasks served from the Gradle build cache contribute nothing - `BUILD
+SUCCESSFUL`, empty database, identical error message. Caching is now off for
+that job.
+
+**Lesson: "could not process any code" is a symptom, not a cause.** It says the
+extractor saw nothing, which a wrong build mode and a warm cache produce
+identically. The thing that distinguished them was the task summary, not the
+error.
+
+**Two settings would not enable.** `secret_scanning_non_provider_patterns` and
+`secret_scanning_validity_checks` stay `disabled` after a `PATCH` the API
+accepts without error - no message, no failure, just no effect. Recorded in
+`TODO.md` rather than assumed to have worked.
+
+---
+
 ## 2026-09-06 — First release, and the documentation site
 
 **Outcome: `v0.1.0` published and the site live - after both workflows turned

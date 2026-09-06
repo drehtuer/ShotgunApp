@@ -1,0 +1,82 @@
+name: Code scanning
+
+# CodeQL over both the app and the workflows. The workflows are scanned too
+# because they hold the signing key handling and the release path, which is
+# where a mistake is least visible and least recoverable.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # A weekly run so new queries reach existing code, not only changed code.
+  schedule:
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      # One language failing should not hide the other's findings.
+      fail-fast: false
+      matrix:
+        include:
+          # Kotlin is extracted by the compiler as it runs, so it needs a real
+          # build. `build-mode: none` is Java-only: it completed here and
+          # produced an empty database - "CodeQL could not process any code
+          # written in Java/Kotlin" - which fails at the finalize step rather
+          # than reporting nothing.
+          - language: java-kotlin
+            build-mode: manual
+          # Workflows are YAML. Nothing to build.
+          - language: actions
+            build-mode: none
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        if: matrix.build-mode == 'manual'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # Caching is off on purpose. CodeQL extracts Kotlin by tracing the
+      # compiler as it runs, so a task served from the build cache contributes
+      # nothing - and a fully cached build yields an empty database while
+      # reporting BUILD SUCCESSFUL.
+      - name: Set up Gradle
+        if: matrix.build-mode == 'manual'
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+
+      - name: Set up the Android SDK
+        if: matrix.build-mode == 'manual'
+        uses: android-actions/setup-android@v3
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      # Debug rather than release: the same sources, without R8 rewriting them
+      # into something the analysis would have to see through. Unsigned is
+      # fine - nothing here is installed.
+      - name: Build
+        if: matrix.build-mode == 'manual'
+        run: ./gradlew assembleDebug --no-build-cache --stacktrace
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}

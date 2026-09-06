@@ -1,0 +1,49 @@
+# Dependency updates. Two ecosystems, because they fail in different ways:
+# a stale Gradle dependency is a vulnerability, a stale action is usually a
+# broken workflow.
+#
+# Grouped deliberately. AndroidX and Compose artifacts are released in step and
+# expect to be upgraded together, so one PR per artifact would be both noise and
+# a set of PRs that cannot pass CI on their own.
+version: 2
+
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+    groups:
+      androidx:
+        patterns:
+          - "androidx.*"
+      compose:
+        patterns:
+          - "androidx.compose*"
+          - "org.jetbrains.kotlin*"
+      kotlin-toolchain:
+        patterns:
+          - "com.google.devtools.ksp*"
+          - "org.jetbrains.dokka*"
+    ignore:
+      # AGP and the Gradle wrapper move together with compileSdk and the
+      # Kotlin version, and AGP 9 removed the kotlin-android plugin - an
+      # automated bump here breaks the build rather than updating it. These
+      # are raised by hand, with the toolchain notes in build-environment.md.
+      - dependency-name: "com.android.application"
+      - dependency-name: "com.android.tools.build:gradle"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns:
+          - "*"

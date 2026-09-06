@@ -32,12 +32,6 @@ authoritatively, in the design export itself.
       changes. Fast at the sizes involved, but it belongs off the main thread
       before the history gets large.
 
-## Security and maintenance
-
-- [ ] `SECURITY.md` - how to report a vulnerability.
-- [ ] Dependabot for Gradle and GitHub Actions.
-- [ ] Code scanning.
-
 ## Infrastructure
 
 - [ ] **Back the release keystore up off this machine.** It is gitignored, and a
@@ -50,6 +44,14 @@ authoritatively, in the design export itself.
       the `main` ruleset carries no merge-queue rule. If the option is visible
       in the UI, ticking it there will settle it; the earlier claim that it is
       organization-only is no longer something this repo can substantiate.
+- [ ] **Two secret-scanning options would not enable.**
+      `secret_scanning_non_provider_patterns` (generic secrets, which is what a
+      keystore password looks like) and `secret_scanning_validity_checks` both
+      stay `disabled` after a `PATCH` that the API accepts without error.
+      Probably a UI toggle or an Advanced Security requirement. They matter here
+      more than most repositories, because a leaked signing key is the one
+      unrecoverable failure - see
+      [`SECURITY.md`](https://github.com/drehtuer/ShotgunApp/blob/main/SECURITY.md).
 - [ ] **Re-exports from Claude Design overwrite behaviour decided here** - it
       has happened twice. Either mirror the haptics and toggle-copy changes
       upstream, or accept the export as visuals-only and stop hand-editing it.
