@@ -15,19 +15,29 @@ import kotlinx.coroutines.flow.map
 /** How the draw reveals its result. */
 enum class RevealTiming { SUSPENSE, INSTANT }
 
-/** Everything the settings screen owns. Defaults match the design export. */
+/** Everything the settings screen owns. */
 data class Settings(
     val themePreference: ThemePreference = ThemePreference.SYSTEM,
     val haptics: Boolean = true,
     val dim: Boolean = true,
-    val countdownSeconds: Int = 3,
-    val revealTiming: RevealTiming = RevealTiming.SUSPENSE,
+    /** Held in milliseconds so the stepper can move in half seconds. */
+    val countdownMillis: Int = DEFAULT_COUNTDOWN_MILLIS,
+    val revealTiming: RevealTiming = RevealTiming.INSTANT,
 ) {
     companion object {
-        /** The design's stepper floor; there is no ceiling worth enforcing. */
-        const val MIN_COUNTDOWN_SECONDS = 1
+        const val DEFAULT_COUNTDOWN_MILLIS = 3_500
+
+        /** The stepper moves in half seconds; there is no ceiling worth enforcing. */
+        const val COUNTDOWN_STEP_MILLIS = 500
+
+        /** One step is also the floor. */
+        const val MIN_COUNTDOWN_MILLIS = COUNTDOWN_STEP_MILLIS
     }
 }
+
+/** "2s" or "2.5s" - the trailing ".0" is noise on a control this small. */
+fun formatCountdown(millis: Int): String =
+    if (millis % 1_000 == 0) "${millis / 1_000}s" else "${millis / 1_000}.${(millis % 1_000) / 100}s"
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -38,7 +48,10 @@ class SettingsRepository(private val context: Context) {
         val THEME = stringPreferencesKey("theme_preference")
         val HAPTICS = booleanPreferencesKey("haptics")
         val DIM = booleanPreferencesKey("dim")
-        val COUNTDOWN = intPreferencesKey("countdown_seconds")
+        val COUNTDOWN = intPreferencesKey("countdown_millis")
+
+        /** Pre-0.5s-step key, read once so an existing setting is not lost. */
+        val LEGACY_COUNTDOWN_SECONDS = intPreferencesKey("countdown_seconds")
         val TIMING = stringPreferencesKey("reveal_timing")
     }
 
@@ -49,8 +62,25 @@ class SettingsRepository(private val context: Context) {
     suspend fun setDim(value: Boolean) = edit { it[Keys.DIM] = value }
     suspend fun setRevealTiming(value: RevealTiming) = edit { it[Keys.TIMING] = value.name }
 
-    suspend fun setCountdownSeconds(value: Int) = edit {
-        it[Keys.COUNTDOWN] = value.coerceAtLeast(Settings.MIN_COUNTDOWN_SECONDS)
+    suspend fun setCountdownMillis(value: Int) = edit {
+        it[Keys.COUNTDOWN] = value.coerceAtLeast(Settings.MIN_COUNTDOWN_MILLIS)
+    }
+
+    /**
+     * Steps the countdown by [steps] half-seconds, reading and writing inside
+     * one transaction.
+     *
+     * Writing an absolute "current + one step" looks equivalent and is not: the
+     * value comes back asynchronously, so two quick taps both read the old
+     * number and write the same result - the second tap is silently lost. That
+     * is why the countdown appeared to ignore the setting.
+     */
+    suspend fun stepCountdown(steps: Int) = edit { prefs ->
+        val current = prefs[Keys.COUNTDOWN]
+            ?: prefs[Keys.LEGACY_COUNTDOWN_SECONDS]?.times(1_000)
+            ?: Settings.DEFAULT_COUNTDOWN_MILLIS
+        prefs[Keys.COUNTDOWN] = (current + steps * Settings.COUNTDOWN_STEP_MILLIS)
+            .coerceAtLeast(Settings.MIN_COUNTDOWN_MILLIS)
     }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
@@ -70,8 +100,12 @@ internal fun Preferences.toSettings(): Settings {
             ?: defaults.themePreference,
         haptics = this[booleanPreferencesKey("haptics")] ?: defaults.haptics,
         dim = this[booleanPreferencesKey("dim")] ?: defaults.dim,
-        countdownSeconds = (this[intPreferencesKey("countdown_seconds")] ?: defaults.countdownSeconds)
-            .coerceAtLeast(Settings.MIN_COUNTDOWN_SECONDS),
+        // Falls back to the pre-0.5s-step key so an existing setting survives.
+        countdownMillis = (
+            this[intPreferencesKey("countdown_millis")]
+                ?: this[intPreferencesKey("countdown_seconds")]?.times(1_000)
+                ?: defaults.countdownMillis
+            ).coerceAtLeast(Settings.MIN_COUNTDOWN_MILLIS),
         revealTiming = this[stringPreferencesKey("reveal_timing")]
             ?.let { name -> runCatching { RevealTiming.valueOf(name) }.getOrNull() }
             ?: defaults.revealTiming,

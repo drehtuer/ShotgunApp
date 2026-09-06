@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import de.drehtuer.shotgun.ui.theme.ThemePreference
+
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -14,25 +15,49 @@ import org.junit.Test
 class SettingsTest {
 
     @Test
-    fun `an empty store yields the design's defaults`() {
+    fun `an empty store yields the defaults`() {
         val s = preferencesOf().toSettings()
         assertEquals(ThemePreference.SYSTEM, s.themePreference)
         assertEquals(true, s.haptics)
         assertEquals(true, s.dim)
-        assertEquals(3, s.countdownSeconds)
-        assertEquals(RevealTiming.SUSPENSE, s.revealTiming)
+        assertEquals(3_500, s.countdownMillis)
+        assertEquals(RevealTiming.INSTANT, s.revealTiming)
+    }
+
+    /** The countdown moved from whole seconds to millis when it gained halves. */
+    @Test
+    fun `a countdown stored under the old seconds key still applies`() {
+        val s = preferencesOf(intPreferencesKey("countdown_seconds") to 7).toSettings()
+        assertEquals(7_000, s.countdownMillis)
+    }
+
+    @Test
+    fun `the millis key wins over the old seconds key`() {
+        val s = preferencesOf(
+            intPreferencesKey("countdown_seconds") to 7,
+            intPreferencesKey("countdown_millis") to 2_500,
+        ).toSettings()
+        assertEquals(2_500, s.countdownMillis)
+    }
+
+    @Test
+    fun `whole seconds lose the decimal, halves keep it`() {
+        assertEquals("2s", formatCountdown(2_000))
+        assertEquals("2.5s", formatCountdown(2_500))
+        assertEquals("0.5s", formatCountdown(500))
+        assertEquals("10s", formatCountdown(10_000))
     }
 
     @Test
     fun `stored values are read back`() {
         val s = preferencesOf(
             stringPreferencesKey("theme_preference") to ThemePreference.DARK.name,
-            stringPreferencesKey("reveal_timing") to RevealTiming.INSTANT.name,
-            intPreferencesKey("countdown_seconds") to 7,
+            stringPreferencesKey("reveal_timing") to RevealTiming.SUSPENSE.name,
+            intPreferencesKey("countdown_millis") to 3_500,
         ).toSettings()
         assertEquals(ThemePreference.DARK, s.themePreference)
-        assertEquals(RevealTiming.INSTANT, s.revealTiming)
-        assertEquals(7, s.countdownSeconds)
+        assertEquals(RevealTiming.SUSPENSE, s.revealTiming)
+        assertEquals(3_500, s.countdownMillis)
     }
 
     /** A theme written by a newer build must fall back, not crash on launch. */
@@ -43,13 +68,31 @@ class SettingsTest {
             stringPreferencesKey("reveal_timing") to "DRAMATIC",
         ).toSettings()
         assertEquals(ThemePreference.SYSTEM, s.themePreference)
-        assertEquals(RevealTiming.SUSPENSE, s.revealTiming)
+        assertEquals(RevealTiming.INSTANT, s.revealTiming)
     }
 
     /** The design gives the countdown stepper a floor of one second. */
+    /**
+     * Regression: the stepper used to write "current + 1" from state that came
+     * back asynchronously, so two quick taps both read the old value and the
+     * second was lost. Deltas have to compose.
+     */
+    @Test
+    fun `stepping the countdown three times moves it three half seconds`() {
+        var value = Settings().countdownMillis
+        fun step(steps: Int) {
+            value = (value + steps * Settings.COUNTDOWN_STEP_MILLIS)
+                .coerceAtLeast(Settings.MIN_COUNTDOWN_MILLIS)
+        }
+        step(+1); step(+1); step(+1)
+        assertEquals(5_000, value)
+        step(-1); step(-1)
+        assertEquals(4_000, value)
+    }
+
     @Test
     fun `countdown is clamped to the floor`() {
-        assertEquals(1, preferencesOf(intPreferencesKey("countdown_seconds") to 0).toSettings().countdownSeconds)
-        assertEquals(1, preferencesOf(intPreferencesKey("countdown_seconds") to -5).toSettings().countdownSeconds)
+        assertEquals(500, preferencesOf(intPreferencesKey("countdown_millis") to 0).toSettings().countdownMillis)
+        assertEquals(500, preferencesOf(intPreferencesKey("countdown_millis") to -5).toSettings().countdownMillis)
     }
 }

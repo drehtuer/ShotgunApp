@@ -32,6 +32,43 @@ stubs.
 
 ---
 
+## 2026-09-06 — Device testing, and the blank screen
+
+**Outcome: a run of real bugs, all found by hands on glass rather than by
+tests.** Installed on the target Pixel 10a over Wi-Fi.
+
+The blank screen was the hard one, and worth recording in full because three
+plausible explanations were wrong before the right one.
+
+Reported as: pick a mode, press back immediately, and the app draws nothing
+until it is restarted. It could not be reproduced synthetically - six back-press
+timings, rapid double taps, tap-plus-two-backs, and the edge-swipe gesture all
+behaved. Two suspects were ruled out with evidence rather than argument: the new
+glow uses `BlurMaskFilter`, historically unsupported under hardware
+acceleration, but forcing a countdown produced no HWUI or render errors; and the
+brightness override was measured, not guessed.
+
+What settled it was catching the app *in* the state. `dumpsys` showed the
+activity resumed with no crash, and an accessibility dump showed **three nodes**
+- the bare window chrome, no Compose content at all. The navigation graph had
+lost its destination.
+
+It was then reproduced in a test: **popping more often than the stack is deep
+empties the graph**, and an empty graph renders nothing. Two pops racing each
+other is enough - a button tapped twice, or a tap arriving with the back
+gesture. Every exit path now goes through `popSafely()`, which pops only when
+there is something underneath, and back handling lives in one place.
+
+**Lesson:** an unreproducible bug is usually a wrong model of the failure, not a
+rare one. Catching the app in the broken state and dumping what it *actually*
+contained took minutes; guessing at causes took much longer.
+
+Also fixed from device testing: labels drawn under the very fingers they
+belonged to; the countdown appearing to ignore its setting, which turned out to
+be the stepper losing taps to an asynchronous read; both timers restarted
+forever by the jitter of a resting hand; and dim mode, which was set absolutely
+and so made a dim screen *brighter*.
+
 ## 2026-09-06 — Settings screen and dim mode
 
 **Outcome: done. Every screen in the design is now built.**

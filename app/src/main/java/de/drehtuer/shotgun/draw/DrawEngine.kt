@@ -13,8 +13,11 @@ enum class DrawPhase {
     /** Two or more fingers down; the countdown is running. */
     COUNTING,
 
-    /** Drawn, but holding the result back for a beat. */
-    SUSPENSE,
+    /**
+     * Drawn, and being revealed one finger at a time. The whole result exists
+     * already; this is only how much of it has been shown.
+     */
+    REVEALING,
 
     /** Result shown. */
     REVEALED,
@@ -26,6 +29,12 @@ data class DrawOutcome(
     val teamCount: Int?,
     /** Finger id to rank (order, 1-based) or team index (teams, 0-based). */
     val assignment: Map<Long, Int>,
+    /**
+     * The draw order. Revealing along it gives ranks 1, 2, 3 in order, and in
+     * teams mode steps between teams on every reveal, because assignments are
+     * dealt round robin.
+     */
+    val order: List<Long>,
     val winnerId: Long,
     val fingers: List<Finger>,
 )
@@ -53,7 +62,7 @@ sealed interface DrawEffect {
 class DrawEngine(
     val mode: DrawMode,
     val teamCount: Int,
-    private val countdownSeconds: Int,
+    private val countdownMillis: Int,
     private val instantReveal: Boolean,
     private val random: Random = Random.Default,
 ) {
@@ -68,6 +77,16 @@ class DrawEngine(
     var outcome: DrawOutcome? = null
         private set
 
+    /** How many fingers of [DrawOutcome.order] have been shown so far. */
+    var revealedCount: Int = 0
+        private set
+
+    /** Whether this finger's assignment is on screen yet. */
+    fun isRevealed(id: Long): Boolean {
+        val position = outcome?.order?.indexOf(id) ?: return false
+        return position in 0 until revealedCount
+    }
+
     private var deadlineAt: Long = 0
     private var armedAt: Long = 0
 
@@ -79,26 +98,22 @@ class DrawEngine(
     }
 
     /**
-     * A finger lands. Ignored once the draw has fired - a latecomer must not
-     * join a result that is already being shown.
+     * A finger lands.
+     *
+     * Ignored while a result is being shown *under people's hands* - a
+     * latecomer must not join a draw that has already been decided. But once
+     * everyone has lifted, the round is over and the result is only being read,
+     * so a new finger starts a fresh one.
      */
     fun onDown(id: Long, x: Float, y: Float, now: Long): DrawEffect? {
-        if (phase == DrawPhase.SUSPENSE || phase == DrawPhase.REVEALED) return null
+        if (phase == DrawPhase.REVEALING) return null
+        if (phase == DrawPhase.REVEALED) {
+            if (_fingers.isNotEmpty()) return null
+            reset()
+        }
         if (_fingers.containsKey(id)) return null
         _fingers[id] = Finger(id, x, y)
-
-        when {
-            _fingers.size < MIN_PLAYERS -> Unit
-            phase != DrawPhase.COUNTING -> {
-                // The second finger arms the countdown.
-                armedAt = now
-                deadlineAt = now + countdownSeconds * 1000L
-                phase = DrawPhase.COUNTING
-            }
-            // Every finger after that buys everyone another second, so a late
-            // joiner never costs the group their draw.
-            else -> deadlineAt += EXTENSION_MILLIS
-        }
+        if (_fingers.size >= MIN_PLAYERS) arm(now)
         return DrawEffect.FingerTick
     }
 
@@ -108,21 +123,40 @@ class DrawEngine(
     }
 
     /** A finger lifts. */
-    fun onUp(id: Long) {
+    fun onUp(id: Long, now: Long) {
         _fingers.remove(id) ?: return
         when (phase) {
-            DrawPhase.SUSPENSE, DrawPhase.REVEALED ->
-                // The result stays until the last hand leaves the glass.
-                if (_fingers.isEmpty()) reset()
+            // The result deliberately survives the last hand leaving: you have
+            // to lift to see what is underneath your own fingers. It is cleared
+            // by leaving the surface, or by starting the next draw.
+            DrawPhase.REVEALING, DrawPhase.REVEALED -> Unit
 
             DrawPhase.COUNTING ->
                 if (_fingers.size < MIN_PLAYERS) {
                     phase = DrawPhase.IDLE
                     deadlineAt = 0
+                } else {
+                    // Someone leaving is a change too, and the group deserves
+                    // the same settling time after it.
+                    arm(now)
                 }
 
             DrawPhase.IDLE -> Unit
         }
+    }
+
+    /**
+     * Starts, or restarts, the countdown.
+     *
+     * The countdown is not a fixed delay from the second finger: it is how long
+     * the hands have to be *still in number* before the draw runs. Any change -
+     * someone joining, someone leaving - puts the full time back on the clock,
+     * so nobody is caught out by a draw firing as they reach in.
+     */
+    private fun arm(now: Long) {
+        armedAt = now
+        deadlineAt = now + countdownMillis
+        phase = DrawPhase.COUNTING
     }
 
     /** Drives the countdown. Returns an effect on the tick the draw fires. */
@@ -131,9 +165,17 @@ class DrawEngine(
         return draw()
     }
 
-    /** Ends suspense. The UI calls this once the pause has elapsed. */
-    fun reveal() {
-        if (phase == DrawPhase.SUSPENSE) phase = DrawPhase.REVEALED
+    /** Discards a shown result, so the surface is bare again. */
+    fun clear() = reset()
+
+    /**
+     * Shows one more finger. The UI calls this on a timer while [DrawPhase.REVEALING].
+     */
+    fun revealNext() {
+        if (phase != DrawPhase.REVEALING) return
+        val total = outcome?.order?.size ?: return
+        revealedCount = (revealedCount + 1).coerceAtMost(total)
+        if (revealedCount >= total) phase = DrawPhase.REVEALED
     }
 
     private fun draw(): DrawEffect {
@@ -154,15 +196,23 @@ class DrawEngine(
             mode = mode,
             teamCount = teamCount.takeIf { mode == DrawMode.TEAMS },
             assignment = assignment,
+            order = shuffled,
             winnerId = shuffled.first(),
             fingers = present,
         )
         outcome = result
-        // Starter has nothing to stagger, so it always reveals at once.
-        phase = if (instantReveal || mode == DrawMode.STARTER) {
-            DrawPhase.REVEALED
+
+        // Starter has one answer, so there is nothing to stagger: showing a
+        // single winner slowly is just a slower single winner.
+        val staged = !instantReveal && mode != DrawMode.STARTER
+        if (staged) {
+            // The first finger appears at once - the wait was the countdown,
+            // not this - and the rest follow one at a time.
+            revealedCount = 1
+            phase = if (shuffled.size <= 1) DrawPhase.REVEALED else DrawPhase.REVEALING
         } else {
-            DrawPhase.SUSPENSE
+            revealedCount = shuffled.size
+            phase = DrawPhase.REVEALED
         }
         return DrawEffect.Drawn(result)
     }
@@ -170,6 +220,7 @@ class DrawEngine(
     private fun reset() {
         phase = DrawPhase.IDLE
         outcome = null
+        revealedCount = 0
         deadlineAt = 0
         armedAt = 0
     }
@@ -177,8 +228,5 @@ class DrawEngine(
     companion object {
         /** A draw needs someone to lose. */
         const val MIN_PLAYERS = 2
-
-        /** Each finger past the second adds this much. */
-        const val EXTENSION_MILLIS = 1_000L
     }
 }

@@ -26,9 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import android.content.Intent
+import de.drehtuer.shotgun.BuildConfig
 import de.drehtuer.shotgun.data.settings.RevealTiming
 import de.drehtuer.shotgun.data.settings.Settings
+import de.drehtuer.shotgun.data.settings.formatCountdown
 import de.drehtuer.shotgun.ui.components.Rule
 import de.drehtuer.shotgun.ui.components.ScreenHeader
 import de.drehtuer.shotgun.ui.components.Stepper
@@ -49,11 +54,12 @@ fun SettingsScreen(
     onThemePreferenceChange: (ThemePreference) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
     onDimChange: (Boolean) -> Unit,
-    onCountdownChange: (Int) -> Unit,
+    onCountdownStep: (Int) -> Unit,
     onRevealTimingChange: (RevealTiming) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+
     Column(
         modifier
             .fillMaxSize()
@@ -105,14 +111,14 @@ fun SettingsScreen(
 
         Section(
             title = "COUNTDOWN",
-            subtitle = "Each new finger adds one second",
+            subtitle = "How long hands must settle before the draw runs",
         ) {
             Stepper(
                 label = "SECONDS",
-                value = "${settings.countdownSeconds}s",
-                onDecrement = { onCountdownChange(settings.countdownSeconds - 1) }
-                    .takeIf { settings.countdownSeconds > Settings.MIN_COUNTDOWN_SECONDS },
-                onIncrement = { onCountdownChange(settings.countdownSeconds + 1) },
+                value = formatCountdown(settings.countdownMillis),
+                onDecrement = { onCountdownStep(-1) }
+                    .takeIf { settings.countdownMillis > Settings.MIN_COUNTDOWN_MILLIS },
+                onIncrement = { onCountdownStep(+1) },
                 decrementLabel = "shorter countdown",
                 incrementLabel = "longer countdown",
             )
@@ -149,6 +155,8 @@ fun SettingsScreen(
             color = PPTheme.colors.dim,
             modifier = Modifier.padding(16.dp),
         )
+
+        About()
     }
 }
 
@@ -245,6 +253,51 @@ private fun Pill(
             .padding(start = 14.dp, top = 16.dp, bottom = 16.dp),
     )
 }
+
+/** Version and where the source lives. */
+@Composable
+private fun About() {
+    val context = LocalContext.current
+    Column {
+        Rule()
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("SHOTGUN!", style = PPTheme.typography.settingTitle, color = PPTheme.colors.ink)
+                Text(
+                    text = "Version ${BuildConfig.VERSION_NAME}",
+                    style = PPTheme.typography.bodySmall,
+                    color = PPTheme.colors.dim,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            Text(
+                text = "SOURCE →",
+                style = PPTheme.typography.micro,
+                color = PPTheme.colors.accent,
+                modifier = Modifier
+                    .clickable {
+                        // Nothing guarantees a browser exists, and a missing one
+                        // must not take the app down with it.
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, REPOSITORY_URL.toUri())
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                        }
+                    }
+                    .semantics { contentDescription = "Open the source repository" }
+                    .padding(8.dp),
+            )
+        }
+    }
+}
+
+private const val REPOSITORY_URL = "https://github.com/drehtuer/ShotgunApp"
 
 private fun ThemePreference.label(): String = when (this) {
     ThemePreference.SYSTEM -> "System"

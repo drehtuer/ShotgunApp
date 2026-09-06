@@ -67,6 +67,7 @@ fun ResultScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+
     Column(
         modifier
             .fillMaxSize()

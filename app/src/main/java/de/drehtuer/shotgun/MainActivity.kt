@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
             val latestDraw by viewModel.latestDraw.collectAsStateWithLifecycle()
             val drawCount by viewModel.drawCount.collectAsStateWithLifecycle()
 
+
             ShotgunTheme(preference = settings.themePreference) {
                 // Brightness is an app-wide property, so it is applied here
                 // rather than on the screen that happens to toggle it.
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
                     onThemePreferenceChange = viewModel::setThemePreference,
                     onHapticsChange = viewModel::setHaptics,
                     onDimChange = viewModel::setDim,
-                    onCountdownChange = viewModel::setCountdownSeconds,
+                    onCountdownStep = viewModel::stepCountdown,
                     onRevealTimingChange = viewModel::setRevealTiming,
                     teamCount = teamCount,
                     onTeamCountChange = viewModel::setTeamCount,
@@ -47,6 +48,7 @@ class MainActivity : ComponentActivity() {
                     winners = winners,
                     latestDraw = latestDraw,
                     drawCount = drawCount,
+                    onExit = { finish() },
                     modifier = Modifier
                         .fillMaxSize()
                         .background(PPTheme.colors.bg)
