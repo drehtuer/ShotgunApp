@@ -85,8 +85,15 @@ Work out which of these your change touches, and update it:
 | Project layout, commands, status table | [`README.md`](../README.md) |
 | The rules themselves | this file |
 
-Two specific rules:
+Three specific rules:
 
+- **These documents are published.** `README.md` and `docs/` are rendered to the
+  GitHub Pages site by Jekyll, unchanged - so a link has to work in both places.
+  A link to another published document is relative (`docs/design.md`,
+  `STATUS.md`) and Jekyll rewrites it. A link to anything Jekyll does *not*
+  publish - source under `app/`, `design/`, `.github/`, `.claude/`, `gradle/` -
+  must be an **absolute GitHub URL**, or it will 404 on the site. Mermaid
+  diagrams are fine; the site renders them.
 - **Know which source wins.** `design/Shotgun.dc.html` is the authority on
   *visuals* - layout, tokens, copy, the interaction model. `docs/design.md` is
   the specification of record for *behaviour*, including the parts a browser

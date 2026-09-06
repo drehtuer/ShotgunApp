@@ -21,3 +21,9 @@ keystore.properties
 
 # OS
 .DS_Store
+
+# Jekyll output from a local preview of the GitHub Pages site.
+_site/
+_site_test/
+.jekyll-cache/
+.jekyll-metadata

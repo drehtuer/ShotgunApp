@@ -34,56 +34,38 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # Dokka resolves the compile classpath, so it needs the Android SDK. The
+      # runner image ships one, but declaring it keeps the job from depending
+      # on what happens to be baked into the image.
+      - name: Set up the Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Generate API documentation
         run: ./gradlew :app:dokkaGenerate --stacktrace
 
-      # Pages serves this artifact as-is - there is no Jekyll step in the
-      # Actions-based flow - so Markdown has to be rendered to HTML here or it
-      # would be served as raw text.
-      - name: Install pandoc
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pandoc
+      # GitHub's own Pages toolchain, using _config.yml at the repository root.
+      # The documentation is rendered from the Markdown in place - README.md and
+      # docs/ - so the site cannot drift from what the repository shows.
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
 
-      - name: Assemble the site
-        env:
-          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-          REF: ${{ github.event.release.tag_name || github.ref_name }}
+      # Copied in after Jekyll rather than before: Dokka's output includes
+      # underscore-prefixed files, which Jekyll would drop, and it is already
+      # HTML that needs no rendering.
+      - name: Add the API documentation
         run: |
           set -euo pipefail
-          mkdir -p site/docs site/api
-
-          render() {
-            pandoc --standalone --from gfm --to html5 \
-              --metadata title="$2" \
-              --output "$3" "$1"
-          }
-
-          render README.md "Player Picker" site/index.html
-          for md in docs/*.md; do
-            [ -e "$md" ] || continue
-            render "$md" "$(basename "${md%.md}")" "site/docs/$(basename "${md%.md}").html"
-          done
-
-          cp -r app/build/dokka/html/. site/api/
-
-          # Links to files that live in the repo but not on the site would 404,
-          # so point them at GitHub instead.
-          find site -name '*.html' -maxdepth 2 -print0 | xargs -0 sed -i -E \
-            "s#href=\"(app/|design/|\.claude/|\.devcontainer/|gradle/)#href=\"${REPO_URL}/blob/${REF}/\1#g"
-
-          # Cross-link the generated API docs from the landing page.
-          sed -i 's#</body>#<hr><p><a href="api/index.html">API documentation</a></p></body>#' site/index.html
-
-          # Guards the legacy Pages path, which would otherwise drop Dokka's
-          # underscore-prefixed directories.
-          touch site/.nojekyll
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+          test -d app/build/dokka/html
+          mkdir -p _site/api
+          cp -r app/build/dokka/html/. _site/api/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: ./_site
 
   deploy:
     name: Deploy to Pages
