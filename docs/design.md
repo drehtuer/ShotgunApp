@@ -261,8 +261,14 @@ settings    { haptics, dim, countdown, timing, themePref }
 | --- | --- |
 | Press on empty surface | Adds a player |
 | Drag an existing ring | **Repositions it — never counts as a new player** |
-| Double-tap a ring | Lifts that player |
+| Lift a finger | Removes that player |
 | Press during suspense/revealed | Ignored |
+
+**Divergence from the export.** The prototype was driven by a mouse, which
+cannot lift, so it removed a player on double-tap and kept rings on screen after
+the pointer went up. On a touchscreen a ring belongs to a finger: it exists
+while that finger is down and goes when it lifts. That is what "LIFT ALL FINGERS
+TO CLEAR" already assumes, so double-tap has no purpose and is not implemented.
 
 Every press that adds a player fires a short haptic tick — see *Haptics*.
 

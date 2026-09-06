@@ -32,6 +32,43 @@ stubs.
 
 ---
 
+## 2026-09-06 — Draw surface
+
+**Outcome: built and tested as far as this hardware allows. Not yet touched by
+real fingers.**
+
+The rules live in a plain `DrawEngine` with no Android in it - time is passed in
+and randomness injected - so the countdown extension, the teams guard, the
+reveal rules and who wins are all unit-tested. That split was the point: the one
+thing that cannot be tested without hardware is the multi-touch itself, so
+everything else was made testable without it.
+
+**Multi-touch turned out to be testable after all, partially.** The emulator
+exposes one input device per contact and so cannot inject a genuine
+multi-pointer gesture, but Compose's own pointer injection can. Six instrumented
+tests now cover several pointers alive at once, lifting one of them, and moving
+without joining - the tracking that unit tests cannot reach.
+
+Also closed the gap flagged in the persistence PR: the Room DAO now has six
+instrumented tests of its own, including that pruning cascades to points rather
+than orphaning them.
+
+Two deliberate divergences from the export, both recorded in `design.md`:
+
+- **Lifting removes a ring.** The prototype was mouse-driven and could not lift,
+  so it removed players on double-tap and left rings on screen. On a touchscreen
+  a ring belongs to a finger. "LIFT ALL FINGERS TO CLEAR" already assumes this,
+  which makes double-tap redundant.
+- The suspense **churn animation** is not implemented - the pause happens, the
+  rings do not pulse yet.
+
+Verified on an API 37 emulator: the hint reads correctly, and a single finger
+held for two and a half seconds never draws and never writes to the database.
+40 unit tests and 12 instrumented tests pass.
+
+**What is unverified:** feel. Timing, haptic strength, and whether the countdown
+is long enough to get a hand down are all judgements that need the Pixel 10a.
+
 ## 2026-09-06 — Home screen
 
 **Outcome: done.**
