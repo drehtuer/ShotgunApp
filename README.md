@@ -130,7 +130,7 @@ Documentation is kept in sync with the implementation - see
 
 | Workflow | Runs on | Does |
 | --- | --- | --- |
-| [`pr.yml`](.github/workflows/pr.yml) | PR to `main`, push to `main` | builds debug, then unit tests and Android Lint |
+| [`pr.yml`](.github/workflows/pr.yml) | any PR, push to `main` | builds debug, then unit tests and Android Lint |
 | [`release.yml`](.github/workflows/release.yml) | a `v*` tag only | builds the release APK and AAB, attaches them to the release |
 | [`docs.yml`](.github/workflows/docs.yml) | `release: published`, manual | builds the GitHub Pages site (Dokka API docs + these documents) |
 
