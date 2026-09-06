@@ -37,6 +37,9 @@ titles_from_headings:
 # Everything that is source code, tooling or signing material. Without this
 # Jekyll copies the entire repository - including app/build - into the site.
 exclude:
+  # A GitHub community-health file: it belongs in the Security tab, next to the
+  # button its instructions tell you to press, not as a page on the site.
+  - SECURITY.md
   - app/
   - design/
   - gradle/

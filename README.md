@@ -119,6 +119,7 @@ including the older `adb tcpip 5555` route.
 | [`docs/TODO.md`](docs/TODO.md) | Open work and the decisions that block it |
 | [`docs/STATUS.md`](docs/STATUS.md) | What has been done and how it turned out |
 | [`.claude/CLAUDE.md`](https://github.com/drehtuer/ShotgunApp/blob/main/.claude/CLAUDE.md) | Working rules: branching, testing, keeping docs in sync |
+| [`SECURITY.md`](https://github.com/drehtuer/ShotgunApp/blob/main/SECURITY.md) | Reporting a vulnerability, and what the app can actually do |
 
 The design sources these are derived from:
 
@@ -137,7 +138,8 @@ Documentation is kept in sync with the implementation - see
 | --- | --- | --- |
 | [`pr.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/pr.yml) | any PR, push to `main` | builds debug, then unit tests and Android Lint |
 | [`release.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/release.yml) | a `v*` tag only | builds and signs the APK and AAB, drafts the release with them, then publishes it |
-| [`docs.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/docs.yml) | `release: published`, manual | builds the GitHub Pages site with Jekyll (these documents + Dokka API docs) |
+| [`docs.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/docs.yml) | a `v*` tag, manual | builds the GitHub Pages site with Jekyll (these documents + Dokka API docs) |
+| [`codeql.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/codeql.yml) | any PR, push to `main`, weekly | CodeQL over the Kotlin sources and the workflows |
 
 Reports are uploaded as artifacts, including on failure.
 

@@ -1,0 +1,47 @@
+name: Code scanning
+
+# CodeQL over both the app and the workflows. The workflows are scanned too
+# because they hold the signing key handling and the release path, which is
+# where a mistake is least visible and least recoverable.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # A weekly run so new queries reach existing code, not only changed code.
+  schedule:
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      # One language failing should not hide the other's findings.
+      fail-fast: false
+      matrix:
+        language: [java-kotlin, actions]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # `build-mode: none` analyses the sources without compiling them. The
+      # alternative would be a full Android build inside the scanning job -
+      # the SDK, Gradle and R8 - for no extra coverage of code this size.
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}

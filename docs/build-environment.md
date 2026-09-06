@@ -293,6 +293,7 @@ adb -s <serial> install -r app/build/outputs/apk/debug/Shotgun-debug-*.apk
 | [`pr.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/pr.yml) | **any** pull request, push to `main` | builds debug, then unit tests and lint |
 | [`release.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/release.yml) | **a `v*` tag only** | builds and signs the release APK and AAB, drafts the release with them, then publishes it |
 | [`docs.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/docs.yml) | **a `v*` tag only**, manual | builds the Pages site with Jekyll plus Dokka, and deploys it |
+| [`codeql.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/codeql.yml) | any PR, push to `main`, weekly | CodeQL over the Kotlin sources and the workflows |
 
 Releases are cut by tagging. Nothing in `release.yml` runs for ordinary pushes
 or pull requests:
@@ -395,3 +396,32 @@ serve it from that path rather than opening the files directly.
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Debug keystore changed. `adb uninstall de.drehtuer.shotgun`, then reinstall. |
 | `x86_64 emulation currently requires hardware acceleration` | `/dev/kvm` missing or not writable. |
 | Emulator says `Unknown AVD name` | `ANDROID_AVD_HOME` is not set; the AVD lives in the SDK volume. |
+
+## Security
+
+| Piece | Where |
+| --- | --- |
+| Policy, scope, how to report | [`SECURITY.md`](https://github.com/drehtuer/ShotgunApp/blob/main/SECURITY.md) |
+| Dependency updates | [`.github/dependabot.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/dependabot.yml) |
+| Code scanning | [`.github/workflows/codeql.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/workflows/codeql.yml) |
+
+Repository settings, all on: private vulnerability reporting, Dependabot alerts
+and security updates, secret scanning with push protection.
+
+**Dependabot deliberately does not raise AGP or the Gradle wrapper.** They move
+together with `compileSdk` and the Kotlin version - and AGP 9 removed the
+`kotlin-android` plugin - so an automated bump breaks the build rather than
+updating it. Those are raised by hand, against the notes above. AndroidX and
+Compose artifacts are **grouped** into one PR each, because they are released in
+step and a per-artifact PR could not pass CI on its own.
+
+**CodeQL scans the workflows as well as the Kotlin.** The workflows hold the
+signing-key handling and the release path, which is where a mistake is least
+visible and, with immutable releases, least recoverable. It runs weekly as well
+as per PR, so new queries reach existing code and not only changed code.
+
+It uses `build-mode: none`, analysing the sources without compiling them. The
+alternative is a full Android build inside the scanning job - SDK, Gradle and R8
+- for no extra coverage at this size. **Code scanning is not a required check**:
+its findings are advisory, and a required one would block unrelated merges on an
+alert nobody has triaged yet.
