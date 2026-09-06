@@ -430,5 +430,12 @@ so `actions` uses `build-mode: none` and skips the toolchain entirely.
 It builds `debug` rather than `release`: the same sources, without R8 rewriting
 them into something the analysis has to see through.
 
+**Caching is disabled for that build, deliberately.** CodeQL extracts Kotlin by
+tracing the compiler as it runs, so a task served from the build cache
+contributes nothing. The second attempt failed exactly this way: `39 actionable
+tasks: 22 executed, 17 from cache`, `BUILD SUCCESSFUL`, and an empty database -
+the same "could not process any code" error as a wrong build mode, from a
+completely different cause.
+
 **Code scanning is not a required check**: its findings are advisory, and a
 required one would block unrelated merges on an alert nobody has triaged yet.

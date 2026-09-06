@@ -49,9 +49,15 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      # Caching is off on purpose. CodeQL extracts Kotlin by tracing the
+      # compiler as it runs, so a task served from the build cache contributes
+      # nothing - and a fully cached build yields an empty database while
+      # reporting BUILD SUCCESSFUL.
       - name: Set up Gradle
         if: matrix.build-mode == 'manual'
         uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
 
       - name: Set up the Android SDK
         if: matrix.build-mode == 'manual'
@@ -68,7 +74,7 @@ jobs:
       # fine - nothing here is installed.
       - name: Build
         if: matrix.build-mode == 'manual'
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --no-build-cache --stacktrace
 
       - name: Analyse
         uses: github/codeql-action/analyze@v3

@@ -72,6 +72,18 @@ runs, so it needs `build-mode: manual` and a real `assembleDebug`. The `actions`
 language has nothing to build and keeps `none`, so the two now differ by
 design.
 
+That was not the end of it. With a real build the run failed **the same way**,
+and for a completely different reason: `39 actionable tasks: 22 executed, 17
+from cache`. **CodeQL extracts Kotlin by tracing the compiler as it runs**, so
+tasks served from the Gradle build cache contribute nothing - `BUILD
+SUCCESSFUL`, empty database, identical error message. Caching is now off for
+that job.
+
+**Lesson: "could not process any code" is a symptom, not a cause.** It says the
+extractor saw nothing, which a wrong build mode and a warm cache produce
+identically. The thing that distinguished them was the task summary, not the
+error.
+
 **Two settings would not enable.** `secret_scanning_non_provider_patterns` and
 `secret_scanning_validity_checks` stay `disabled` after a `PATCH` the API
 accepts without error - no message, no failure, just no effect. Recorded in
