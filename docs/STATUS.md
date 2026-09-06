@@ -50,11 +50,18 @@ Within each keystore the store and key passwords are the same value; debug and
 release differ from each other. The release key is 4096-bit RSA, `SHA384withRSA`,
 valid until 2056 - so expiry is not the risk.
 
-**The only readable copy of the password is `keystore.properties` on the build
-machine.** The GitHub secret is write-only by design, so it is not a second
-copy. That makes the password, not the file, the single point of failure -
-`build-environment.md` now says so explicitly, with a table of what a backup has
-to contain.
+**Both are now backed up together**, which closes the last item on the list
+that could not be recovered from. Until this, the only readable copy of the
+password was `keystore.properties` on the build machine - a GitHub secret is
+write-only by design and never counted as a copy - so the password, not the
+file, was the single point of failure. `build-environment.md` records what a
+backup has to contain, and that the two have to be updated in the same pass if
+the key is ever rotated.
+
+**Worth keeping as a habit:** the backup was believed complete before it was.
+Nothing failed, and nothing would have failed until the day the machine died -
+which is the property that makes backups worth testing rather than assuming. Two
+`keytool` commands settled it.
 
 Merge queue is dropped from the open list. The rulesets API rejected the rule at
 the type level however it was sent, the `main` ruleset never carried one, and it

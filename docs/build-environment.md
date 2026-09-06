@@ -189,24 +189,27 @@ survives into a later step or an uploaded artifact.
 ### Backing the release key up
 
 **Both keystores are password-protected, so the file on its own is not a
-backup.** A backup has to hold two things:
+backup.** A backup has to hold two things, and both are now off this machine:
 
-| Piece | Where it lives now |
+| Piece | Where it lives |
 | --- | --- |
 | `keystore/release.keystore` | the build machine, and a password manager |
-| The password | **`keystore.properties` on the build machine only** |
+| The password | `keystore.properties` on the build machine, and the same password manager |
 
 Within each keystore the store password and the key password are the same
 value; the debug and release passwords differ from each other.
 
 A GitHub secret is **write-only** - it can be read back by no one, including
-you - so it is not a second copy of either piece. If both the local
-`keystore.properties` and any copy of the password are lost, the key is
-unusable even with the file, and **no future build can ever update an installed
-app**: Android identifies an app by its signature and there is no recovery.
+you - so it is not a copy of either piece, and never counts towards this.
+
+**Keep the two together.** With the file but not the password the key is
+unusable, and then no future build can ever update an installed app: Android
+identifies an app by its signature and there is no recovery. If the key is ever
+rotated, the password manager has to be updated in the same pass as
+`keystore.properties` and the GitHub secrets.
 
 The release key is 4096-bit RSA, `SHA384withRSA`, valid until **2056-08-29**, so
-the expiry is not the thing to worry about. Losing the password is.
+the expiry is not the thing to worry about. Losing the password was.
 
 ## Persistence
 

@@ -34,13 +34,6 @@ authoritatively, in the design export itself.
 
 ## Infrastructure
 
-- [ ] **Back up the release keystore's password**, not only the file. The
-      `.keystore` is now held in a password manager, which is half of it: the
-      keystore is **password-protected**, and the file alone cannot be opened.
-      The only readable copy of the password is `keystore.properties` on the
-      build machine - the GitHub secret is write-only. Losing it means no future
-      build can ever update an installed app. This is still the one item here
-      that cannot be recovered from.
 - [ ] **Two secret-scanning options would not enable.**
       `secret_scanning_non_provider_patterns` (generic secrets, which is what a
       keystore password looks like) and `secret_scanning_validity_checks` both
