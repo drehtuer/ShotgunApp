@@ -170,6 +170,30 @@ can be read back by no one, including you - it is write-only once set. If the
 local copy is lost, the key is gone, and no future build can update an
 installed app.
 
+## Persistence
+
+Two stores, both under `app/src/main/java/de/drehtuer/shotgun/data/`:
+
+| Store | Backed by | Holds |
+| --- | --- | --- |
+| `DrawHistory` | Room (`shotgun.db`) | every completed draw, for the fairness field |
+| `SettingsRepository` | DataStore (`settings.preferences_pb`) | theme, haptics, dim, countdown, reveal timing |
+
+**Room schemas are committed** to `app/schemas/`. Bump `version` in
+`ShotgunDatabase` and add a `Migration` for every schema change; the exported
+JSON gives a real before-and-after to write it against.
+
+`fallbackToDestructiveMigration` is deliberately not set. History is what makes
+the fairness field evidence rather than decoration, so a schema change must
+migrate it, not discard it.
+
+Inspecting either on a device:
+
+```bash
+adb shell run-as de.drehtuer.shotgun ls -l files/datastore databases
+adb exec-out run-as de.drehtuer.shotgun cat databases/shotgun.db > shotgun.db
+```
+
 ## Testing
 
 Two layers run without a device, one needs one.
