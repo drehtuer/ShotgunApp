@@ -30,7 +30,7 @@ specified in [`design.md`](design.md):
 
 ## Screens
 
-- [ ] **Home** — mode cards with their four-dot motifs, the team stepper
+- [x] **Home** — mode cards with their four-dot motifs, the team stepper
       (floor 2, no ceiling), and the footer link.
 - [ ] **Draw surface** — the core of the app, and the hardest part:
   - [ ] one ring per pointer, tracked by pointer id

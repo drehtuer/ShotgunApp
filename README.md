@@ -25,13 +25,13 @@ and the design tokens are in place. The screens themselves are stubs.
 | Modernist theme: colour, type, dimensions | done |
 | Navigation shell across all four screens | done |
 | Appearance setting (system / light / dark) | done |
-| Home: mode cards, team stepper | stub |
+| Home: mode cards, team stepper | done |
 | Draw surface: multi-touch, countdown, reveal | stub |
 | Result: fairness heatmap | stub |
 | Settings: haptics, dim, countdown, timing | stub |
-| Draw history database | not started |
+| Draw history database | done, not yet written to |
 | Identity: name, logo, launcher icon | done |
-| Settings persistence | not started |
+| Settings persistence | done |
 
 ## Design tokens
 

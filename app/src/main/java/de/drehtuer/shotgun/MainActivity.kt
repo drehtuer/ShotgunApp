@@ -23,11 +23,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel = shotgunViewModel()
             val settings by viewModel.settings.collectAsStateWithLifecycle()
+            val teamCount by viewModel.teamCount.collectAsStateWithLifecycle()
 
             ShotgunTheme(preference = settings.themePreference) {
                 ShotgunNavHost(
                     themePreference = settings.themePreference,
                     onThemePreferenceChange = viewModel::setThemePreference,
+                    teamCount = teamCount,
+                    onTeamCountChange = viewModel::setTeamCount,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(PPTheme.colors.bg)

@@ -14,7 +14,10 @@ import de.drehtuer.shotgun.data.settings.SettingsRepository
 import de.drehtuer.shotgun.ui.theme.ThemePreference
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import de.drehtuer.shotgun.ui.screens.clampTeamCount
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -33,6 +36,19 @@ class ShotgunViewModel(
         initialValue = Settings(),
     )
 
+    /**
+     * How many teams to draw for. Deliberately not persisted: the design keeps
+     * it alongside the draw rather than in settings, so it resets with the app
+     * the way the mode does.
+     */
+    private val _teamCount = MutableStateFlow(DEFAULT_TEAMS)
+    val teamCount: StateFlow<Int> = _teamCount.asStateFlow()
+
+    /** Floored at two; the design puts no ceiling on it. */
+    fun setTeamCount(value: Int) {
+        _teamCount.value = clampTeamCount(value)
+    }
+
     fun setThemePreference(value: ThemePreference) = update { repository.setThemePreference(value) }
     fun setHaptics(value: Boolean) = update { repository.setHaptics(value) }
     fun setDim(value: Boolean) = update { repository.setDim(value) }
@@ -44,6 +60,9 @@ class ShotgunViewModel(
     }
 
     companion object {
+        /** The design's starting value. */
+        const val DEFAULT_TEAMS = 3
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as ShotgunApplication

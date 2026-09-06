@@ -32,6 +32,31 @@ stubs.
 
 ---
 
+## 2026-09-06 — Home screen
+
+**Outcome: done.**
+
+Mode cards with their four-dot motifs, the team stepper and the footer link.
+The motifs are drawn from the palette rather than hard-coded, so team colours
+stay in step with `PPColors.teamFills`.
+
+The team count deliberately lives in the ViewModel rather than in settings: the
+design keeps it beside the draw, not among the preferences, so it resets with
+the app the way the mode does. Its clamp is a pure function so the floor is
+unit-tested rather than only observed.
+
+**Two bugs found by looking at it on a device**, neither visible from the code:
+
+- The vertical SETTINGS tab wrapped mid-word - "SETTIN / GS". Compose has no
+  `writing-mode`, and my first attempt measured the rotated label against the
+  tab's 60dp width. Fixed by measuring it unbounded and rotating only for
+  drawing.
+- The stepper's minus stayed at full contrast at the floor, so it looked live
+  while doing nothing. It now dims.
+
+Verified on an API 37 emulator in both palettes: motifs, stepper floor (3 → 2,
+then held), and navigation from each card into the right draw mode.
+
 ## 2026-09-06 — Signing, build variants, persistence
 
 **Outcome: done, in two stacked PRs.**
