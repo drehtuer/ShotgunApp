@@ -1,8 +1,8 @@
 # Working in this repo
 
 Shotgun! is an Android app (Kotlin + Jetpack Compose) built from a Claude
-Design export. The design is the spec, not a mood board: `design/Player
-Picker.dc.html` carries the real state machine in its embedded
+Design export. The design is the spec, not a mood board:
+`design/Shotgun.dc.html` carries the real state machine in its embedded
 `<script type="text/x-dc">` block. **Read [`docs/design.md`](../docs/design.md)
 and the export before implementing any screen behaviour** - countdown timing,
 reveal rules, haptics and the fairness field are all defined between them.
@@ -11,7 +11,8 @@ reveal rules, haptics and the fairness field are all defined between them.
 
 ```
 app/            the Android app
-design/         the Claude Design export (spec) + the bound Modernist system
+design/         the Claude Design export (spec), the identity spec and the
+                bound Modernist system
 docs/           all documentation except README.md
 .devcontainer/  Android SDK, emulator, adb helpers
 ```
@@ -22,6 +23,13 @@ docs/           all documentation except README.md
 | [`docs/build-environment.md`](../docs/build-environment.md) | Building, testing, emulator and device, CI, troubleshooting |
 | [`docs/TODO.md`](../docs/TODO.md) | Open work and the decisions that block it |
 | [`docs/STATUS.md`](../docs/STATUS.md) | What has been done and how it turned out |
+
+Two more references worth knowing, outside `docs/`:
+
+| Source | What it is for |
+| --- | --- |
+| [`design/Shotgun Logo.dc.html`](../design/Shotgun%20Logo.dc.html) | The identity spec: mark geometry, wordmark, brand don'ts |
+| [`design/_ds/…/readme.md`](../design/_ds/modernist-f7022762-4cb9-409e-a6ce-7116795bae5b/readme.md) | Modernist's own guide, from the bound design system |
 
 ## Non-negotiables
 

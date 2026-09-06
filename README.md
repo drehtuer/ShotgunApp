@@ -4,7 +4,9 @@ An Android app for settling *who goes first*. Everyone puts a finger on the
 screen, a countdown runs, and the app draws — a starting player, a full player
 order, or teams.
 
-The mark is the game itself: four fingers on the glass, one of them called.
+The mark is the game itself: four fingers on the glass, one of them called -
+specified in [`design/Shotgun Logo.dc.html`](design/Shotgun%20Logo.dc.html),
+with rendered assets in [`assets/logo/`](assets/logo/).
 
 The design lives in [`design/Shotgun.dc.html`](design/Shotgun.dc.html),
 exported from a Claude Design project. It is the spec for this implementation:
@@ -70,18 +72,6 @@ rebuilds are fast.
 Contributor workflow, testing rules and the emulator/device recipes are in
 [`.claude/CLAUDE.md`](.claude/CLAUDE.md).
 
-## Documentation
-
-| Document | What it covers |
-| --- | --- |
-| [`docs/design.md`](docs/design.md) | The design in Markdown: tokens, screens, state model, behaviour |
-| [`docs/build-environment.md`](docs/build-environment.md) | Building, testing, emulator and device, CI, troubleshooting |
-| [`docs/TODO.md`](docs/TODO.md) | Open work and the decisions that block it |
-| [`docs/STATUS.md`](docs/STATUS.md) | What has been done and how it turned out |
-
-Documentation is kept in sync with the implementation - see
-[`.claude/CLAUDE.md`](.claude/CLAUDE.md).
-
 ### Emulator
 
 ```bash
@@ -111,6 +101,36 @@ works without host networking.
 Run `./.devcontainer/connect-device.sh` with no arguments for the full notes,
 including the older `adb tcpip 5555` route.
 
+## Documentation
+
+| Document | What it covers |
+| --- | --- |
+| [`docs/design.md`](docs/design.md) | The design in Markdown: tokens, screens, state model, behaviour |
+| [`docs/build-environment.md`](docs/build-environment.md) | Building, testing, emulator and device, CI, troubleshooting |
+| [`docs/TODO.md`](docs/TODO.md) | Open work and the decisions that block it |
+| [`docs/STATUS.md`](docs/STATUS.md) | What has been done and how it turned out |
+| [`.claude/CLAUDE.md`](.claude/CLAUDE.md) | Working rules: branching, testing, keeping docs in sync |
+
+The design sources these are derived from:
+
+| Source | What it is |
+| --- | --- |
+| [`design/Shotgun.dc.html`](design/Shotgun.dc.html) | The app design and its state machine - the spec |
+| [`design/Shotgun Logo.dc.html`](design/Shotgun%20Logo.dc.html) | The identity: mark geometry, wordmark, brand don'ts |
+| [`design/_ds/…/readme.md`](design/_ds/modernist-f7022762-4cb9-409e-a6ce-7116795bae5b/readme.md) | Modernist's own guide, from the bound design system |
+
+Documentation is kept in sync with the implementation - see
+[`.claude/CLAUDE.md`](.claude/CLAUDE.md).
+
+## Continuous integration
+
+| Workflow | Runs on | Does |
+| --- | --- | --- |
+| [`pr.yml`](.github/workflows/pr.yml) | PR to `main`, push to `main` | builds, then unit tests and Android Lint |
+| [`docs.yml`](.github/workflows/docs.yml) | `release: published`, manual | builds the GitHub Pages site (Dokka API docs + these documents) |
+
+Reports are uploaded as artifacts, including on failure.
+
 ## Layout
 
 ```
@@ -123,10 +143,11 @@ docs/          documentation
 app/src/main/java/de/drehtuer/shotgun/
   MainActivity.kt
   ui/
-    theme/       PPColors, PPTypography, PPDimens, PlayerPickerTheme
-    navigation/  Destination, DrawMode, PlayerPickerNavHost
-    components/  Rule, ScreenHeader, NotBuiltYet
+    theme/       PPColors, PPTypography, PPDimens, ShotgunTheme
+    navigation/  Destination, DrawMode, ShotgunNavHost
+    components/  Rule, ScreenHeader, NotBuiltYet, ShotgunWordmark
     screens/     Home, Draw, Result, Settings
+    util/        KeepScreenOn, findActivity
 
 app/src/test/    JVM unit tests
 ```

@@ -68,9 +68,6 @@ specified in [`design.md`](design.md):
 - [ ] Consider branch protection on `main` requiring the PR checks.
 - [ ] Cut a first release once there is something to release, which is also the
       first real exercise of the docs workflow.
-- [ ] `docs/github.md` is Claude Design's repo-sync note and was moved from the
-      root. It still refers to the app by its old name. If that sync expects it
-      at the root, it needs repointing.
 - [ ] **Behaviour decisions live in this repo, but re-exports come from Claude
       Design and overwrite them** (it has happened twice). Either mirror the
       haptics and toggle-copy changes upstream, or accept the export as
