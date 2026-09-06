@@ -10,7 +10,14 @@ captures/
 .cxx/
 *.apk
 *.aab
+
+# Signing material. NEVER commit these - this repository is public.
+# The release key exists only on the maintainer's machine; the dev key is held
+# as a GitHub Actions secret. See docs/build-environment.md.
 *.keystore
+*.jks
+keystore/
+keystore.properties
 
 # OS
 .DS_Store

@@ -63,11 +63,15 @@ first create downloads the SDK packages (~1–2 GB) into a named volume, so late
 rebuilds are fast.
 
 ```bash
-./gradlew assembleDebug          # build
+./gradlew assembleDebug          # debug build: debuggable, unminified
+./gradlew assembleRelease        # release build: R8, shrunk, symbols stripped
 ./gradlew testDebugUnitTest      # unit tests
 ./gradlew lint                   # static analysis
 ./gradlew installDebug           # install on the connected device
 ```
+
+Signing keys are **never committed** - this repository is public. See
+[`docs/build-environment.md`](docs/build-environment.md#signing).
 
 Contributor workflow, testing rules and the emulator/device recipes are in
 [`.claude/CLAUDE.md`](.claude/CLAUDE.md).
@@ -126,7 +130,8 @@ Documentation is kept in sync with the implementation - see
 
 | Workflow | Runs on | Does |
 | --- | --- | --- |
-| [`pr.yml`](.github/workflows/pr.yml) | PR to `main`, push to `main` | builds, then unit tests and Android Lint |
+| [`pr.yml`](.github/workflows/pr.yml) | PR to `main`, push to `main` | builds debug, then unit tests and Android Lint |
+| [`release.yml`](.github/workflows/release.yml) | a `v*` tag only | builds the release APK and AAB, attaches them to the release |
 | [`docs.yml`](.github/workflows/docs.yml) | `release: published`, manual | builds the GitHub Pages site (Dokka API docs + these documents) |
 
 Reports are uploaded as artifacts, including on failure.

@@ -66,11 +66,103 @@ gitignored.
 
 ```bash
 ./gradlew assembleDebug          # debug APK
-./gradlew assembleRelease        # release APK, R8 + resource shrinking on
+./gradlew assembleRelease        # release APK
+./gradlew bundleRelease          # release AAB
 ./gradlew installDebug           # build and install on the connected device
 ```
 
-Output lands in `app/build/outputs/apk/`.
+Output lands in `app/build/outputs/apk/` and `app/build/outputs/bundle/`.
+
+### The two variants
+
+| | `debug` | `release` |
+| --- | --- | --- |
+| Debuggable | yes | no |
+| Minified (R8) | no | yes |
+| Resource shrinking | no | yes |
+| Debug symbols | kept | stripped (`debugSymbolLevel = NONE`) |
+| Version name | `0.1.0-debug` | `0.1.0` |
+| Signed with | dev key | release key, when present |
+
+`debug` is the build to test on a device: unminified, with symbols, so a stack
+trace means something.
+
+Two deliberate omissions in `debug`:
+
+- **No `applicationIdSuffix`.** It would rename the package for debug builds
+  and break every `adb` command in this document.
+- **No `enableAndroidTestCoverage`.** It instruments the APK itself, and this
+  app is judged on touch and countdown timing - a slowed build would misreport
+  how it feels. Unit-test coverage is on; it does not touch the APK.
+
+## Signing
+
+**This repository is public. No signing material is ever committed to it.**
+`.gitignore` covers `*.keystore`, `*.jks`, `keystore/` and `keystore.properties`.
+
+There are two keys:
+
+| Key | Lives | Used for |
+| --- | --- | --- |
+| **dev** | your machine, and a GitHub Actions secret | debug builds, CI |
+| **release** | your machine only - **never uploaded anywhere** | release builds |
+
+### Local setup
+
+Gradle reads `keystore.properties` from the repository root:
+
+```properties
+debug.storeFile=keystore/debug.keystore
+debug.storePassword=…
+debug.keyAlias=shotgun-debug
+debug.keyPassword=…
+
+release.storeFile=keystore/release.keystore
+release.storePassword=…
+release.keyAlias=shotgun-release
+release.keyPassword=…
+```
+
+Both the file and the keystores are gitignored. If they are missing the build
+still works: `debug` falls back to the SDK's own debug key, and `release` is
+produced **unsigned**.
+
+### Generating a key
+
+```bash
+keytool -genkeypair -v \
+  -keystore keystore/release.keystore -alias shotgun-release \
+  -keyalg RSA -keysize 4096 -validity 10950 \
+  -dname "CN=Shotgun!, OU=Release, O=drehtuer, C=DE"
+```
+
+**Back the release key up somewhere off this machine.** Losing it means no
+future build can update an installed app - Android identifies an app by its
+signature, and there is no recovery.
+
+### CI
+
+The dev key reaches CI as base64 in a secret:
+
+```bash
+base64 -w0 keystore/debug.keystore    # paste into the DEBUG_KEYSTORE_BASE64 secret
+```
+
+| Secret | Used by |
+| --- | --- |
+| `DEBUG_KEYSTORE_BASE64`, `DEBUG_KEYSTORE_PASSWORD`, `DEBUG_KEY_ALIAS`, `DEBUG_KEY_PASSWORD` | `pr.yml` |
+| `RELEASE_KEYSTORE_BASE64`, … | `release.yml`, **only if you choose to add them** |
+
+**The release key is deliberately not on GitHub**, and the consequence is
+explicit: the release workflow produces **unsigned** artifacts and warns in the
+job log. Sign them locally before distributing:
+
+```bash
+./gradlew assembleRelease bundleRelease    # signed, because the key is local
+```
+
+Every workflow deletes the restored keystore in an `always()` step, so it never
+survives into a later step or an uploaded artifact.
 
 ## Testing
 
@@ -147,8 +239,16 @@ adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
 
 | Workflow | Trigger | Does |
 | --- | --- | --- |
-| [`pr.yml`](../.github/workflows/pr.yml) | PR to `main`, push to `main` | builds, then unit tests and lint |
+| [`pr.yml`](../.github/workflows/pr.yml) | PR to `main`, push to `main` | builds debug, then unit tests and lint |
+| [`release.yml`](../.github/workflows/release.yml) | **a `v*` tag only** | builds the release APK and AAB and attaches them to the release |
 | [`docs.yml`](../.github/workflows/docs.yml) | `release: published`, manual | builds and deploys the Pages site |
+
+Releases are cut by tagging. Nothing in `release.yml` runs for ordinary pushes
+or pull requests:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
 
 Test and lint reports are uploaded as artifacts, including on failure, so a red
 run can be diagnosed without reproducing it locally.
