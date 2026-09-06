@@ -7,28 +7,127 @@ See [`TODO.md`](TODO.md) for what is still open.
 
 ## Current state
 
-**Skeleton + theme.** The project builds, runs on device and in CI, navigation
-works end to end, and the design tokens are in place. The four screens are
-stubs.
+**Complete and verified on the phone.** All four screens are built, the draw
+history and settings persist, and seven rounds of device feedback have settled
+the timing, the reveal, the dim level and the haptics. What is left is a fourth
+draw mode and polish.
 
 | Area | State |
 | --- | --- |
 | Gradle project, Compose setup | done |
 | Modernist theme: colour, type, dimensions | done |
 | Navigation shell across all four screens | done |
-| Appearance setting (system / light / dark) | done, not persisted |
+| Appearance setting (system / light / dark) | done, persisted |
 | Devcontainer: SDK, emulator, adb over Wi-Fi | done |
 | CI: build, unit tests, lint | done |
-| Docs: Pages on release | done, never run yet |
+| Docs: Pages on release | rebuilt on Jekyll, never run in CI |
+| Release: signed artifacts on a `v*` tag | rebuilt for immutable releases, never run |
 | Specification: all open questions answered | done |
-| Home: mode cards, team stepper | stub |
-| Draw surface: multi-touch, countdown, reveal | stub |
+| Home: mode cards, team stepper | done |
+| Draw surface: multi-touch, countdown, reveal | done, verified on the phone |
 | Draw surface: keeps the screen awake | done |
-| Result: fairness heatmap | stub |
-| Settings: haptics, dim, countdown, timing | stub |
-| Draw history database | not started |
+| Result: fairness heatmap | done |
+| Settings: haptics, dim, countdown, timing | done |
+| Draw history database | done |
 | Identity: name, logo, launcher icon | done |
-| Settings persistence | not started |
+| Settings persistence | done |
+| COLOURS draw mode | not started - blocked on one decision |
+
+---
+
+## 2026-09-06 — The documentation site, and the release path
+
+**Outcome: done. Both workflows were broken in ways that only showed up when
+the output was actually built.**
+
+Neither `docs.yml` nor `release.yml` had ever run - there has been no release -
+so both were correct only on paper. Building the site locally, with the same
+container image CI uses, found what reading them had not.
+
+### Every link on the site was broken
+
+The site rendered `README.md` and `docs/*.md` to HTML, and **all 25
+cross-document links pointed at `.md` files that do not exist on the site**.
+A `sed` pass rewrote a handful of prefixes to GitHub URLs and left everything
+else alone, so the published documentation would have been a set of pages that
+could not reach each other.
+
+This is now GitHub's own Jekyll (`actions/jekyll-build-pages`) against a
+`_config.yml` at the repository root, which fixes it at the source:
+`jekyll-relative-links` rewrites `docs/design.md` to the rendered page as a
+matter of course. Links to files Jekyll does not publish - source, workflows,
+the design export - are written as absolute GitHub URLs in the Markdown, so they
+resolve in the repository *and* on the site.
+
+Verified by building with `ghcr.io/actions/jekyll-build-pages` and resolving
+every link against the output: **74 internal links, none broken.**
+
+### The Mermaid diagrams were being served as source code
+
+`architecture.md` has five diagrams. GitHub renders Mermaid in its repository
+Markdown view, which is where they had been checked - but **Pages does not**, so
+every diagram would have appeared as a wall of `graph TD` text.
+
+The layout now loads Mermaid and unwraps Kramdown's
+`<pre><code class="language-mermaid">` into the element Mermaid expects, and the
+blocks stay hidden until it has run so raw source never flashes up. The shim was
+run against the actual generated page under jsdom: 5 blocks matched, 5 unwrapped,
+none left behind, entities decoded.
+
+### A release would have been published unsigned, permanently
+
+`release.yml` treated a missing release key as normal and published **unsigned**
+artifacts with a warning. That was written when the key was deliberately not on
+GitHub; the key has since been added as a secret, so the comment was wrong as
+well as the behaviour.
+
+It matters more than it looks, because **a published release is immutable** -
+assets cannot be added, replaced or removed. Two consequences, both now handled:
+
+- A missing key **fails the run**. An unsigned APK on an immutable release would
+  burn that version number for good.
+- Artifacts are attached to a **draft**, and the release is published only after
+  the upload succeeds. Attaching to an already-published release does not work,
+  and a release published empty could not be corrected.
+
+The signature is confirmed with `apksigner verify` on the built APK rather than
+inferred from the secret existing, because the Gradle config falls back to an
+unsigned build when the keystore fails to load - which is exactly the case the
+check is there to catch.
+
+### Documentation that had drifted
+
+Found by checking claims against the code rather than by reading for sense:
+
+- `STATUS.md` still opened with "**Skeleton + theme** ... the four screens are
+  stubs", describing the app as it was eight entries earlier.
+- `TODO.md` recorded the countdown as "**+1 s per further finger**", which was
+  removed when it became a settling time, and the dim level as "a fixed 0.25",
+  which was wrong twice over before it became a halving of current brightness.
+- `TODO.md` had navigation instrumented tests and the phone verification open;
+  both are done.
+- `design.md` gave the countdown default as 2 s (it is 3.5 s, set on the phone)
+  and `suspense` as "after 600 ms", from before the staged per-finger reveal.
+- `build.gradle.kts` and `release.yml` both still said the release key was
+  "deliberately not on GitHub".
+
+### The docs workflow would never have fired
+
+Caught while preparing the first release rather than by the first release
+failing. `docs.yml` triggered on `release: published`, and `release.yml`
+publishes the release itself using the default `GITHUB_TOKEN` - and **an event
+raised by that token does not start another workflow run**. The site would never
+have published, silently, with nothing in any log pointing at the cause.
+
+Both workflows now watch the `v*` tag directly. The tag is pushed by a person,
+so it triggers.
+
+### What is still unproven
+
+Both workflows are verified as far as they can be without running: the site was
+built locally with the CI image and Dokka's output confirmed at
+`app/build/dokka/html`. **The release path has never executed.** The first `v*`
+tag is the real test of it.
 
 ---
 

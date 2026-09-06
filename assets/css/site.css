@@ -1,0 +1,188 @@
+/* The published documentation, in the app's own palette.
+ *
+ * Tokens are transcribed from ui/theme/Color.kt so the site and the app cannot
+ * drift apart. Modernist rules apply here as they do in the app: zero corner
+ * radius, 2px rules doing the organising, Archivo throughout. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #F3F2F2;
+  --surface: #EAE9E9;
+  --ink: #201E1D;
+  --dim: #7D7979;
+  --line: #BAB6B6;
+  --accent: #EC3013;
+  --rule: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #201E1D;
+    --surface: #2D2B2B;
+    --ink: #F3F2F2;
+    --dim: #9B9797;
+    --line: #605D5D;
+    --accent: #FF563C;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+}
+
+main, .site-footer { max-width: 54rem; margin: 0 auto; padding: 0 1.5rem; }
+main { padding-bottom: 4rem; }
+
+/* Navigation ------------------------------------------------------------- */
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 1.25rem;
+  margin-bottom: 2.5rem;
+  padding: 1rem 1.5rem;
+  border-bottom: var(--rule) solid var(--ink);
+}
+
+.site-nav a {
+  color: var(--dim);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.site-nav a:hover { color: var(--accent); }
+.site-nav a[aria-current="page"] { color: var(--ink); }
+
+.site-nav .brand {
+  margin-right: auto;
+  color: var(--accent);
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  font-weight: 800;
+}
+
+.site-footer {
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+  border-top: var(--rule) solid var(--line);
+  color: var(--dim);
+  font-size: 0.8rem;
+}
+
+/* Type ------------------------------------------------------------------- */
+
+h1, h2, h3, h4 {
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: 2.25rem; margin: 0 0 1.5rem; }
+
+h2 {
+  font-size: 1.4rem;
+  margin: 3rem 0 1rem;
+  padding-top: 0.75rem;
+  border-top: var(--rule) solid var(--line);
+}
+
+h3 { font-size: 1.1rem; margin: 2rem 0 0.5rem; }
+
+h4 {
+  font-size: 0.95rem;
+  margin: 1.5rem 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+a { color: var(--accent); text-decoration: underline; text-underline-offset: 0.15em; }
+
+hr { height: var(--rule); margin: 3rem 0; border: 0; background: var(--line); }
+
+blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1.25rem;
+  border-left: var(--rule) solid var(--accent);
+  color: var(--dim);
+}
+
+/* Code ------------------------------------------------------------------- */
+
+code, pre {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.85em;
+}
+
+code { padding: 0.1em 0.3em; background: var(--surface); }
+
+/* Rouge wraps a highlighted block in .highlighter-rouge > .highlight > pre. */
+pre, div.highlight {
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  border-left: var(--rule) solid var(--line);
+  background: var(--surface);
+}
+
+pre { padding: 1rem 1.25rem; line-height: 1.5; }
+div.highlight pre { margin: 0; border-left: 0; }
+pre code { padding: 0; background: none; }
+
+/* Tables ----------------------------------------------------------------- */
+
+/* Wide tables scroll inside their own box rather than widening the page. */
+table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.5rem 0.9rem 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  border-bottom: var(--rule) solid var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+}
+
+/* Diagrams --------------------------------------------------------------- */
+
+/* Before Mermaid runs this holds the diagram source, which is an unreadable
+ * wall of text - so it is hidden, and appears as the rendered SVG. */
+pre.mermaid {
+  visibility: hidden;
+  padding: 1.5rem 0;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+pre.mermaid[data-processed="true"] { visibility: visible; }
+pre.mermaid svg { max-width: 100%; height: auto; }
+
+/* Lists ------------------------------------------------------------------ */
+
+ul, ol { padding-left: 1.4rem; }
+li { margin: 0.3rem 0; }
+li > input[type="checkbox"] { margin-right: 0.4rem; accent-color: var(--accent); }
+
+img { max-width: 100%; height: auto; }

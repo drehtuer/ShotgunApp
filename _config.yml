@@ -1,0 +1,56 @@
+# GitHub Pages site for the Shotgun! documentation.
+#
+# The documentation is rendered from the Markdown that already lives in this
+# repository - README.md and docs/ - rather than from a copy, so the published
+# site cannot drift from what a reader sees in the repository itself.
+#
+# Built by .github/workflows/docs.yml with actions/jekyll-build-pages, which is
+# GitHub's own Pages toolchain. The Dokka API documentation is copied in
+# afterwards, under /api/.
+
+title: Shotgun!
+description: An Android app for settling who goes first.
+
+# A project site is served from a subdirectory, so every internal link has to
+# go through the `relative_url` filter or it will 404.
+baseurl: "/ShotgunApp"
+
+# All from the github-pages gem, so they are available to the Pages build:
+#   optional-front-matter  renders Markdown that carries no front matter, which
+#                          is all of it - these files are read in the repo too
+#   readme-index           serves README.md as the site index
+#   relative_links         rewrites `docs/design.md` to the rendered page
+#   default-layout         applies the layout below without per-file front matter
+#   titles-from-headings   takes each page's title from its first heading
+plugins:
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-relative-links
+  - jekyll-default-layout
+  - jekyll-titles-from-headings
+
+# The first heading stays in the page; the layout only uses the title for
+# <title> and the navigation.
+titles_from_headings:
+  strip_title: false
+
+# Everything that is source code, tooling or signing material. Without this
+# Jekyll copies the entire repository - including app/build - into the site.
+exclude:
+  - app/
+  - design/
+  - gradle/
+  - keystore/
+  - keystore.properties
+  - build/
+  - build.gradle.kts
+  - settings.gradle.kts
+  - gradle.properties
+  - local.properties
+  - gradlew
+  - gradlew.bat
+  - .devcontainer/
+  - .claude/
+  - .github/
+  - .gradle/
+  - .kotlin/

@@ -1,7 +1,7 @@
 # Design
 
 The specification for the app, derived from
-[`design/Shotgun.dc.html`](../design/Shotgun.dc.html), the Claude
+[`design/Shotgun.dc.html`](https://github.com/drehtuer/ShotgunApp/blob/main/design/Shotgun.dc.html), the Claude
 Design export.
 
 **This document is the specification of record.** The export remains the
@@ -32,8 +32,8 @@ the fingers themselves - no list, no names, nothing typed in.
 ## Identity
 
 The app is **Shotgun!** — the exclamation mark is part of the name and is never
-dropped. Specified in [`design/Shotgun Logo.dc.html`](../design/Shotgun%20Logo.dc.html),
-with rendered assets in [`assets/logo/`](../assets/logo/).
+dropped. Specified in [`design/Shotgun Logo.dc.html`](https://github.com/drehtuer/ShotgunApp/blob/main/design/Shotgun%20Logo.dc.html),
+with rendered assets in [`assets/logo/`](https://github.com/drehtuer/ShotgunApp/tree/main/assets/logo).
 
 **The mark is the game itself:** four fingers on the glass, one of them called.
 One filled dot in accent, three outlined ones that missed, placed where fingers
@@ -217,7 +217,7 @@ lands on top of this field."
 | HAPTICS — *A tick per finger, a stronger buzz on the result* | toggle | on |
 | DIM MODE — *Lowers screen brightness, like an alarm clock* | toggle | on |
 | APPEARANCE — *Follows the system theme unless you pick one* | System / Light / Dark | System |
-| COUNTDOWN — *How long hands must settle before the draw runs* | stepper, 0.5s steps, min 0.5s | 2s |
+| COUNTDOWN — *How long hands must settle before the draw runs* | stepper, 0.5s steps, min 0.5s | 3.5s |
 | REVEAL — *Show order and teams at once, or after a beat* | Suspense / Instant | **Instant** |
 
 Footer note: *"Mode lives on the home screen so the draw surface stays bare.
@@ -241,7 +241,7 @@ settings    { haptics, dim, countdown, timing, themePref }
 | --- | --- | --- |
 | `idle` | start, or all fingers lifted | a 2nd finger lands |
 | `counting` | ≥2 fingers down | countdown expires, or count drops below 2 |
-| `suspense` | draw fires, if not instant | after 600 ms |
+| `suspense` | draw fires, if not instant | the last player has been revealed |
 | `revealed` | draw fires (instant) or suspense ends | all fingers lifted |
 
 ## Behaviour
@@ -255,7 +255,8 @@ countdown itself was not adjustable. Now that it is, the countdown is a
 **settling time** instead:
 
 - Arms when the **second** finger lands, for the configured time
-  (default **2 s**, adjustable in half-second steps from 0.5 s).
+  (default **3.5 s**, adjustable in half-second steps from 0.5 s). The default
+  was set on the phone: shorter rushed a group still reaching in.
 - **Any change in the number of fingers restarts it in full** - someone joining
   or leaving. Nobody is caught by a draw firing as they reach in.
 - **Moving a finger does not restart it.** Repositioning is not a change in the
@@ -309,7 +310,9 @@ Starter mode always reveals instantly - there is nothing to stagger.
 | **teams** | — | team letter on the team fill, "TEAM" beneath |
 
 During `suspense` every ring churns (`scale .94 ↔ 1.06`) in accent at 85%
-opacity — the tell that something is being decided.
+opacity — the tell that something is being decided. **Specified but not yet
+built**: the staged reveal happens, the churn between steps does not. Tracked
+in [`TODO.md`](TODO.md).
 
 ## Keeping the screen awake
 
@@ -355,6 +358,12 @@ on a table in a dark room and a phone at full brightness is unpleasant there.
 - Applies to the app's own window only, by lowering
   `WindowManager.LayoutParams.screenBrightness` — it must not change the
   system-wide setting, and the previous value must return on leaving the app.
+- **Halves whatever the screen is currently at**, with a floor just above off.
+  It is deliberately *relative*: a fixed target was tried first and made a dim
+  screen brighter, which is the one thing the setting must never do. The
+  current level is read from `Settings.System.SCREEN_BRIGHTNESS`, because a
+  window that has never overridden brightness reports `BRIGHTNESS_OVERRIDE_NONE`
+  rather than a value.
 - On by default.
 - It is a *brightness* change, not a palette change: the theme is chosen
   separately under APPEARANCE, and dim must not silently darken the colours.

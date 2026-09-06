@@ -44,7 +44,8 @@ specified in [`design.md`](design.md):
       (floor 2, no ceiling), and the footer link.
 - [x] **Draw surface** — built.
   - [x] one ring per pointer, tracked by pointer id
-  - [x] countdown arming on the 2nd finger, **+1 s per further finger**
+  - [x] countdown arming on the 2nd finger, restarting in full whenever the
+        finger count changes - a settling time, not an additive one
   - [x] edge glow and frame driven by countdown progress
   - [x] drag to reposition without counting as a new player
   - [x] the "N fingers can't fill M teams" guard
@@ -53,9 +54,13 @@ specified in [`design.md`](design.md):
         then `[90]` / `[90, 60, 90]` on the result
   - [x] write the draw to the history database
   - [x] keep the screen awake while the draw surface is open
-  - [ ] **Verify on the Pixel 10a.** Compose pointer injection covers the
-        tracking, but nothing here has been touched by real fingers - feel,
-        timing and haptic strength are unjudged.
+  - [x] **Verified on the Pixel 10a** over seven rounds of feedback. Feel,
+        timing and haptic strength are judged; the countdown default landed on
+        3.5 s as a result.
+  - [ ] Whether the rank labels clear the player's actual hand is still a
+        heuristic - they are drawn above the ring, flipping below near the top
+        edge. It holds for the hands it has been tried with, not by
+        construction.
   - [ ] The suspense churn animation is not implemented; the pause happens but
         the rings do not pulse during it.
   - [ ] Lifting a finger removes its ring, so the design's double-tap-to-lift
@@ -69,8 +74,10 @@ specified in [`design.md`](design.md):
       timing picker, all persisted.
   - [x] DIM MODE — lowers `WindowManager.LayoutParams.screenBrightness` for the
         app's own window only, restored on leave.
-  - [ ] The dim level is a fixed 0.25. Whether that is right for a dark room is
-        a judgement that needs the phone, not the emulator.
+  - [x] The dim level halves the current brightness, floored just above off.
+        Two earlier attempts were wrong on the phone: a fixed 0.25 made an
+        already-dim screen *brighter*, and capping at the current value made
+        the setting do nothing.
 
 ## Testing
 
@@ -78,7 +85,8 @@ specified in [`design.md`](design.md):
       extension arithmetic and position normalisation. Heatmap density follows
       with the Result screen.
 - [x] Instrumented tests for multi-touch and the Room DAO.
-- [ ] Instrumented tests for navigation.
+- [x] Instrumented tests for navigation - `NavigationStateTest`, which
+      reproduced the blank screen before it was fixed and now guards it.
 - [ ] Decide whether CI should run instrumented tests on an emulator. They pass
       locally but nothing runs them automatically, so they will rot.
 
@@ -94,12 +102,21 @@ specified in [`design.md`](design.md):
       repository to an organisation. Until then, stacked PRs are chained by
       hand: each branches from the one below it, and GitHub retargets them to
       `main` as they merge.
-- [x] Signing keys configured as repository secrets - both dev and release.
+- [x] Signing keys configured as repository secrets - both dev and release. All
+      eight are set; nothing further needs adding.
+- [x] The documentation site is rendered by GitHub's own Jekyll, from the
+      Markdown in place rather than a copy.
 - [ ] **Back the release keystore up off this machine.** It is gitignored, and
       a GitHub secret is write-only, so the local file is the only readable
       copy. Losing it means no future build can ever update an installed app.
-- [ ] Cut a first release once there is something to release - `v*` tag - which
-      is also the first real exercise of the release and docs workflows.
+- [ ] Cut a first release - `v0.1.0` - which is also the first real exercise of
+      the release and docs workflows. Both have been rebuilt but **neither has
+      ever run**: the release path is checked by reading, the docs path by
+      building the site locally with the same container image CI uses.
+- [ ] Consider `actions/attest-build-provenance` on the release artifacts. It
+      pairs with immutable releases - the release cannot change, and the
+      attestation says which workflow and commit produced it - but it is not
+      needed until something is actually distributed.
 - [ ] **Behaviour decisions live in this repo, but re-exports come from Claude
       Design and overwrite them** (it has happened twice). Either mirror the
       haptics and toggle-copy changes upstream, or accept the export as
@@ -113,3 +130,9 @@ specified in [`design.md`](design.md):
       scale, and the draw surface has no text alternative.
 - [ ] Decide what happens on very large finger counts - the design says the
       screen is the limit, which is not a limit.
+- [ ] Five informational Lint findings, none failing the build and all
+      predating the documentation work: `NewerVersionAvailable`,
+      `ModifierParameter` (Wordmark), `AutoboxingStateCreation` (DrawScreen),
+      `UnusedResources` (`ic_launcher_round.xml`) and
+      `UseOfNonLambdaOffsetOverload` (SettingsScreen). Worth a pass, or a
+      narrow suppression each with a reason.

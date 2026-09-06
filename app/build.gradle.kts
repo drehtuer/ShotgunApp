@@ -87,8 +87,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Left unsigned when the release key is absent, which is the normal
-            // case in CI - the release key is deliberately not on GitHub.
+            // Left unsigned when the release key is absent, so a checkout
+            // without the keystore still builds. CI does have the key, as a
+            // repository secret, and the release workflow refuses to publish
+            // if it is missing rather than shipping this fallback.
             signingConfig = signingConfigs.getByName("release")
                 .takeIf { it.storeFile?.exists() == true }
         }
