@@ -70,12 +70,10 @@ specified in [`design.md`](design.md):
       a PR but does not yet require the PR checks to pass.
 - [ ] Consider enabling the **merge queue** on the `main` ruleset - stacked PRs
       are currently chained by hand.
-- [ ] Add the dev signing key to the repository secrets so CI signs debug
-      builds: `DEBUG_KEYSTORE_BASE64`, `DEBUG_KEYSTORE_PASSWORD`,
-      `DEBUG_KEY_ALIAS`, `DEBUG_KEY_PASSWORD`.
-- [ ] **Back the release keystore up off this machine.** It is gitignored and
-      exists nowhere else; losing it means no future build can ever update an
-      installed app.
+- [x] Signing keys configured as repository secrets - both dev and release.
+- [ ] **Back the release keystore up off this machine.** It is gitignored, and
+      a GitHub secret is write-only, so the local file is the only readable
+      copy. Losing it means no future build can ever update an installed app.
 - [ ] Cut a first release once there is something to release - `v*` tag - which
       is also the first real exercise of the release and docs workflows.
 - [ ] **Behaviour decisions live in this repo, but re-exports come from Claude

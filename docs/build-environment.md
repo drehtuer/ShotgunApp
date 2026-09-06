@@ -105,7 +105,12 @@ There are two keys:
 | Key | Lives | Used for |
 | --- | --- | --- |
 | **dev** | your machine, and a GitHub Actions secret | debug builds, CI |
-| **release** | your machine only - **never uploaded anywhere** | release builds |
+| **release** | your machine, and a GitHub Actions secret | release builds |
+
+Both keys are held as **encrypted Actions secrets**, never as files in the
+repository. That distinction is the whole point: this repository is public, so a
+committed key would be world-readable, while a secret is encrypted at rest and
+is not exposed to pull requests from forks.
 
 ### Local setup
 
@@ -151,18 +156,19 @@ base64 -w0 keystore/debug.keystore    # paste into the DEBUG_KEYSTORE_BASE64 sec
 | Secret | Used by |
 | --- | --- |
 | `DEBUG_KEYSTORE_BASE64`, `DEBUG_KEYSTORE_PASSWORD`, `DEBUG_KEY_ALIAS`, `DEBUG_KEY_PASSWORD` | `pr.yml` |
-| `RELEASE_KEYSTORE_BASE64`, … | `release.yml`, **only if you choose to add them** |
+| `RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` | `release.yml` |
 
-**The release key is deliberately not on GitHub**, and the consequence is
-explicit: the release workflow produces **unsigned** artifacts and warns in the
-job log. Sign them locally before distributing:
-
-```bash
-./gradlew assembleRelease bundleRelease    # signed, because the key is local
-```
+All eight are configured, so CI signs both variants end to end. If the release
+secrets are ever removed the release workflow still succeeds - it produces
+**unsigned** artifacts and warns in the job log, rather than failing the build.
 
 Every workflow deletes the restored keystore in an `always()` step, so it never
 survives into a later step or an uploaded artifact.
+
+**Back the release key up somewhere off this machine and off GitHub.** A secret
+can be read back by no one, including you - it is write-only once set. If the
+local copy is lost, the key is gone, and no future build can update an
+installed app.
 
 ## Testing
 
