@@ -19,10 +19,25 @@ fun signingValue(property: String, env: String): String? =
 /**
  * The marketing version, in one place. The debug build appends `-debug` to
  * `versionName`, so the APK naming below uses this rather than the variant's
- * own version - `Shotgun-debug-0.1.0.apk` reads better than
- * `Shotgun-0.1.0-debug.apk`, and matches how the file is asked for.
+ * own version - `Shotgun-debug-0.1.1.apk` reads better than
+ * `Shotgun-0.1.1-debug.apk`, and matches how the file is asked for.
+ *
+ * The release workflow refuses to run if the `v*` tag does not match this.
  */
-val appVersion = "0.1.0"
+val appVersion = "0.1.1"
+
+/**
+ * Derived, never written by hand. `versionCode` is what Android compares to
+ * decide whether an APK is an update, and a release that repeats or lowers it
+ * cannot be installed over the one before - which, with immutable releases, is
+ * not a thing that can be corrected afterwards.
+ *
+ * `major * 10000 + minor * 100 + patch`, so 0.1.1 is 101. It steps up from the
+ * 1 that `v0.1.0` shipped by hand, which is all that is required of it.
+ */
+val appVersionCode = appVersion.split(".").let { (major, minor, patch) ->
+    major.toInt() * 10_000 + minor.toInt() * 100 + patch.toInt()
+}
 
 plugins {
     alias(libs.plugins.android.application)
@@ -39,7 +54,7 @@ android {
         applicationId = "de.drehtuer.shotgun"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
+        versionCode = appVersionCode
         versionName = appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

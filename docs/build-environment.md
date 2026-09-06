@@ -81,7 +81,14 @@ named for people rather than for Gradle:
 
 The version comes from `appVersion` in `app/build.gradle.kts`, which is also
 what `versionName` is set from - one value, so the file name and the manifest
-cannot disagree. The release workflow **fails if the tag and `appVersion`
+cannot disagree.
+
+**`versionCode` is derived from it too, never written by hand.** It is what
+Android compares to decide whether an APK is an update, and a release that
+repeats or lowers it cannot be installed over the one before - which an
+immutable release cannot then correct. `major * 10000 + minor * 100 + patch`,
+so `0.1.1` is `101`. To cut a release, change `appVersion` and tag; there is no
+second number to remember. The release workflow **fails if the tag and `appVersion`
 disagree**: the artifacts are named from the build file, so a `v0.2.0` tag on
 an unchanged `appVersion` would publish files called `Shotgun-0.1.0.apk`, and a
 published release cannot be corrected.

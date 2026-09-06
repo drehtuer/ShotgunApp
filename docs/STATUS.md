@@ -28,6 +28,33 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-06 — v0.1.1, and one number fewer to get wrong
+
+**Outcome: a patch release, and `versionCode` taken out of human hands.**
+
+Everything since `v0.1.0` was infrastructure, documentation and three Lint
+fixes - the artifact naming, the Jekyll site, the security policy, Dependabot
+and CodeQL. **No behaviour changed**, so a patch bump rather than a minor one.
+
+The release itself only needed `appVersion`. But `versionCode` was still a
+hand-written `1`, and it is the number Android compares to decide whether an
+APK is an update: **a release that repeats or lowers it cannot be installed over
+the one before**, and an immutable release cannot be corrected afterwards. It is
+also exactly the kind of number that gets forgotten, because nothing local
+fails when it is wrong - the build succeeds, the tests pass, and the damage only
+appears on someone else's phone.
+
+So it is derived now - `major * 10000 + minor * 100 + patch`, giving `101` for
+`0.1.1` - and cutting a release means changing one value. Verified against the
+built APK rather than the source: `aapt2 dump badging` reports
+`versionCode='101' versionName='0.1.1'`.
+
+That is the third guard on this path, after the signature check and the
+tag-versus-`appVersion` check. All three exist because a published release
+cannot be taken back, so the only place to catch a mistake is before the tag.
+
+---
+
 ## 2026-09-06 — The keystore backup is only half a backup
 
 **Outcome: a wrong assumption caught before it mattered.**
