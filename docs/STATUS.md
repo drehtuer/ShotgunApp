@@ -86,6 +86,14 @@ So the integration is a contract, not a tool: **the export is never hand-edited*
 good intentions. Two hand-edits made before the rule still need mirroring
 upstream; they are in `TODO.md`.
 
+`/design-login`, which would authorize the sync tool, is **not available in this
+environment** either - and it is a Claude Code command rather than anything in
+the Claude Design UI, which is worth saying because it is the wrong place to
+look for it. Neither matters: nothing here depends on it. `DesignTokenTest`
+reads a file already in the repository, so it needs no account, no login and no
+network. `build-environment.md` records the re-export procedure that replaces
+all of it.
+
 ---
 
 ## 2026-09-06 — v0.1.1, and one number fewer to get wrong

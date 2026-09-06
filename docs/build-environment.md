@@ -454,11 +454,39 @@ The export is declared as an input of the test task. Without that, changing
 *only* the export - exactly what a re-export does - leaves `testDebugUnitTest`
 `UP-TO-DATE` and the test never runs.
 
-Claude Design's `/design-sync` does **not** apply to this repository. It syncs
+### Taking a re-export
+
+A re-export replaces these files, and nothing else in the repository:
+
+```
+design/Shotgun.dc.html          the app design - the spec
+design/Shotgun Logo.dc.html     the identity spec
+design/_ds/modernist-…/         the bound design system, if it moved
+design/support.js               export scaffolding
+design/android-frame.jsx
+```
+
+Then run the unit tests. `DesignTokenTest` is the gate, and **a failure there is
+a decision, not a defect**:
+
+- The design changed a colour on purpose → update `PPColors` to match.
+- The export reverted something decided here → re-apply it **in the Claude
+  Design project**, not in the file. Editing the file is how it gets lost again.
+- A new token appeared → decide whether the app adopts it, then map it or take
+  it out upstream.
+
+### What is not part of this
+
+Claude Design's `/design-sync` does **not** apply to this repository, and no
+design authorization is needed to work on it. `/design-sync` syncs
 design-*system* projects, pushing a local component library up to one. This repo
-consumes a design system - Modernist, bound as
+*consumes* a design system - Modernist, bound as
 `design/_ds/modernist-f7022762-…/` - and the app is Kotlin, not a component
-library. There is nothing here to push.
+library, so there is nothing here to push.
+
+Everything above works against the files already in the repository:
+`DesignTokenTest` reads `design/Shotgun.dc.html` off disk and needs no account,
+no login and no network.
 
 ## Security
 
