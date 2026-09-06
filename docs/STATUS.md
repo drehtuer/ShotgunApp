@@ -28,6 +28,45 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-06 — Polish: Lint clean, and a decision about how many fingers
+
+**Outcome: done. Lint is at zero findings, and "how many players" has an answer
+that is not a number this app invented.**
+
+The five informational Lint findings were each a real thing rather than noise,
+so all five were fixed rather than suppressed:
+
+- `AutoboxingStateCreation` - the countdown's `progress` was a `Float` in a
+  generic state box, boxed on **every frame** of the countdown. Now
+  `mutableFloatStateOf`.
+- `UseOfNonLambdaOffsetOverload` - the settings toggle knob is animated, and the
+  non-lambda `offset` recomposed the whole `Box` per frame instead of only
+  re-laying it out.
+- `ModifierParameter` - `ShotgunMark` took `size` before `modifier`, so a
+  caller could not pass a modifier positionally the way every other composable
+  here allows.
+- `UnusedResources` - `ic_launcher_round.xml` was **byte-identical** to
+  `ic_launcher.xml`. Both are adaptive icons, which the launcher already masks
+  to whatever shape it wants, so the round variant was a duplicate that could
+  drift. Deleted rather than wired up with `android:roundIcon`.
+- `NewerVersionAvailable` - coroutines 1.10.2 → 1.11.0.
+
+### How many fingers
+
+The design said "the screen is the limit", which is not a limit. The answer is
+that **the app should not invent one**: Android reports a device-dependent
+maximum number of simultaneous pointers, commonly ten, and past that a finger
+produces no pointer at all. A cap in the app would only be a second, lower
+limit that then had to be explained.
+
+Ten is also the practical ceiling for the thing itself - two hands, one phone -
+so the behaviour is pinned there by three tests: ten fingers each get a distinct
+rank, ten across three teams are dealt round robin with sizes differing by at
+most one, and lifting one of ten leaves the other nine undisturbed. 64 unit
+tests now.
+
+---
+
 ## 2026-09-06 — Security policy, Dependabot and code scanning
 
 **Outcome: done. Most of the value was in deciding what *not* to automate.**

@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -114,7 +115,7 @@ fun DrawScreen(
     // and both timers were cancelled and restarted before they could finish -
     // so nothing resolved until the fingers came off.
     var phaseState by remember { mutableStateOf(engine.phase) }
-    var progress by remember { mutableStateOf(0f) }
+    var progress by remember { mutableFloatStateOf(0f) }
     var refusal by remember { mutableStateOf<String?>(null) }
     var surface by remember { mutableStateOf(0f to 0f) }
 
