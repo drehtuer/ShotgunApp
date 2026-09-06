@@ -113,6 +113,9 @@ specified in [`design.md`](design.md):
       The release workflow worked first time.
 - [ ] Publish the documentation site. The first run failed on a permission
       error; fixed, but the site has not been deployed yet.
+- [ ] `v0.1.0` carries `app-release.apk` / `app-release.aab`, from before the
+      artifacts were named. Releases are immutable, so it keeps them; the next
+      release gets `Shotgun-<version>.apk`.
 - [ ] Consider `actions/attest-build-provenance` on the release artifacts. It
       pairs with immutable releases - the release cannot change, and the
       attestation says which workflow and commit produced it - but it is not

@@ -1,3 +1,4 @@
+import com.android.build.api.variant.impl.VariantOutputImpl
 import java.util.Properties
 
 /**
@@ -15,6 +16,14 @@ val keystoreProperties = Properties().apply {
 fun signingValue(property: String, env: String): String? =
     keystoreProperties.getProperty(property) ?: System.getenv(env)
 
+/**
+ * The marketing version, in one place. The debug build appends `-debug` to
+ * `versionName`, so the APK naming below uses this rather than the variant's
+ * own version - `Shotgun-debug-0.1.0.apk` reads better than
+ * `Shotgun-0.1.0-debug.apk`, and matches how the file is asked for.
+ */
+val appVersion = "0.1.0"
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -31,7 +40,7 @@ android {
         minSdk = 26
         targetSdk = 37
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -110,6 +119,28 @@ android {
     ksp { arg("room.schemaLocation", "$projectDir/schemas") }
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    }
+}
+
+/**
+ * Name the APKs for people rather than for Gradle: `Shotgun-0.1.0.apk` and
+ * `Shotgun-debug-0.1.0.apk`, instead of `app-release.apk` and `app-debug.apk`.
+ * A release asset has to say what it is and which version it is without being
+ * opened, and the default name says neither.
+ *
+ * `outputFileName` is not on the public `VariantOutput` interface, so this has
+ * to go through `VariantOutputImpl`. The cast is checked rather than forced -
+ * an output that is not one leaves the default name instead of failing the
+ * build.
+ */
+androidComponents {
+    onVariants { variant ->
+        val suffix = if (variant.buildType == "debug") "-debug" else ""
+        variant.outputs.forEach { output ->
+            (output as? VariantOutputImpl)?.outputFileName?.set(
+                "Shotgun$suffix-$appVersion.apk"
+            )
+        }
     }
 }
 
