@@ -54,11 +54,12 @@ specified in [`design.md`](design.md):
   - [ ] The field is recomputed on the main thread when history changes. It is
         fast at the sizes involved, but belongs off the main thread before the
         history gets large.
-- [ ] **Settings** — the two toggles, the countdown stepper and the reveal
-      timing picker. Appearance is already wired.
-  - [ ] DIM MODE — lower `WindowManager.LayoutParams.screenBrightness` for the
-        app's own window only, restoring it on leave. Must not touch the
-        system-wide setting, and must not darken the palette.
+- [x] **Settings** — the two toggles, the countdown stepper and the reveal
+      timing picker, all persisted.
+  - [x] DIM MODE — lowers `WindowManager.LayoutParams.screenBrightness` for the
+        app's own window only, restored on leave.
+  - [ ] The dim level is a fixed 0.25. Whether that is right for a dark room is
+        a judgement that needs the phone, not the emulator.
 
 ## Testing
 

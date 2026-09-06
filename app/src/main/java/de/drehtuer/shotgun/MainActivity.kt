@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.drehtuer.shotgun.ui.navigation.ShotgunNavHost
 import de.drehtuer.shotgun.ui.theme.PPTheme
 import de.drehtuer.shotgun.ui.theme.ShotgunTheme
+import de.drehtuer.shotgun.ui.util.DimScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,9 +30,16 @@ class MainActivity : ComponentActivity() {
             val drawCount by viewModel.drawCount.collectAsStateWithLifecycle()
 
             ShotgunTheme(preference = settings.themePreference) {
+                // Brightness is an app-wide property, so it is applied here
+                // rather than on the screen that happens to toggle it.
+                DimScreen(enabled = settings.dim)
+
                 ShotgunNavHost(
-                    themePreference = settings.themePreference,
                     onThemePreferenceChange = viewModel::setThemePreference,
+                    onHapticsChange = viewModel::setHaptics,
+                    onDimChange = viewModel::setDim,
+                    onCountdownChange = viewModel::setCountdownSeconds,
+                    onRevealTimingChange = viewModel::setRevealTiming,
                     teamCount = teamCount,
                     onTeamCountChange = viewModel::setTeamCount,
                     settings = settings,
