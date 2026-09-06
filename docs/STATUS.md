@@ -53,6 +53,29 @@ That is the third guard on this path, after the signature check and the
 tag-versus-`appVersion` check. All three exist because a published release
 cannot be taken back, so the only place to catch a mistake is before the tag.
 
+### The release worked; the docs deploy was rejected
+
+`Shotgun-0.1.1.apk` and `Shotgun-0.1.1.aab`, signed and published. The
+documentation workflow **built the site and then failed to deploy it**:
+
+> Tag "v0.1.1" is not allowed to deploy to github-pages due to environment
+> protection rules.
+
+The `github-pages` environment ships allowing the **default branch only**, and
+moving the trigger to the `v*` tag put the deploy on a ref it does not accept.
+The first successful publish had been a `workflow_dispatch` from `main`, which
+is exactly why this went unnoticed - **the working path and the release path
+were never the same path.**
+
+The environment now carries a `v*` tag policy alongside `main`, and the failed
+job was re-run against the artifact it had already built. Site live, and it
+carries this entry.
+
+**Lesson, and it is the same one as the `--user` flag on the Jekyll container:**
+verifying through a slightly different route than the real one verifies a
+slightly different thing. Both failures were invisible until the real path ran
+for the first time.
+
 ---
 
 ## 2026-09-06 — The keystore backup is only half a backup

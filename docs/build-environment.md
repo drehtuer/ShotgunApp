@@ -399,8 +399,20 @@ Four things about it are easy to get wrong:
 - **Dokka's output is copied in after Jekyll**, not before: it contains
   underscore-prefixed files, which Jekyll would silently drop.
 
-**GitHub Pages must be set to Source: GitHub Actions** in the repository
-settings, or the deploy step fails.
+Two repository settings the workflow cannot supply for itself:
+
+- **Pages Source must be GitHub Actions**, or the deploy step fails.
+- **The `github-pages` environment must allow the tag to deploy.** It ships
+  allowing the default branch only, and this workflow runs on a `v*` tag, so
+  the deploy is rejected with *"Tag v0.1.1 is not allowed to deploy to
+  github-pages due to environment protection rules"* - after the site has built
+  successfully, in a separate job, which makes it look like a deployment problem
+  rather than a settings one. The environment now carries two policies:
+
+  | Type | Pattern | For |
+  | --- | --- | --- |
+  | branch | `main` | `workflow_dispatch`, republishing without a release |
+  | tag | `v*` | the release itself |
 
 To preview the site exactly as CI builds it, run the same container image:
 
