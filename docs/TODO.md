@@ -42,9 +42,12 @@ authoritatively, in the design export itself.
       more than most repositories, because a leaked signing key is the one
       unrecoverable failure - see
       [`SECURITY.md`](https://github.com/drehtuer/ShotgunApp/blob/main/SECURITY.md).
-- [ ] **Re-exports from Claude Design overwrite behaviour decided here** - it
-      has happened twice. Either mirror the haptics and toggle-copy changes
-      upstream, or accept the export as visuals-only and stop hand-editing it.
+- [ ] **Mirror the two hand-edits still living in the export.** The rule is now
+      that the export is never edited here - visuals go upstream in the Claude
+      Design project, behaviour goes in `design.md`. Two edits predate that
+      rule and would be lost by a re-export: the haptics change and the
+      HAPTICS/DIM MODE toggle copy. They need making in the Design project
+      itself. `DesignTokenTest` covers the palette, not copy.
 - [ ] Consider `actions/attest-build-provenance` on release artifacts. It pairs
       with immutable releases - the release cannot change, and the attestation
       says which workflow and commit produced it - but it is not needed until
