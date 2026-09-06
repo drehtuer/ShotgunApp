@@ -67,14 +67,6 @@ authoritatively, in the design export itself.
       on a real screen at small sizes.
 - [ ] **No accessibility tests.** The design leans on colour and scale, and the
       draw surface has no text alternative.
-- [ ] Decide what happens on very large finger counts - the design says the
-      screen is the limit, which is not a limit.
-- [ ] Five informational Lint findings, none failing the build:
-      `NewerVersionAvailable`, `ModifierParameter` (Wordmark),
-      `AutoboxingStateCreation` (DrawScreen), `UnusedResources`
-      (`ic_launcher_round.xml`), `UseOfNonLambdaOffsetOverload`
-      (SettingsScreen). Worth a pass, or a narrow suppression each with a
-      reason.
 
 ## Settled, so they are not open
 

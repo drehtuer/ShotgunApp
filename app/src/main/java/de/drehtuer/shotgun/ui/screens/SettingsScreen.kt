@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import android.content.Intent
@@ -225,7 +226,7 @@ private fun Toggle(
             ) {
                 Box(
                     Modifier
-                        .offset(x = knobOffset, y = 2.dp)
+                        .offset { IntOffset(knobOffset.roundToPx(), 2.dp.roundToPx()) }
                         .size(22.dp)
                         .background(if (checked) colors.accentInk else colors.dim),
                 )

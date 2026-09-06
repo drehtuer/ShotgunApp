@@ -34,7 +34,7 @@ private data class MarkDot(val x: Float, val y: Float, val scale: Float, val cla
 
 /** The mark on its own, drawn from the same geometry as the launcher icon. */
 @Composable
-fun ShotgunMark(size: Dp = 26.dp, modifier: Modifier = Modifier) {
+fun ShotgunMark(modifier: Modifier = Modifier, size: Dp = 26.dp) {
     val claimed = PPTheme.colors.accent
     val missed = PPTheme.colors.dim
     Canvas(modifier.size(size)) {

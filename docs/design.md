@@ -224,6 +224,23 @@ Footer note: *"Mode lives on the home screen so the draw surface stays bare.
 Moving a finger never counts as a new player. Team count has no ceiling — the
 screen is the limit."*
 
+### How many fingers
+
+**There is no cap on players, and there is deliberately no arbitrary one.** The
+limit is the touchscreen: Android reports a device-dependent maximum number of
+simultaneous pointers - commonly ten - and beyond that a finger produces no
+pointer for the app to see at all. A cap in the app would only be a second,
+lower limit that had to be explained.
+
+Ten is also the practical ceiling for the thing itself: it is two hands, and the
+draw exists to settle an argument around one phone. Tests pin the behaviour
+there - ten fingers each get a distinct rank, ten across three teams are dealt
+round robin with sizes differing by at most one, and lifting one of ten leaves
+the other nine undisturbed.
+
+The teams guard still applies: fewer fingers than teams is refused, whatever the
+numbers are.
+
 ## State model
 
 ```

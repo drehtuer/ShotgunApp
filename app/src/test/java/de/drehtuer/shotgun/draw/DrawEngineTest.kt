@@ -310,4 +310,47 @@ class DrawEngineTest {
             )
         }
     }
+
+    // ---- how many fingers ---------------------------------------------------
+
+    // There is deliberately no cap on players. The limit is the touchscreen:
+    // Android reports a device-dependent maximum number of simultaneous
+    // pointers, commonly ten, and the engine simply draws for whatever it is
+    // given. These pin the behaviour at a full pair of hands, which is the most
+    // any real group can put on one phone.
+
+    @Test
+    fun `ten fingers all get a distinct rank`() {
+        val e = engine(mode = DrawMode.ORDER, instant = true)
+        repeat(10) { e.onDown(it.toLong(), it * 10f, 0f, now = 0) }
+        val drawn = e.tick(now = 10_000) as DrawEffect.Drawn
+
+        assertEquals(10, drawn.outcome.order.size)
+        assertEquals(10, drawn.outcome.order.toSet().size)
+        assertEquals((1..10).toSet(), drawn.outcome.assignment.values.toSet())
+    }
+
+    @Test
+    fun `ten fingers across three teams are dealt round robin`() {
+        val e = engine(mode = DrawMode.TEAMS, teams = 3, instant = true)
+        repeat(10) { e.onDown(it.toLong(), it * 10f, 0f, now = 0) }
+        val drawn = e.tick(now = 10_000) as DrawEffect.Drawn
+
+        // Ten into three: sizes differ by at most one, and nobody is left out.
+        val sizes = drawn.outcome.assignment.values.groupingBy { it }.eachCount()
+        assertEquals(setOf(0, 1, 2), sizes.keys)
+        assertEquals(10, sizes.values.sum())
+        assertEquals(1, sizes.values.max() - sizes.values.min())
+    }
+
+    @Test
+    fun `a finger lifted from a large group does not disturb the rest`() {
+        val e = engine(mode = DrawMode.ORDER, instant = true)
+        repeat(10) { e.onDown(it.toLong(), it * 10f, 0f, now = 0) }
+        e.onUp(4, now = 100)
+        val drawn = e.tick(now = 10_000) as DrawEffect.Drawn
+
+        assertEquals(9, drawn.outcome.order.size)
+        assertTrue(4L !in drawn.outcome.order)
+    }
 }
