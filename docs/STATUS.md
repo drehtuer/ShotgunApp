@@ -1,430 +1,226 @@
 # Status
 
-A running record of work done and how it turned out. Newest first. Add an entry
-when a task lands; keep it factual, including the parts that went wrong.
+What has been done and how it turned out. Newest first. Entries keep the parts
+that went wrong - a bug someone hit and fixed is worth more to the next person
+than a clean summary that hides it.
 
 See [`TODO.md`](TODO.md) for what is still open.
 
 ## Current state
 
-**Complete and verified on the phone.** All four screens are built, the draw
-history and settings persist, and seven rounds of device feedback have settled
-the timing, the reveal, the dim level and the haptics. What is left is a fourth
-draw mode and polish.
+**Built, verified on the phone, and released.** All four screens work, the draw
+history and settings persist, and seven rounds of device feedback settled the
+timing, the reveal, the dim level and the haptics. `v0.1.0` is published and the
+documentation site is live. What is left is a fourth draw mode and polish.
 
 | Area | State |
 | --- | --- |
-| Gradle project, Compose setup | done |
-| Modernist theme: colour, type, dimensions | done |
-| Navigation shell across all four screens | done |
-| Appearance setting (system / light / dark) | done, persisted |
+| Gradle project, Compose setup, Modernist theme | done |
+| Navigation across all four screens | done |
+| Home, Draw surface, Result, Settings | done, verified on the phone |
+| Draw history database, settings persistence | done |
+| Identity: name, logo, launcher icon | done |
 | Devcontainer: SDK, emulator, adb over Wi-Fi | done |
 | CI: build, unit tests, lint | done |
-| Docs: Pages on release | rebuilt on Jekyll, never run in CI |
-| Release: signed artifacts on a `v*` tag | rebuilt for immutable releases, never run |
-| Specification: all open questions answered | done |
-| Home: mode cards, team stepper | done |
-| Draw surface: multi-touch, countdown, reveal | done, verified on the phone |
-| Draw surface: keeps the screen awake | done |
-| Result: fairness heatmap | done |
-| Settings: haptics, dim, countdown, timing | done |
-| Draw history database | done |
-| Identity: name, logo, launcher icon | done |
-| Settings persistence | done |
+| Release: signed artifacts on a `v*` tag | `v0.1.0` published |
+| Documentation site | live at [drehtuer.github.io/ShotgunApp](https://drehtuer.github.io/ShotgunApp/) |
 | COLOURS draw mode | not started - blocked on one decision |
 
 ---
 
-## 2026-09-06 — The documentation site, and the release path
+## 2026-09-06 — First release, and the documentation site
 
-**Outcome: done. Both workflows were broken in ways that only showed up when
-the output was actually built.**
+**Outcome: `v0.1.0` published and the site live - after both workflows turned
+out to be broken in ways only building their output could show.**
 
-Neither `docs.yml` nor `release.yml` had ever run - there has been no release -
-so both were correct only on paper. Building the site locally, with the same
-container image CI uses, found what reading them had not.
+Neither had ever run. Building the site locally, with the same container image
+CI uses, found what reading them had not.
 
-### Every link on the site was broken
+**Every link on the site was broken.** All 25 cross-document links pointed at
+`.md` files that do not exist on the site; a `sed` pass rewrote a few prefixes
+and left the rest. Now GitHub's own Jekyll against a root `_config.yml`, which
+fixes it at the source - `jekyll-relative-links` resolves them as a matter of
+course. Links to files Jekyll does not publish are absolute GitHub URLs, so they
+work in the repository *and* on the site.
 
-The site rendered `README.md` and `docs/*.md` to HTML, and **all 25
-cross-document links pointed at `.md` files that do not exist on the site**.
-A `sed` pass rewrote a handful of prefixes to GitHub URLs and left everything
-else alone, so the published documentation would have been a set of pages that
-could not reach each other.
+**The Mermaid diagrams would have been served as source code.** GitHub renders
+Mermaid in its *repository* Markdown view - which is where they had been checked
+- but **Pages does not**. All five would have appeared as walls of `graph TD`
+text. The layout now loads Mermaid and unwraps Kramdown's markup, with blocks
+hidden until it has run.
 
-This is now GitHub's own Jekyll (`actions/jekyll-build-pages`) against a
-`_config.yml` at the repository root, which fixes it at the source:
-`jekyll-relative-links` rewrites `docs/design.md` to the rendered page as a
-matter of course. Links to files Jekyll does not publish - source, workflows,
-the design export - are written as absolute GitHub URLs in the Markdown, so they
-resolve in the repository *and* on the site.
+**A release would have been published unsigned, permanently.** `release.yml`
+treated a missing key as normal and published unsigned artifacts with a warning
+- written back when the key was deliberately not on GitHub. Since a published
+release is immutable, that would have burned the version number for good. A
+missing key now fails the run, `apksigner verify` confirms the signature on the
+artifact rather than inferring it from the secret existing, and artifacts are
+attached to a **draft** which is published only once the upload succeeds.
 
-Verified by building with `ghcr.io/actions/jekyll-build-pages` and resolving
-every link against the output: **74 internal links, none broken.**
+**The docs workflow would never have fired.** It triggered on
+`release: published`, and `release.yml` publishes the release itself using the
+default `GITHUB_TOKEN` - and **an event raised by that token does not start
+another workflow run**. The site would silently never have published. Both
+workflows now watch the `v*` tag, which a person pushes.
 
-### The Mermaid diagrams were being served as source code
+### The one thing local testing hid
 
-`architecture.md` has five diagrams. GitHub renders Mermaid in its repository
-Markdown view, which is where they had been checked - but **Pages does not**, so
-every diagram would have appeared as a wall of `graph TD` text.
-
-The layout now loads Mermaid and unwraps Kramdown's
-`<pre><code class="language-mermaid">` into the element Mermaid expects, and the
-blocks stay hidden until it has run so raw source never flashes up. The shim was
-run against the actual generated page under jsdom: 5 blocks matched, 5 unwrapped,
-none left behind, entities decoded.
-
-### A release would have been published unsigned, permanently
-
-`release.yml` treated a missing release key as normal and published **unsigned**
-artifacts with a warning. That was written when the key was deliberately not on
-GitHub; the key has since been added as a secret, so the comment was wrong as
-well as the behaviour.
-
-It matters more than it looks, because **a published release is immutable** -
-assets cannot be added, replaced or removed. Two consequences, both now handled:
-
-- A missing key **fails the run**. An unsigned APK on an immutable release would
-  burn that version number for good.
-- Artifacts are attached to a **draft**, and the release is published only after
-  the upload succeeds. Attaching to an already-published release does not work,
-  and a release published empty could not be corrected.
-
-The signature is confirmed with `apksigner verify` on the built APK rather than
-inferred from the secret existing, because the Gradle config falls back to an
-unsigned build when the keystore fails to load - which is exactly the case the
-check is there to catch.
-
-### Documentation that had drifted
-
-Found by checking claims against the code rather than by reading for sense:
-
-- `STATUS.md` still opened with "**Skeleton + theme** ... the four screens are
-  stubs", describing the app as it was eight entries earlier.
-- `TODO.md` recorded the countdown as "**+1 s per further finger**", which was
-  removed when it became a settling time, and the dim level as "a fixed 0.25",
-  which was wrong twice over before it became a halving of current brightness.
-- `TODO.md` had navigation instrumented tests and the phone verification open;
-  both are done.
-- `design.md` gave the countdown default as 2 s (it is 3.5 s, set on the phone)
-  and `suspense` as "after 600 ms", from before the staged per-finger reveal.
-- `build.gradle.kts` and `release.yml` both still said the release key was
-  "deliberately not on GitHub".
-
-### The docs workflow would never have fired
-
-Caught while preparing the first release rather than by the first release
-failing. `docs.yml` triggered on `release: published`, and `release.yml`
-publishes the release itself using the default `GITHUB_TOKEN` - and **an event
-raised by that token does not start another workflow run**. The site would never
-have published, silently, with nothing in any log pointing at the cause.
-
-Both workflows now watch the `v*` tag directly. The tag is pushed by a person,
-so it triggers.
-
-### The first release, and the one thing local testing hid
-
-`v0.1.0` was tagged and the release workflow **worked**: signed APK and AAB,
-attached to a draft, published. `apksigner` confirmed
-`CN=Shotgun!, OU=Release, O=drehtuer` on the artifact.
-
-The docs workflow failed, on `mkdir: cannot create directory '_site/api'`.
+The release worked first time: signed APK and AAB, `apksigner` confirming
+`CN=Shotgun!, OU=Release, O=drehtuer`. The docs run failed on
+`mkdir: cannot create directory '_site/api': Permission denied`.
 `jekyll-build-pages` is a **container action running as root**, so `_site`
-belongs to root while the job does not, and the next step could not write into
-it. Local testing had hidden this exactly: the container had been run with
-`--user "$(id -u)"` to keep the output writable, which made the local run
-*differ from CI in the one way that mattered*. A convenience added to avoid
-cleaning up root-owned files removed the failure being tested for.
+belongs to root while the job does not.
 
-The site is now assembled in a fresh directory instead - copying *out* of
-`_site` needs only read - and the fix was verified by reproducing the failure
-first: run the container as root, watch the old step fail, watch the new one
-succeed.
+Local testing had hidden this precisely: the container had been run with
+`--user "$(id -u)"` to keep the output writable, which made the local run
+*differ from CI in the one way that mattered*. **A convenience added to avoid
+cleaning up root-owned files removed the failure being tested for.** The site is
+now assembled in a fresh directory - copying *out* of `_site` needs only read -
+and the fix was verified by reproducing the failure first.
 
 ### Named release artifacts
 
-`app-release.apk` says neither what it is nor which version, which is poor for
-something people download. The APKs are now `Shotgun-0.1.0.apk` and
-`Shotgun-debug-0.1.0.apk`, and the bundle is renamed to match when the release
-workflow attaches it.
+`app-release.apk` says neither what it is nor which version. The builds now
+produce `Shotgun-<version>.apk` and `Shotgun-debug-<version>.apk`, and the
+release workflow renames the bundle to match. `outputFileName` is not on the
+public `VariantOutput` interface, so this goes through `VariantOutputImpl`; the
+cast is checked, not forced.
 
-`outputFileName` is not on the public `VariantOutput` interface, so this goes
-through `VariantOutputImpl`. The cast is checked, not forced: an output that is
-not one keeps the default name rather than failing the build.
+That introduced a new way to publish something unfixable - the name comes from
+`appVersion` in the build file, not the tag, so a `v0.2.0` tag on an unchanged
+`appVersion` would put `Shotgun-0.1.0.apk` inside a `v0.2.0` release. The
+workflow now refuses to run when the two disagree. **`v0.1.0` keeps the old
+names**; it is immutable.
 
-The naming introduced a way to publish something wrong and unfixable - the file
-name comes from `appVersion` in the build file, not from the tag, so a `v0.2.0`
-tag on an unchanged `appVersion` would produce `Shotgun-0.1.0.apk` inside a
-`v0.2.0` release. The release workflow now refuses to run when the two
-disagree.
+### Documentation that had drifted
 
-**`v0.1.0` keeps the old names.** It is published and immutable; this applies
-from the next release.
-
-### What is still unproven
-
-Both workflows are verified as far as they can be without running: the site was
-built locally with the CI image and Dokka's output confirmed at
-`app/build/dokka/html`. **The release path has never executed.** The first `v*`
-tag is the real test of it.
-
----
+Found by checking claims against the code rather than reading for sense:
+`STATUS.md` still opened with "skeleton + theme … the four screens are stubs";
+`TODO.md` carried the removed "+1 s per further finger" countdown and a dim
+level that had been wrong twice; `design.md` gave the old 2 s countdown default
+and a 600 ms suspense; `build.gradle.kts` and `release.yml` both still said the
+release key was not on GitHub.
 
 ## 2026-09-06 — Device testing, and the blank screen
 
 **Outcome: a run of real bugs, all found by hands on glass rather than by
 tests.** Installed on the target Pixel 10a over Wi-Fi.
 
-The blank screen was the hard one, and worth recording in full because three
-plausible explanations were wrong before the right one.
+The blank screen is worth recording in full, because three plausible
+explanations were wrong before the right one.
 
 Reported as: pick a mode, press back immediately, and the app draws nothing
 until it is restarted. It could not be reproduced synthetically - six back-press
-timings, rapid double taps, tap-plus-two-backs, and the edge-swipe gesture all
-behaved. Two suspects were ruled out with evidence rather than argument: the new
+timings, rapid double taps, tap-plus-two-backs and the edge-swipe gesture all
+behaved. Two suspects were ruled out with evidence rather than argument: the
 glow uses `BlurMaskFilter`, historically unsupported under hardware
-acceleration, but forcing a countdown produced no HWUI or render errors; and the
+acceleration, but forcing a countdown produced no render errors; and the
 brightness override was measured, not guessed.
 
 What settled it was catching the app *in* the state. `dumpsys` showed the
 activity resumed with no crash, and an accessibility dump showed **three nodes**
-- the bare window chrome, no Compose content at all. The navigation graph had
-lost its destination.
+- bare window chrome, no Compose content. The navigation graph had lost its
+destination.
 
-It was then reproduced in a test: **popping more often than the stack is deep
-empties the graph**, and an empty graph renders nothing. Two pops racing each
-other is enough - a button tapped twice, or a tap arriving with the back
-gesture. Every exit path now goes through `popSafely()`, which pops only when
-there is something underneath, and back handling lives in one place.
+Reproduced in a test: **popping more often than the stack is deep empties the
+graph**, and an empty graph renders nothing. Two pops racing each other is
+enough - a button tapped twice, or a tap arriving with the back gesture. Every
+exit now goes through `popSafely()`, and back handling lives in one place.
 
-**Lesson:** an unreproducible bug is usually a wrong model of the failure, not a
-rare one. Catching the app in the broken state and dumping what it *actually*
+**Lesson: an unreproducible bug is usually a wrong model of the failure, not a
+rare one.** Catching the app in the broken state and dumping what it actually
 contained took minutes; guessing at causes took much longer.
 
 Also fixed from device testing: labels drawn under the very fingers they
-belonged to; the countdown appearing to ignore its setting, which turned out to
-be the stepper losing taps to an asynchronous read; both timers restarted
-forever by the jitter of a resting hand; and dim mode, which was set absolutely
-and so made a dim screen *brighter*.
+belonged to; the countdown appearing to ignore its setting, which was the
+stepper losing taps to an asynchronous read; both timers restarted forever by
+the jitter of a resting hand; and dim mode, set absolutely, making a dim screen
+*brighter*.
 
-## 2026-09-06 — Settings screen and dim mode
+## 2026-09-06 — The four screens
 
-**Outcome: done. Every screen in the design is now built.**
+**Outcome: done, across five PRs.** Each screen's logic was pushed out of the
+composables into plain functions, so the parts that can be tested without
+hardware are.
 
-The two toggles, the appearance picker, the countdown stepper and the reveal
-timing picker, all reading and writing the persisted settings from the earlier
-PR rather than local state.
+**Settings and dim mode.** Dim lowers `screenBrightness` on the app's own window
+and restores it on the way out - deliberately not the system-wide setting, which
+would leave a phone dimmed after the app closed. Applied in `MainActivity`,
+because brightness is an app-wide property, not a property of the screen that
+happens to toggle it. Verified by changing three settings, force-stopping and
+reopening.
 
-**Dim mode** lowers `screenBrightness` on the app's own window and restores the
-previous value on the way out. It deliberately does not touch the system-wide
-setting: leaving a phone dimmed after the app closes would be a bug the user
-could not explain, and could not easily undo. It is applied in `MainActivity`
-rather than on the settings screen, because brightness is an app-wide property,
-not a property of the screen that happens to toggle it.
+**Result and the fairness field.** The density maths lives in a plain
+`HeatField` with no Android types, so it is unit-tested. That mattered more than
+usual: the screen makes a claim about fairness, and "it looks about right" is
+not a check of a claim. The test worth keeping is **a corner win registering as
+hot as a centre win** - without edge mirroring, corners read as permanently
+cold and the screen would libel the draw as unfair. Verified by seeding 241
+draws into the real on-device database and looking at it.
 
-Verified on an API 37 emulator by changing three settings, force-stopping, and
-reopening: dim off, countdown 5s and Instant reveal all came back. Eight
-instrumented tests cover the controls, including that the countdown stepper
-refuses to go below one second and that SOUND does not reappear.
+Two things that cost time: `gradle connectedAndroidTest` **uninstalls the app
+afterwards**, deleting its database, so seeding through it shows an empty screen
+- `adb shell am instrument` leaves the data in place; and `--tests` is not a
+valid filter there, it is
+`-Pandroid.testInstrumentationRunnerArguments.class=`.
 
-50 unit tests and 24 instrumented tests pass, and the release build still
-compiles under R8.
+**Draw surface.** The rules live in a plain `DrawEngine` with no Android in it -
+time passed in, randomness injected - so the countdown, the teams guard, the
+reveal rules and who wins are unit-tested. The one thing that cannot be tested
+without hardware is multi-touch, so everything else was made testable without
+it. **Multi-touch turned out partly testable anyway**: the emulator cannot
+inject a genuine multi-pointer gesture, but Compose's own pointer injection can.
 
-## 2026-09-06 — Result screen and the fairness field
+**Home.** The team count lives in the ViewModel rather than in settings,
+because the design keeps it beside the draw. Two bugs only visible on a device:
+the vertical SETTINGS tab wrapped mid-word - "SETTIN / GS", since Compose has no
+`writing-mode` and the first fix measured the rotated label against the tab's
+width; and the stepper's minus stayed at full contrast at the floor, looking
+live while doing nothing.
 
-**Outcome: done, and the field is real history rather than a picture of one.**
+**Signing, build variants and persistence.** `debug` carries full debug data,
+`release` is R8-minified and symbol-stripped - 1.2 MB against 12 MB. Two
+deliberate omissions in `debug`, both easy to add by reflex and both wrong here:
+no `applicationIdSuffix` (it would break every documented adb command) and no
+`enableAndroidTestCoverage` (it instruments the APK, and this app is judged on
+touch and countdown timing).
 
-The density maths lives in a plain `HeatField` object with no Android types, so
-it is unit-tested - eleven tests. That mattered more here than usual: the screen
-makes a claim about fairness, and "it looks about right" is not a check of a
-claim.
+The integration risk was KSP: it versions independently and AGP 9 supplies its
+own Kotlin, so the two could easily have disagreed. KSP 2.3.11 against Kotlin
+2.4.10 under AGP 9 was checked before anything was built on top of it.
 
-The test worth keeping is **a corner win registering as hot as a centre win**.
-Without edge mirroring a win in the corner spreads into a quarter of the
-kernel's area instead of all of it, so the corners read as permanently cold -
-the screen would libel the draw as unfair when it is not.
-
-The field is computed at 160px wide and scaled up. It is a blur either way, and
-this keeps a large history cheap to draw.
-
-**Verified by seeding 241 draws into the real on-device database** and looking
-at it: the field covers the panel with no cold corners, the last draw's dots sit
-on top with the winner marked, and the mode line and caption read correctly.
-
-Two things that cost time and are worth remembering:
-
-- `gradle connectedAndroidTest` **uninstalls the app afterwards**, which deletes
-  its database. Seeding through it and then looking at the app shows an empty
-  screen. Running the instrumentation directly with `adb shell am instrument`
-  leaves the data in place.
-- `--tests` is not a valid option for `connectedAndroidTest`; the filter is
-  `-Pandroid.testInstrumentationRunnerArguments.class=…`.
-
-50 unit tests and 16 instrumented tests pass.
-
-## 2026-09-06 — Draw surface
-
-**Outcome: built and tested as far as this hardware allows. Not yet touched by
-real fingers.**
-
-The rules live in a plain `DrawEngine` with no Android in it - time is passed in
-and randomness injected - so the countdown extension, the teams guard, the
-reveal rules and who wins are all unit-tested. That split was the point: the one
-thing that cannot be tested without hardware is the multi-touch itself, so
-everything else was made testable without it.
-
-**Multi-touch turned out to be testable after all, partially.** The emulator
-exposes one input device per contact and so cannot inject a genuine
-multi-pointer gesture, but Compose's own pointer injection can. Six instrumented
-tests now cover several pointers alive at once, lifting one of them, and moving
-without joining - the tracking that unit tests cannot reach.
-
-Also closed the gap flagged in the persistence PR: the Room DAO now has six
-instrumented tests of its own, including that pruning cascades to points rather
-than orphaning them.
-
-Two deliberate divergences from the export, both recorded in `design.md`:
-
-- **Lifting removes a ring.** The prototype was mouse-driven and could not lift,
-  so it removed players on double-tap and left rings on screen. On a touchscreen
-  a ring belongs to a finger. "LIFT ALL FINGERS TO CLEAR" already assumes this,
-  which makes double-tap redundant.
-- The suspense **churn animation** is not implemented - the pause happens, the
-  rings do not pulse yet.
-
-Verified on an API 37 emulator: the hint reads correctly, and a single finger
-held for two and a half seconds never draws and never writes to the database.
-40 unit tests and 12 instrumented tests pass.
-
-**What is unverified:** feel. Timing, haptic strength, and whether the countdown
-is long enough to get a hand down are all judgements that need the Pixel 10a.
-
-## 2026-09-06 — Home screen
-
-**Outcome: done.**
-
-Mode cards with their four-dot motifs, the team stepper and the footer link.
-The motifs are drawn from the palette rather than hard-coded, so team colours
-stay in step with `PPColors.teamFills`.
-
-The team count deliberately lives in the ViewModel rather than in settings: the
-design keeps it beside the draw, not among the preferences, so it resets with
-the app the way the mode does. Its clamp is a pure function so the floor is
-unit-tested rather than only observed.
-
-**Two bugs found by looking at it on a device**, neither visible from the code:
-
-- The vertical SETTINGS tab wrapped mid-word - "SETTIN / GS". Compose has no
-  `writing-mode`, and my first attempt measured the rotated label against the
-  tab's 60dp width. Fixed by measuring it unbounded and rotating only for
-  drawing.
-- The stepper's minus stayed at full contrast at the floor, so it looked live
-  while doing nothing. It now dims.
-
-Verified on an API 37 emulator in both palettes: motifs, stepper floor (3 → 2,
-then held), and navigation from each card into the right draw mode.
-
-## 2026-09-06 — Signing, build variants, persistence
-
-**Outcome: done, in two stacked PRs.**
-
-**Signing and build variants.** `debug` carries full debug data; `release` is
-R8-minified, resource-shrunk and symbol-stripped - 1.2 MB against 12 MB. Both
-keys are generated locally and held as encrypted Actions secrets; nothing
-signing-related is ever committed, because this repository is public. A new
-`release.yml` fires only on a `v*` tag.
-
-Two deliberate omissions in `debug`, both easy to add by reflex and both wrong
-here: no `applicationIdSuffix` (it would break every documented adb command) and
-no `enableAndroidTestCoverage` (it instruments the APK, and this app is judged
-on touch and countdown timing).
-
-**Persistence.** Room for draw history, DataStore for settings.
-
-The integration risk was KSP: it has moved to independent versioning, and AGP 9
-supplies its own Kotlin, so the two could easily have disagreed. KSP 2.3.11
-works against Kotlin 2.4.10 under AGP 9 - checked before building anything on
-top of it.
-
-Positions are normalised to 0..1 **at write time**, not stored as pixels. That
-is the one thing in this layer that can corrupt data silently: raw pixels would
-skew the fairness field, and the damage is invisible until a screen size
-changes. It has tests, including the degenerate zero-sized surface that would
-otherwise divide by zero.
-
+Positions are normalised to 0..1 **at write time**. That is the one thing in
+this layer that can corrupt data silently - raw pixels would skew the fairness
+field, and the damage stays invisible until a screen size changes.
 `fallbackToDestructiveMigration` is deliberately **not** set: history is the
 whole point of the fairness field, and wiping it on a schema change would make
 that screen lie.
 
-Verified on an API 37 emulator: settings picked in the app survive a
-`force-stop` - the system was in light mode and the app relaunched dark, so the
-value came from disk rather than memory - and `settings.preferences_pb` exists
-on disk.
-
-## 2026-09-06 — Documentation reference audit
-
-**Outcome: done. Found more wrong than missing.**
-
-Checked whether `README.md` referenced every document in the repo. It did not -
-but the omissions mattered less than three stale references, two of which this
-project's own docs-stay-in-sync rule was written to prevent.
-
-Wrong, and now fixed:
-
-- `.claude/CLAUDE.md` opened by pointing at `design/Player Picker.dc.html`, a
-  file **deleted** in the rename. It survived the rename because the path was
-  line-wrapped across `design/Player` / `Picker.dc.html`, so the search and
-  replace never matched it. The worst of the three: it is the first instruction
-  anyone reads, and it named a file that no longer exists.
-- `README.md`'s layout tree still said `PlayerPickerTheme` and
-  `PlayerPickerNavHost`; both were renamed in the same PR. They survived for the
-  same class of reason - inside a fenced code block.
-- That tree also omitted `ui/util/` and `ShotgunWordmark`, added in the two
-  preceding PRs.
-
-Structural: `### Emulator` and `### A real device over Wi-Fi` had ended up under
-`## Documentation` rather than `## Development`, because the Documentation
-section was inserted between Development and its own subsections. Moved.
-
-Missing, and now referenced: the identity spec `design/Shotgun Logo.dc.html`
-(never mentioned, despite the README opening with a line about the mark),
-Modernist's own readme in `design/_ds/`, and both CI workflows - the README had
-no mention of CI at all.
-
-`docs/github.md` was deleted rather than fixed: it was Claude Design's sync note
-and carried almost nothing beyond a repo pointer and a stale screen map.
-
-**Lesson worth keeping:** a line-wrapped path and a fenced code block both
-defeat a naive search and replace. After a rename, grep for the old *words*
-(`Player`, `PlayerPicker`) rather than the old path.
-
-## 2026-09-06 — Renamed to Shotgun!, new identity
+## 2026-09-06 — Rename to Shotgun!, and a documentation audit
 
 **Outcome: done.**
 
-The app is now **Shotgun!**. The design was re-exported as
-`design/Shotgun.dc.html` (the old `Player Picker.dc.html` is removed), a logo
-was added in `assets/logo/`, and SOUND is gone from the settings screen.
+The app became **Shotgun!**: re-exported design, a logo in `assets/logo/`,
+package and `applicationId` moved to `de.drehtuer.shotgun`. The `PP*` prefix on
+the theme types was **kept deliberately** - it mirrors the `--pp-*` token names
+the design still uses, so a colour can be traced between design and code by
+name.
 
-Code: package and `applicationId` moved from `de.drehtuer.playerpicker` to
-`de.drehtuer.shotgun`, `PlayerPickerTheme` -> `ShotgunTheme`,
-`PlayerPickerNavHost` -> `ShotgunNavHost`, launcher label "Shotgun!".
+**The re-export had been branched from the original design rather than the
+edited copy here, so it silently reverted decisions made the day before**:
+haptics went back to a single buzz, and the toggle copy to its old text. Those
+decisions still stand, so they were re-applied. Second time hand-edits have been
+at risk - see `TODO.md`.
 
-The `PP*` prefix on the theme types was **kept deliberately**: it mirrors the
-`--pp-*` token names the design still uses, so a colour can be traced between
-design and code by name. Renaming it would have broken that link for no gain.
+The audit that followed found more wrong than missing. `.claude/CLAUDE.md`
+opened by pointing at `design/Player Picker.dc.html`, **deleted in the rename**;
+it survived because the path was line-wrapped across two lines, so the search
+and replace never matched. `README.md`'s layout tree still named
+`PlayerPickerTheme` and `PlayerPickerNavHost`, for the same class of reason -
+inside a fenced code block.
 
-Home's accent eyebrow is replaced by the mark plus wordmark, so the `kicker`
-type role became `wordmark`. The mark and the launcher icon are both generated
-from the same normalised dot geometry in the logo spec, so they cannot drift.
-
-**The re-export had been branched from the original design, not from the edited
-copy in this repo, so it silently reverted decisions made on 2026-09-05:**
-haptics went back to a single buzz on fire, and the HAPTICS/DIM MODE copy went
-back to the old text. Those decisions still stand, so they were re-applied to
-the new export and re-verified. This is the second time hand-edits have been at
-risk; the durable fix is to make behaviour changes in the Claude Design project
-itself.
+**Lesson: a line-wrapped path and a fenced code block both defeat a naive search
+and replace.** After a rename, grep for the old *words*, not the old path.
 
 ## 2026-09-05 — Keep the screen awake during a draw
 
@@ -433,134 +229,72 @@ itself.
 The screen could dim or lock mid-draw. Android resets its idle timer on touch
 *events*, and a finger held still through the countdown produces none - so the
 one moment the screen must stay on is exactly the moment the system counts as
-idle.
+idle. Fixed with `FLAG_KEEP_SCREEN_ON`, scoped to the draw surface so it cannot
+leak into the other screens.
 
-Fixed with `FLAG_KEEP_SCREEN_ON`, held by a `KeepScreenOn()` composable for as
-long as the draw surface is in the composition and released on the way out.
-Scoped to that screen so the flag cannot leak into Home, Result or Settings.
-
-Also extracted the `Context.findActivity()` helper that `Theme.kt` already had
-into `ui/util/`, rather than writing it a second time.
-
-Verified with `dumpsys window` on the emulator, walking the whole navigation
-graph: absent on Home, **present on the draw surface**, released on navigating
-back, re-acquired on entering it again, released again on Result, and
-re-acquired on returning to the draw surface. No crashes.
-
-The first attempt to verify this reported a false negative - `grep -A3` after
-the window line stopped short of the `fl=` line it needed. Worth remembering:
-the flag shows up as `fl=KEEP_SCREEN_ON ...` about five lines into the window
-block.
+Verified with `dumpsys window` across the whole navigation graph. The first
+attempt reported a **false negative**: `grep -A3` after the window line stopped
+short of the `fl=` line it needed, about five lines in.
 
 ## 2026-09-05 — Specification decisions
 
 **Outcome: done. All three open questions answered; no code changed yet.**
 
-- **SOUND removed.** Not needed. Taken out of the design export (state field and
-  settings row) and out of the documentation.
-- **DIM MODE defined** as lowering screen brightness like an alarm clock -
-  the app's own window only, restored on leave, and explicitly *not* a palette
-  change.
-- **Haptics redefined.** Was a single buzz when the draw fired. Now a `12 ms`
-  keyboard-style tick per finger down, and a stronger `[90]` / `[90, 60, 90]`
-  on the result. The tick deliberately does **not** fire on drag or lift -
-  dragging is repositioning, not joining, and buzzing on it would contradict
-  the rule the hint text teaches.
-- **Draw history to a database.** The heatmap plots real recorded positions
-  rather than the export's seeded sample set. Positions are normalised to 0..1
-  at write time so history survives a device or surface-size change.
+SOUND removed as not needed. DIM MODE defined as lowering screen brightness like
+an alarm clock, explicitly *not* a palette change. Haptics redefined from a
+single buzz to a `12 ms` tick per finger down plus a stronger result buzz - the
+tick deliberately does **not** fire on drag or lift, because dragging is
+repositioning, not joining, and buzzing on it would contradict the rule the hint
+text teaches. Draw history moved to a database so the heatmap plots real draws.
 
-The export was edited directly for sound and haptics; its script was
-syntax-checked after each change. Dim mode and the database cannot be expressed
-in a browser prototype, which forced a question about which document wins.
-Resolved by splitting authority: **the export owns visuals, `docs/design.md`
-owns behaviour**, recorded in both files and in `.claude/CLAUDE.md`.
+Dim mode and the database cannot be expressed in a browser prototype, which
+forced a question about which document wins. Resolved by splitting authority:
+**the export owns visuals, `docs/design.md` owns behaviour.**
 
-GitHub Pages has been enabled with Source: GitHub Actions, so the docs workflow
-can now deploy. It has still never run - the first release will be its first
-real exercise.
+## 2026-09-05 — Toolchain, documentation set and CI
 
-## 2026-09-05 — Documentation set
-
-**Outcome: done.**
-
-Added `docs/design.md` (the design export translated to Markdown),
-`docs/build-environment.md`, `TODO.md` and this file. Added the
-documentation-stays-in-sync rule to `.claude/CLAUDE.md`.
-
-`design.md` is a translation, not a replacement: the `.dc.html` export stays the
-source of truth because it holds the executable state machine.
-
-Two gaps surfaced while translating: **`sound` and `dim` appear in the design's
-settings but have no behaviour defined anywhere in the export.** Both were
-answered the same day - see the entry above.
-
-## 2026-09-05 — Restructure, contributor guide and CI (PR #2)
-
-**Outcome: done.**
-
-Moved the design export to `design/` and documentation to `docs/`; the
-`.dc.html` references its siblings relatively, so they moved together and the
-links still resolve. Added `.claude/CLAUDE.md`, the first 11 unit tests, and the
-two workflows.
-
-Verified: `assembleDebug`, `testDebugUnitTest` (11 passed) and `lintDebug` all
-green; `dokkaGenerate` produces `app/build/dokka/html`; the Pages site assembly
-was dry-run end to end.
-
-**Found and fixed while building it:** the first version of the docs workflow
-would have served the landing page as raw Markdown. Pages serves the uploaded
-artifact as-is - there is no Jekyll step in the Actions-based flow - so the
-workflow now renders Markdown with pandoc and rewrites repo-file links to
-GitHub URLs.
-
-Neither workflow could run on its own PR, since workflows must exist on `main`
-first. Their first real exercise is the following PR.
-
-## 2026-09-05 — Retarget to the Pixel 10a
-
-**Outcome: done, and it forced a toolchain jump.**
+**Outcome: done, and retargeting forced a toolchain jump.**
 
 The target device was confirmed as a **Pixel 10a on Android 17 (API 37)**.
-
-Raising `compileSdk` to 36 failed immediately: current AndroidX
-(`navigation-compose` 2.10.0) requires **compileSdk 37 and AGP 9.1+**. So the
-whole toolchain moved - AGP 8.7.3 → 9.4.0, Gradle 8.11.1 → 9.7.1, Kotlin
-2.0.21 → 2.4.10, compileSdk/targetSdk 35 → 37.
+Raising `compileSdk` to 36 failed immediately - current AndroidX requires
+compileSdk 37 and AGP 9.1+ - so the whole toolchain moved: AGP 8.7.3 → 9.4.0,
+Gradle 8.11.1 → 9.7.1, Kotlin 2.0.21 → 2.4.10, compileSdk/targetSdk 35 → 37.
 
 **AGP 9 has built-in Kotlin support: the `kotlin-android` plugin now fails the
-build and had to be removed.** This is recorded in several places because it is
+build outright and had to be removed.** Recorded in several places because it is
 easy to re-add by reflex.
 
-The emulator has no `pixel_10a` device profile; `pixel_9a` on an API 37 image is
-the closest match. Verified on that emulator, which reported
-`ro.build.version.release=17`.
+The emulator has no `pixel_10a` profile; `pixel_9a` on an API 37 image is the
+closest match, and reported `ro.build.version.release=17`.
 
-## 2026-09-05 — Android skeleton and Modernist theme (PR #1)
+Also added: `docs/design.md` as a translation of the export - not a replacement,
+since the `.dc.html` holds the executable state machine - `build-environment.md`,
+this file, `TODO.md`, the first 11 unit tests, and the two workflows. Neither
+workflow could run on its own PR, since workflows must exist on `main` first.
+
+Translating the design surfaced two gaps: **`sound` and `dim` appeared in the
+settings with no behaviour defined anywhere.** Both were answered the same day.
+
+## 2026-09-05 — Android skeleton and Modernist theme
 
 **Outcome: done.**
 
-Set up the Gradle project, the theme transcribed from the design's `--pp-*`
-tokens, the navigation shell and stub screens, and the devcontainer.
+The Gradle project, the theme transcribed from the design's `--pp-*` tokens, the
+navigation shell and stub screens, and the devcontainer.
 
-Verified on an emulator: renders correctly in both palettes, navigation works,
-no crashes.
-
-**Two bugs found only by running it**, both fixed:
-
-1. System bar icons followed `uiMode` rather than the app's palette, so the
-   clock was unreadable when the app's theme was overridden.
-2. The settings option dividers used a hardcoded height instead of the row's
-   intrinsic height.
+**Two bugs found only by running it:** system bar icons followed `uiMode` rather
+than the app's palette, so the clock was unreadable when the theme was
+overridden; and the settings dividers used a hardcoded height instead of the
+row's intrinsic height.
 
 Several devcontainer problems also only appeared under use: `/dev/kvm` arrives
-owned by a nonexistent group; AVDs and the debug keystore vanished on rebuild
-until they were moved into named volumes.
+owned by a nonexistent group, and AVDs and the debug keystore vanished on
+rebuild until they were moved into named volumes.
 
 ## 2026-09-05 — Design export imported
 
 **Outcome: done.**
 
 The repository began as an export from a Claude Design project, with no commits
-on `main`. `/design-sync` does not apply here - the repo is a *consumer* of a
-design system, not the source of one, and there was nothing to convert.
+on `main`. `/design-sync` does not apply - this repo is a *consumer* of a design
+system, not the source of one.
