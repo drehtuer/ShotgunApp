@@ -329,6 +329,12 @@ and with an immutable release there is no way to correct one after the fact.
 Test and lint reports are uploaded as artifacts, including on failure, so a red
 run can be diagnosed without reproducing it locally.
 
+**CI deliberately does not run the instrumented tests.** They need the phone:
+an emulator exposes one input device per contact and cannot inject a genuine
+multi-pointer gesture, so a green emulator run would say nothing about the one
+thing the draw surface exists to do. They are run locally against the Pixel 10a
+before a PR that touches multi-touch, haptics or timing.
+
 `pr.yml` deliberately has **no base-branch filter**. Stacked pull requests are
 based on the branch below them rather than on `main`, and a filter of
 `branches: [main]` would leave every PR in a stack unverified.

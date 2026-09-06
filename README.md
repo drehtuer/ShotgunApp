@@ -16,10 +16,12 @@ was built against.
 
 ## Status
 
-**All four screens are built and verified on the phone.** Seven rounds of
-device feedback settled the countdown default, the reveal timing, the dim level
-and the haptics. What remains is a fourth draw mode - COLOURS - and the polish
-listed in [`docs/TODO.md`](docs/TODO.md).
+**Built, verified on the phone, and released.** Seven rounds of device feedback
+settled the countdown default, the reveal timing, the dim level and the haptics.
+`v0.1.0` is published and the documentation site is live at
+[drehtuer.github.io/ShotgunApp](https://drehtuer.github.io/ShotgunApp/). What
+remains is a fourth draw mode - COLOURS - and the polish listed in
+[`docs/TODO.md`](docs/TODO.md).
 
 | Piece | State |
 | --- | --- |
