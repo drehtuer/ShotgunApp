@@ -111,6 +111,7 @@ including the older `adb tcpip 5555` route.
 | Document | What it covers |
 | --- | --- |
 | [`docs/design.md`](docs/design.md) | The design in Markdown: tokens, screens, state model, behaviour |
+| [`docs/architecture.md`](docs/architecture.md) | How the app is put together: layers, screen graph, state machines |
 | [`docs/build-environment.md`](docs/build-environment.md) | Building, testing, emulator and device, CI, troubleshooting |
 | [`docs/TODO.md`](docs/TODO.md) | Open work and the decisions that block it |
 | [`docs/STATUS.md`](docs/STATUS.md) | What has been done and how it turned out |

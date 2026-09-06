@@ -44,6 +44,7 @@ fun HomeScreen(
     onOpenResult: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+
     Column(
         modifier
             .fillMaxSize()

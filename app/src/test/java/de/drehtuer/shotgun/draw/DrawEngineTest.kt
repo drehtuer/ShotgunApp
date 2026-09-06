@@ -16,7 +16,7 @@ class DrawEngineTest {
         seconds: Int = 3,
         instant: Boolean = false,
         seed: Int = 1,
-    ) = DrawEngine(mode, teams, seconds, instant, Random(seed))
+    ) = DrawEngine(mode, teams, seconds * 1_000, instant, Random(seed))
 
     // ---- arming and the countdown ------------------------------------------
 
@@ -38,16 +38,40 @@ class DrawEngineTest {
         assertNotNull(e.tick(now = 3_100))
     }
 
-    /** The rule that keeps a late joiner from costing the group their draw. */
+    /**
+     * The countdown is a settling time, not a fixed delay: a finger joining
+     * puts the whole countdown back on the clock, so nobody is caught out by a
+     * draw firing as they reach in.
+     */
     @Test
-    fun `every finger after the second adds exactly one second`() {
+    fun `a finger joining restarts the countdown in full`() {
         val e = engine(seconds = 3)
         e.onDown(1, 0f, 0f, now = 0)
         e.onDown(2, 0f, 0f, now = 0)                 // due at 3000
-        e.onDown(3, 0f, 0f, now = 500)               // due at 4000
-        e.onDown(4, 0f, 0f, now = 600)               // due at 5000
+        e.onDown(3, 0f, 0f, now = 2_000)             // restarts: due at 5000
         assertNull(e.tick(now = 4_999))
         assertNotNull(e.tick(now = 5_000))
+    }
+
+    /** Leaving is a change too, and earns the same settling time. */
+    @Test
+    fun `a finger leaving restarts the countdown in full`() {
+        val e = engine(seconds = 3)
+        (1L..3L).forEach { e.onDown(it, 0f, 0f, now = 0) }   // due at 3000
+        e.onUp(3, now = 2_000)                               // restarts: due at 5000
+        assertEquals(DrawPhase.COUNTING, e.phase)
+        assertNull(e.tick(now = 4_999))
+        assertNotNull(e.tick(now = 5_000))
+    }
+
+    /** Repositioning is not a change in the count, so it must not restart it. */
+    @Test
+    fun `moving a finger does not restart the countdown`() {
+        val e = engine(seconds = 3)
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)                 // due at 3000
+        repeat(20) { e.onMove(1, it.toFloat(), it.toFloat()) }
+        assertNotNull(e.tick(now = 3_000))
     }
 
     @Test
@@ -55,7 +79,7 @@ class DrawEngineTest {
         val e = engine()
         e.onDown(1, 0f, 0f, now = 0)
         e.onDown(2, 0f, 0f, now = 0)
-        e.onUp(2)
+        e.onUp(2, now = 100)
         assertEquals(DrawPhase.IDLE, e.phase)
         assertNull(e.tick(now = 10_000))
     }
@@ -100,8 +124,9 @@ class DrawEngineTest {
         assertEquals(1, e.fingers.size)
     }
 
+    /** A latecomer must not join a draw that has already been decided. */
     @Test
-    fun `a finger landing after the reveal is ignored`() {
+    fun `a finger landing while the result is still held is ignored`() {
         val e = engine(instant = true)
         e.onDown(1, 0f, 0f, now = 0)
         e.onDown(2, 0f, 0f, now = 0)
@@ -111,15 +136,46 @@ class DrawEngineTest {
         assertEquals(2, e.fingers.size)
     }
 
+    /**
+     * You have to lift your hand to see what is under it, so the result has to
+     * outlive the fingers that produced it.
+     */
     @Test
-    fun `the result stays until the last hand leaves`() {
+    fun `the result survives every hand leaving the glass`() {
         val e = engine(instant = true)
         e.onDown(1, 0f, 0f, now = 0)
         e.onDown(2, 0f, 0f, now = 0)
         e.tick(now = 5_000)
-        e.onUp(1)
+        val drawn = e.outcome
+        e.onUp(1, now = 10)
+        e.onUp(2, now = 20)
         assertEquals(DrawPhase.REVEALED, e.phase)
-        e.onUp(2)
+        assertEquals(drawn, e.outcome)
+        assertEquals(2, drawn?.fingers?.size)
+    }
+
+    /** Once everyone has lifted, the round is over and a press starts a new one. */
+    @Test
+    fun `a press after everyone has lifted starts a fresh draw`() {
+        val e = engine(instant = true)
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)
+        e.tick(now = 5_000)
+        e.onUp(1, now = 10); e.onUp(2, now = 20)
+
+        assertEquals(DrawEffect.FingerTick, e.onDown(3, 10f, 10f, now = 6_000))
+        assertEquals(DrawPhase.IDLE, e.phase)
+        assertNull(e.outcome)
+        assertEquals(1, e.fingers.size)
+    }
+
+    @Test
+    fun `clearing discards a shown result`() {
+        val e = engine(instant = true)
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)
+        e.tick(now = 5_000)
+        e.clear()
         assertEquals(DrawPhase.IDLE, e.phase)
         assertNull(e.outcome)
     }
@@ -166,24 +222,71 @@ class DrawEngineTest {
         assertNull(e.outcome)
     }
 
+    /**
+     * Suspense no longer delays the whole result - it walks it out one finger at
+     * a time, starting immediately.
+     */
     @Test
-    fun `starter reveals at once even when suspense is asked for`() {
-        val e = engine(mode = DrawMode.STARTER, instant = false)
-        e.onDown(1, 0f, 0f, now = 0)
-        e.onDown(2, 0f, 0f, now = 0)
-        e.tick(now = 100_000)
+    fun `suspense reveals the fingers one at a time, first one at once`() {
+        val e = engine(mode = DrawMode.ORDER, instant = false)
+        (1L..4L).forEach { e.onDown(it, 0f, 0f, now = 0) }
+        val order = (e.tick(now = 100_000) as DrawEffect.Drawn).outcome.order
+
+        assertEquals(DrawPhase.REVEALING, e.phase)
+        assertTrue(e.isRevealed(order[0]))
+        assertTrue(!e.isRevealed(order[1]))
+
+        e.revealNext()
+        assertTrue(e.isRevealed(order[1]))
+        assertTrue(!e.isRevealed(order[2]))
+
+        e.revealNext(); e.revealNext()
         assertEquals(DrawPhase.REVEALED, e.phase)
+        assertTrue(order.all(e::isRevealed))
+    }
+
+    /** Ranks come out 1, 2, 3 - the reveal follows the draw order. */
+    @Test
+    fun `the reveal order is the rank order`() {
+        val e = engine(mode = DrawMode.ORDER, instant = false)
+        (1L..5L).forEach { e.onDown(it, 0f, 0f, now = 0) }
+        val outcome = (e.tick(now = 100_000) as DrawEffect.Drawn).outcome
+        assertEquals(
+            listOf(1, 2, 3, 4, 5),
+            outcome.order.map { outcome.assignment.getValue(it) },
+        )
+    }
+
+    /**
+     * Teams are dealt round robin, so walking the reveal along the draw order
+     * steps between teams on every step, as asked for.
+     */
+    @Test
+    fun `the teams reveal steps between teams`() {
+        val e = engine(mode = DrawMode.TEAMS, teams = 3, instant = false)
+        (1L..6L).forEach { e.onDown(it, 0f, 0f, now = 0) }
+        val outcome = (e.tick(now = 100_000) as DrawEffect.Drawn).outcome
+        val teams = outcome.order.map { outcome.assignment.getValue(it) }
+        assertEquals(listOf(0, 1, 2, 0, 1, 2), teams)
+    }
+
+    /** A single winner has nothing to stagger. */
+    @Test
+    fun `starter never stages its reveal`() {
+        val e = engine(mode = DrawMode.STARTER, instant = false)
+        (1L..4L).forEach { e.onDown(it, 0f, 0f, now = 0) }
+        val outcome = (e.tick(now = 100_000) as DrawEffect.Drawn).outcome
+        assertEquals(DrawPhase.REVEALED, e.phase)
+        assertTrue(outcome.order.all(e::isRevealed))
     }
 
     @Test
-    fun `order holds the result back when suspense is asked for`() {
-        val e = engine(mode = DrawMode.ORDER, instant = false)
-        e.onDown(1, 0f, 0f, now = 0)
-        e.onDown(2, 0f, 0f, now = 0)
-        e.tick(now = 100_000)
-        assertEquals(DrawPhase.SUSPENSE, e.phase)
-        e.reveal()
+    fun `instant shows everyone at once`() {
+        val e = engine(mode = DrawMode.ORDER, instant = true)
+        (1L..4L).forEach { e.onDown(it, 0f, 0f, now = 0) }
+        val outcome = (e.tick(now = 100_000) as DrawEffect.Drawn).outcome
         assertEquals(DrawPhase.REVEALED, e.phase)
+        assertTrue(outcome.order.all(e::isRevealed))
     }
 
     /**
@@ -194,7 +297,7 @@ class DrawEngineTest {
     fun `over many draws every position wins about equally often`() {
         val wins = IntArray(5)
         repeat(10_000) { seed ->
-            val e = DrawEngine(DrawMode.STARTER, 3, 3, true, Random(seed))
+                val e = DrawEngine(DrawMode.STARTER, 3, 3_000, true, Random(seed))
             (0L..4L).forEach { e.onDown(it, 0f, 0f, now = 0) }
             val outcome = (e.tick(now = 100_000) as DrawEffect.Drawn).outcome
             wins[outcome.winnerId.toInt()]++

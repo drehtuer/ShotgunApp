@@ -100,6 +100,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // For VERSION_NAME, shown on the settings screen.
+        buildConfig = true
     }
     // Exported schemas are committed, so a migration can be written against a
     // real before-and-after rather than from memory.

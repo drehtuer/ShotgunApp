@@ -110,7 +110,8 @@ class ShotgunViewModel(
     fun setThemePreference(value: ThemePreference) = update { repository.setThemePreference(value) }
     fun setHaptics(value: Boolean) = update { repository.setHaptics(value) }
     fun setDim(value: Boolean) = update { repository.setDim(value) }
-    fun setCountdownSeconds(value: Int) = update { repository.setCountdownSeconds(value) }
+    /** Steps the countdown by half seconds, so rapid taps cannot collapse. */
+    fun stepCountdown(steps: Int) = update { repository.stepCountdown(steps) }
     fun setRevealTiming(value: RevealTiming) = update { repository.setRevealTiming(value) }
 
     private fun update(block: suspend () -> Unit) {
@@ -118,8 +119,8 @@ class ShotgunViewModel(
     }
 
     companion object {
-        /** The design's starting value. */
-        const val DEFAULT_TEAMS = 3
+        /** Two: the smallest draw that is actually a draw. */
+        const val DEFAULT_TEAMS = 2
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

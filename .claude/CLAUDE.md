@@ -20,6 +20,7 @@ docs/           all documentation except README.md
 | Document | What it is for |
 | --- | --- |
 | [`docs/design.md`](../docs/design.md) | The design, in Markdown: tokens, screens, state model, behaviour |
+| [`docs/architecture.md`](../docs/architecture.md) | How the app is put together: layers, screen graph, state machines |
 | [`docs/build-environment.md`](../docs/build-environment.md) | Building, testing, emulator and device, CI, troubleshooting |
 | [`docs/TODO.md`](../docs/TODO.md) | Open work and the decisions that block it |
 | [`docs/STATUS.md`](../docs/STATUS.md) | What has been done and how it turned out |
@@ -77,6 +78,7 @@ Work out which of these your change touches, and update it:
 | If you changed... | Update |
 | --- | --- |
 | Screen behaviour, tokens, copy, state | [`docs/design.md`](../docs/design.md) |
+| Layers, navigation, state ownership, a new screen | [`docs/architecture.md`](../docs/architecture.md) |
 | Toolchain, Gradle tasks, CI, devcontainer, emulator/device setup | [`docs/build-environment.md`](../docs/build-environment.md) |
 | Anything on the open list, or found new work | [`docs/TODO.md`](../docs/TODO.md) |
 | Finished a task | [`docs/STATUS.md`](../docs/STATUS.md) - what you did **and how it turned out**, including what went wrong |

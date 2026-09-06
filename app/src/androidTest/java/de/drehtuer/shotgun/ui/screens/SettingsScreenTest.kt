@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import de.drehtuer.shotgun.data.settings.RevealTiming
 import de.drehtuer.shotgun.data.settings.Settings
 import de.drehtuer.shotgun.ui.theme.ShotgunTheme
@@ -34,7 +35,7 @@ class SettingsScreenTest {
                     onThemePreferenceChange = { lastTheme = it },
                     onHapticsChange = { lastHaptics = it },
                     onDimChange = { lastDim = it },
-                    onCountdownChange = { lastCountdown = it },
+                    onCountdownStep = { lastCountdown = it },
                     onRevealTimingChange = { lastTiming = it },
                     onDone = {},
                 )
@@ -42,11 +43,12 @@ class SettingsScreenTest {
         }
     }
 
+    /** The screen scrolls, so the lower sections must be scrolled into view. */
     @Test
     fun everySettingFromTheDesignIsPresent() {
         show()
         listOf("HAPTICS", "DIM MODE", "APPEARANCE", "COUNTDOWN", "REVEAL")
-            .forEach { rule.onNodeWithText(it).assertIsDisplayed() }
+            .forEach { rule.onNodeWithText(it).performScrollTo().assertIsDisplayed() }
     }
 
     /** SOUND was removed from the design; it must not reappear. */
@@ -88,25 +90,25 @@ class SettingsScreenTest {
     @Test
     fun pickingRevealTimingReportsIt() {
         show()
-        rule.onNodeWithText("Instant").performClick()
+        rule.onNodeWithText("Instant").performScrollTo().performClick()
         assertEquals(RevealTiming.INSTANT, lastTiming)
     }
 
     @Test
-    fun theCountdownStepperGoesUpAndDown() {
-        show(Settings(countdownSeconds = 3))
-        rule.onNodeWithContentDescriptionText("longer countdown").performClick()
-        assertEquals(4, lastCountdown)
-        rule.onNodeWithContentDescriptionText("shorter countdown").performClick()
-        assertEquals(2, lastCountdown)
+    fun theCountdownStepperReportsADeltaNotAnAbsoluteValue() {
+        show(Settings(countdownMillis = 3_000))
+        rule.onNodeWithContentDescriptionText("longer countdown").performScrollTo().performClick()
+        assertEquals(+1, lastCountdown)
+        rule.onNodeWithContentDescriptionText("shorter countdown").performScrollTo().performClick()
+        assertEquals(-1, lastCountdown)
     }
 
     /** One second is the floor, so the control must not offer to go lower. */
     @Test
-    fun theCountdownStepperCannotGoBelowOneSecond() {
-        show(Settings(countdownSeconds = 1))
+    fun theCountdownStepperCannotGoBelowItsFloor() {
+        show(Settings(countdownMillis = Settings.MIN_COUNTDOWN_MILLIS))
         lastCountdown = null
-        rule.onNodeWithContentDescriptionText("shorter countdown").performClick()
+        rule.onNodeWithContentDescriptionText("shorter countdown").performScrollTo().performClick()
         assertEquals(null, lastCountdown)
     }
 

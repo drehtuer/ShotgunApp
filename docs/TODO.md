@@ -29,6 +29,17 @@ specified in [`design.md`](design.md):
 
 ## Screens
 
+- [ ] **COLOURS mode** — a fourth draw mode. Like player order, but the colours
+      are defined first and each finger is given one in the order they were
+      defined.
+  - [ ] A colour-definition screen: a vertical list with a `+` to add
+  - [ ] Preset player colours - blue, red, black, green, yellow and so on
+  - [ ] A colour picker for anything finer
+  - [ ] Decide where the list lives: edited once and persisted, or set up per
+        draw. That choice decides the navigation and whether it is stored at all.
+  - [ ] The rings and the result dots take the chosen colours rather than the
+        palette's team fills
+
 - [x] **Home** — mode cards with their four-dot motifs, the team stepper
       (floor 2, no ceiling), and the footer link.
 - [x] **Draw surface** — built.

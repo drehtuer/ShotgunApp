@@ -183,7 +183,7 @@ Copy for the hint:
 
 | Fingers | Title | Subtitle |
 | --- | --- | --- |
-| 0 | EVERYONE, ONE FINGER DOWN. | Hold still — the edge glow is the countdown. Drag to reposition; a moving finger is not a new player. |
+| 0 | EVERYONE, ONE FINGER DOWN. | The edge glow is the countdown, and it restarts whenever someone joins or leaves. Drag to reposition; a moving finger is not a new player. |
 | 1 | ONE MORE FINGER. | At least two players are needed to draw. |
 
 ### Result
@@ -217,8 +217,8 @@ lands on top of this field."
 | HAPTICS — *A tick per finger, a stronger buzz on the result* | toggle | on |
 | DIM MODE — *Lowers screen brightness, like an alarm clock* | toggle | on |
 | APPEARANCE — *Follows the system theme unless you pick one* | System / Light / Dark | System |
-| COUNTDOWN — *Each new finger adds one second* | stepper, min 1 | 3s |
-| REVEAL — *Show order and teams at once, or after a beat* | Suspense / Instant | Suspense |
+| COUNTDOWN — *How long hands must settle before the draw runs* | stepper, 0.5s steps, min 0.5s | 2s |
+| REVEAL — *Show order and teams at once, or after a beat* | Suspense / Instant | **Instant** |
 
 Footer note: *"Mode lives on the home screen so the draw surface stays bare.
 Moving a finger never counts as a new player. Team count has no ceiling — the
@@ -248,9 +248,18 @@ settings    { haptics, dim, countdown, timing, themePref }
 
 ### The countdown
 
-- Arms when the **second** finger lands, for `countdown` seconds (default 3).
-- **Every further finger extends the deadline by exactly 1 second** - so late
-  joiners never lose their chance.
+**Divergence from the export.** The design armed a fixed countdown on the second
+finger and added a second for each finger after it. In use that was hard to
+predict - three latecomers trebled the wait - and it existed only because the
+countdown itself was not adjustable. Now that it is, the countdown is a
+**settling time** instead:
+
+- Arms when the **second** finger lands, for the configured time
+  (default **2 s**, adjustable in half-second steps from 0.5 s).
+- **Any change in the number of fingers restarts it in full** - someone joining
+  or leaving. Nobody is caught by a draw firing as they reach in.
+- **Moving a finger does not restart it.** Repositioning is not a change in the
+  count.
 - Dropping below two fingers cancels it and returns to `idle`.
 - Progress drives two things at once: the edge glow (`0.1 → 0.5` opacity) and
   the frame (`0.2 → 1.0`).
@@ -285,7 +294,9 @@ not silently join the draw twice.
 5. Haptics, if enabled: a **stronger** buzz than the per-finger tick —
    `[90]` for starter, `[90, 60, 90]` otherwise (see *Haptics*).
 6. Reveal immediately if timing is `instant` **or** mode is `starter`;
-   otherwise 600 ms of `suspense` first.
+   otherwise reveal **one finger at a time**, 500 ms apart, along the draw
+   order. That order is the rank order, and because teams are dealt round
+   robin it steps between teams on every reveal.
 
 Starter mode always reveals instantly - there is nothing to stagger.
 
