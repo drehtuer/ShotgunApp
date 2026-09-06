@@ -32,6 +32,43 @@ stubs.
 
 ---
 
+## 2026-09-06 — Documentation reference audit
+
+**Outcome: done. Found more wrong than missing.**
+
+Checked whether `README.md` referenced every document in the repo. It did not -
+but the omissions mattered less than three stale references, two of which this
+project's own docs-stay-in-sync rule was written to prevent.
+
+Wrong, and now fixed:
+
+- `.claude/CLAUDE.md` opened by pointing at `design/Player Picker.dc.html`, a
+  file **deleted** in the rename. It survived the rename because the path was
+  line-wrapped across `design/Player` / `Picker.dc.html`, so the search and
+  replace never matched it. The worst of the three: it is the first instruction
+  anyone reads, and it named a file that no longer exists.
+- `README.md`'s layout tree still said `PlayerPickerTheme` and
+  `PlayerPickerNavHost`; both were renamed in the same PR. They survived for the
+  same class of reason - inside a fenced code block.
+- That tree also omitted `ui/util/` and `ShotgunWordmark`, added in the two
+  preceding PRs.
+
+Structural: `### Emulator` and `### A real device over Wi-Fi` had ended up under
+`## Documentation` rather than `## Development`, because the Documentation
+section was inserted between Development and its own subsections. Moved.
+
+Missing, and now referenced: the identity spec `design/Shotgun Logo.dc.html`
+(never mentioned, despite the README opening with a line about the mark),
+Modernist's own readme in `design/_ds/`, and both CI workflows - the README had
+no mention of CI at all.
+
+`docs/github.md` was deleted rather than fixed: it was Claude Design's sync note
+and carried almost nothing beyond a repo pointer and a stale screen map.
+
+**Lesson worth keeping:** a line-wrapped path and a fenced code block both
+defeat a naive search and replace. After a rename, grep for the old *words*
+(`Player`, `PlayerPicker`) rather than the old path.
+
 ## 2026-09-06 — Renamed to Shotgun!, new identity
 
 **Outcome: done.**
