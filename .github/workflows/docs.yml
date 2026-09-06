@@ -56,20 +56,26 @@ jobs:
           source: ./
           destination: ./_site
 
-      # Copied in after Jekyll rather than before: Dokka's output includes
+      # Dokka's output goes in after Jekyll, not before: it contains
       # underscore-prefixed files, which Jekyll would drop, and it is already
       # HTML that needs no rendering.
-      - name: Add the API documentation
+      #
+      # Assembled in a fresh directory rather than written into `_site`.
+      # jekyll-build-pages is a container action running as root, so `_site`
+      # belongs to root while this job does not - writing into it fails with a
+      # bare "Permission denied". Copying *out* of it needs only read.
+      - name: Assemble the published site
         run: |
           set -euo pipefail
           test -d app/build/dokka/html
-          mkdir -p _site/api
-          cp -r app/build/dokka/html/. _site/api/
+          mkdir -p site/api
+          cp -r _site/. site/
+          cp -r app/build/dokka/html/. site/api/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./_site
+          path: ./site
 
   deploy:
     name: Deploy to Pages
