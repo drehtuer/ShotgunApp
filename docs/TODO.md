@@ -65,9 +65,17 @@ specified in [`design.md`](design.md):
 
 ## Infrastructure
 
-- [ ] Consider branch protection on `main` requiring the PR checks.
-- [ ] Cut a first release once there is something to release, which is also the
-      first real exercise of the docs workflow.
+- [x] Branch protection on `main` - a ruleset now requires a PR.
+- [ ] Add the required status checks to the `main` ruleset. Protection requires
+      a PR but does not yet require the PR checks to pass.
+- [ ] Consider enabling the **merge queue** on the `main` ruleset - stacked PRs
+      are currently chained by hand.
+- [x] Signing keys configured as repository secrets - both dev and release.
+- [ ] **Back the release keystore up off this machine.** It is gitignored, and
+      a GitHub secret is write-only, so the local file is the only readable
+      copy. Losing it means no future build can ever update an installed app.
+- [ ] Cut a first release once there is something to release - `v*` tag - which
+      is also the first real exercise of the release and docs workflows.
 - [ ] **Behaviour decisions live in this repo, but re-exports come from Claude
       Design and overwrite them** (it has happened twice). Either mirror the
       haptics and toggle-copy changes upstream, or accept the export as
