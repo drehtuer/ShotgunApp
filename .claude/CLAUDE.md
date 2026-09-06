@@ -187,7 +187,7 @@ Run the script with no arguments for the full notes, including the older
 If both an emulator and a phone are attached, target one explicitly:
 
 ```bash
-adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s <serial> install -r app/build/outputs/apk/debug/Shotgun-debug-*.apk
 ```
 
 ## Before opening the PR

@@ -71,7 +71,23 @@ gitignored.
 ./gradlew installDebug           # build and install on the connected device
 ```
 
-Output lands in `app/build/outputs/apk/` and `app/build/outputs/bundle/`.
+Output lands in `app/build/outputs/apk/` and `app/build/outputs/bundle/`,
+named for people rather than for Gradle:
+
+| Build | File |
+| --- | --- |
+| release | `Shotgun-<version>.apk` |
+| debug | `Shotgun-debug-<version>.apk` |
+
+The version comes from `appVersion` in `app/build.gradle.kts`, which is also
+what `versionName` is set from - one value, so the file name and the manifest
+cannot disagree. The release workflow **fails if the tag and `appVersion`
+disagree**: the artifacts are named from the build file, so a `v0.2.0` tag on
+an unchanged `appVersion` would publish files called `Shotgun-0.1.0.apk`, and a
+published release cannot be corrected.
+
+The bundle keeps Gradle's own name until the release workflow renames it to
+`Shotgun-<version>.aab` alongside the APK.
 
 ### The two variants
 
@@ -267,7 +283,7 @@ With both an emulator and a phone attached, target one explicitly:
 
 ```bash
 adb devices
-adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s <serial> install -r app/build/outputs/apk/debug/Shotgun-debug-*.apk
 ```
 
 ## CI

@@ -141,6 +141,26 @@ The site is now assembled in a fresh directory instead - copying *out* of
 first: run the container as root, watch the old step fail, watch the new one
 succeed.
 
+### Named release artifacts
+
+`app-release.apk` says neither what it is nor which version, which is poor for
+something people download. The APKs are now `Shotgun-0.1.0.apk` and
+`Shotgun-debug-0.1.0.apk`, and the bundle is renamed to match when the release
+workflow attaches it.
+
+`outputFileName` is not on the public `VariantOutput` interface, so this goes
+through `VariantOutputImpl`. The cast is checked, not forced: an output that is
+not one keeps the default name rather than failing the build.
+
+The naming introduced a way to publish something wrong and unfixable - the file
+name comes from `appVersion` in the build file, not from the tag, so a `v0.2.0`
+tag on an unchanged `appVersion` would produce `Shotgun-0.1.0.apk` inside a
+`v0.2.0` release. The release workflow now refuses to run when the two
+disagree.
+
+**`v0.1.0` keeps the old names.** It is published and immutable; this applies
+from the next release.
+
 ### What is still unproven
 
 Both workflows are verified as far as they can be without running: the site was

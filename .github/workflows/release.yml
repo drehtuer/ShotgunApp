@@ -27,6 +27,25 @@ jobs:
       - name: Set up the Android SDK
         uses: android-actions/setup-android@v3
 
+      # The artifacts are named from `appVersion` in the build file, not from
+      # the tag. If the two disagree, a v0.2.0 release would carry files called
+      # Shotgun-0.1.0.apk - and a published release cannot be corrected.
+      - name: Check the tag matches the app version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          version=$(sed -n 's/^val appVersion = "\(.*\)"$/\1/p' app/build.gradle.kts)
+          if [ -z "$version" ]; then
+            echo "::error::Could not read appVersion from app/build.gradle.kts."
+            exit 1
+          fi
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Tag v$tag does not match appVersion $version." \
+                 "Update app/build.gradle.kts, or tag v$version."
+            exit 1
+          fi
+          echo "Tag and app version agree: $version"
+
       # A published release is immutable: its assets can never be replaced. An
       # unsigned APK would therefore burn the version number for good, so a
       # missing key stops the run here rather than at the point of no return.
@@ -70,6 +89,17 @@ jobs:
         if: ${{ always() }}
         run: rm -f keystore/release.keystore
 
+      # The APK is named by the build; the bundle is not, so it is renamed to
+      # match here rather than shipping Shotgun-0.1.0.apk beside app-release.aab.
+      - name: Collect the artifacts
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p artifacts
+          cp app/build/outputs/apk/release/Shotgun-*.apk artifacts/
+          cp app/build/outputs/bundle/release/*.aab "artifacts/Shotgun-$version.aab"
+          ls -l artifacts
+
       # Assets are attached to a *draft*. A release becomes immutable when it
       # is published, and assets cannot be added afterwards, so the upload has
       # to finish first.
@@ -78,9 +108,7 @@ jobs:
         with:
           draft: true
           generate_release_notes: true
-          files: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
+          files: artifacts/*
           fail_on_unmatched_files: true
 
       # Publishing seals it, and is what triggers the documentation workflow.
