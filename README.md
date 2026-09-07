@@ -7,6 +7,7 @@
 [![Latest release](https://img.shields.io/github/v/release/drehtuer/ShotgunApp?label=release)](https://github.com/drehtuer/ShotgunApp/releases/latest)
 [![Dependabot](https://img.shields.io/badge/dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](https://github.com/drehtuer/ShotgunApp/blob/main/.github/dependabot.yml)
 [![Licence](https://img.shields.io/github/license/drehtuer/ShotgunApp)](https://github.com/drehtuer/ShotgunApp/blob/main/LICENSE)
+[![Coverage](https://codecov.io/gh/drehtuer/ShotgunApp/branch/main/graph/badge.svg)](https://codecov.io/gh/drehtuer/ShotgunApp)
 
 An Android app for settling *who goes first*. Everyone puts a finger on the
 screen, a countdown runs, and the app draws — a starting player, a full player

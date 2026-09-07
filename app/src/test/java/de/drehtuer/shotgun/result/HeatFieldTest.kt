@@ -104,4 +104,63 @@ class HeatFieldTest {
         assertEquals(12, pixels.size)
         assertTrue(pixels.all { (it ushr 24) == 0xFF })
     }
+
+    // ---- degenerate input ---------------------------------------------------
+
+    /**
+     * The field is built from whatever the panel size and the history happen to
+     * be, so it has to survive both being empty. A crash here would take out the
+     * result screen on the very first launch, before there is anything to show.
+     */
+
+    @Test
+    fun `a zero-width or zero-height field is empty, not a crash`() {
+        assertEquals(0, HeatField.density(listOf(0.5f to 0.5f), 0, 40).size)
+        assertEquals(0, HeatField.density(listOf(0.5f to 0.5f), 40, 0).size)
+        assertEquals(0, HeatField.density(listOf(0.5f to 0.5f), -5, 40).size)
+    }
+
+    /** Every contribution landing off the grid leaves nothing to normalise by. */
+    @Test
+    fun `points entirely outside the grid leave a flat field`() {
+        val d = HeatField.density(listOf(9f to 9f), 20, 20)
+        assertTrue(d.all { it == 0f })
+    }
+
+    // ---- the ramp -----------------------------------------------------------
+
+    @Test
+    fun `a ramp needs at least one stop`() {
+        val thrown = runCatching { HeatField.colorise(FloatArray(4), emptyList()) }
+        assertTrue(thrown.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun `a single-stop ramp is that colour everywhere`() {
+        val stops = listOf(HeatStop(0f, 0xFF102030.toInt()))
+        val px = HeatField.colorise(floatArrayOf(0f, 0.5f, 1f), stops)
+        assertTrue(px.all { it == 0xFF102030.toInt() })
+    }
+
+    @Test
+    fun `values are clamped to the ends of the ramp`() {
+        val stops = listOf(
+            HeatStop(0.25f, 0xFF000000.toInt()),
+            HeatStop(0.75f, 0xFFFFFFFF.toInt()),
+        )
+        // Below the first stop and above the last: the ends hold, and nothing
+        // wraps around to the wrong colour.
+        assertEquals(0xFF000000.toInt(), HeatField.sample(stops, -1f))
+        assertEquals(0xFFFFFFFF.toInt(), HeatField.sample(stops, 2f))
+    }
+
+    /** Two stops at the same position have no span to interpolate across. */
+    @Test
+    fun `a zero-width span does not divide by zero`() {
+        val stops = listOf(
+            HeatStop(0.5f, 0xFF010101.toInt()),
+            HeatStop(0.5f, 0xFF020202.toInt()),
+        )
+        assertEquals(0xFF010101.toInt(), HeatField.sample(stops, 0.5f))
+    }
 }

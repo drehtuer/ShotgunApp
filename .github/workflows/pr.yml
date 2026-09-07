@@ -84,8 +84,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+      # Runs the tests and the JaCoCo report in one go: the coverage task
+      # depends on the test task, so asking for both does not run them twice.
+      - name: Run unit tests with coverage
+        run: ./gradlew testDebugUnitTest createDebugUnitTestCoverageReport --stacktrace
 
       # Uploaded on failure too - the HTML report is how you find out which
       # assertion went red without re-running locally.
@@ -96,6 +98,43 @@ jobs:
           name: unit-test-report
           path: app/build/reports/tests/testDebugUnitTest/
           if-no-files-found: ignore
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: app/build/reports/coverage/test/debug/
+          if-no-files-found: ignore
+
+      # Codecov hosts the README badge and comments diff coverage on PRs.
+      # Whether the token exists is decided in a run step rather than in the
+      # upload step's own `if`: a step's own `env:` is not in scope for its own
+      # condition, so the check has to happen before it - the same shape as the
+      # optional keystore above.
+      - name: Is Codecov configured?
+        id: codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${CODECOV_TOKEN:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No CODECOV_TOKEN - skipping the upload."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A fork's pull request cannot read secrets, so this is skipped there
+      # rather than failing a run the contributor cannot fix.
+      - name: Upload coverage to Codecov
+        if: ${{ !cancelled() && steps.codecov.outputs.configured == 'true' }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: app/build/reports/coverage/test/debug/report.xml
+          flags: unittests
+          fail_ci_if_error: false
 
   lint:
     name: Static analysis

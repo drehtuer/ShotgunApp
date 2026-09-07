@@ -28,6 +28,85 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — Coverage: the gaps, a bug they found, and Codecov
+
+Branch coverage was measured, then the gaps filled. **The logic layer went from
+80.9% to 97.3%** (114/141 to 143/147 branches); 68 tests became 91.
+
+The overall figure moved 16.2% → 20.4%, and that number is close to meaningless:
+it counts Compose UI, navigation and Room's generated DAO, none of which a JVM
+test can reach. Every covered branch in the app is in the logic layer, which is
+the split `architecture.md` intends, so the per-layer figure is the one now
+written down.
+
+### A test found a real bug
+
+`HeatField.density` allocated before it validated:
+
+```kotlin
+val cells = FloatArray(width * height)                        // -5 * 40 = -200
+if (points.isEmpty() || width <= 0 || height <= 0) return cells
+```
+
+The guard checks `width <= 0` **after** the allocation that a negative width
+already blew up - `NegativeArraySizeException`, from a line written specifically
+to prevent it. Dead defensive code, and exactly the sort a coverage gap hides.
+Guard moved above the allocation.
+
+Not reachable from `ResultScreen` today, since the width is a constant and the
+height is coerced to at least 1. It was still wrong.
+
+### What was added
+
+- **`DrawEngine`** - the early returns: an unknown pointer id lifting or moving,
+  `isRevealed` before any draw, a latecomer pressing mid-reveal, `revealNext`
+  with nothing to reveal, `progress` when idle and when settled.
+- **`HeatField`** - degenerate input: zero and negative dimensions, points
+  entirely off the grid, an empty ramp, a single-stop ramp, values past both
+  ends, and two stops sharing a position (the divide-by-zero span).
+- **Settings** - a stored-but-unparseable theme or timing name, `haptics`/`dim`
+  stored as `false` rather than absent, and the countdown floor.
+
+### One refactor, for one branch
+
+`stepCountdown` resolved the legacy `countdown_seconds` key inside a DataStore
+`edit` block, so the migration could not be reached without a `Context`. Pulled
+out as `steppedCountdown(stored, legacySeconds, steps)`, a pure function, and
+tested there. That path runs once per upgrade and never again - the kind nobody
+exercises by hand.
+
+### Four branches left uncovered, deliberately
+
+Unreachable through the public API rather than untested:
+
+- `DrawEngine:212` - the single-finger draw. `draw()` only runs from `tick()`
+  during `COUNTING`, which needs two fingers, and dropping below two returns to
+  `IDLE`. `shuffled.size <= 1` cannot happen.
+- `DrawEngine:176` - `revealNext` finding a null outcome. Only `draw()` sets
+  `REVEALING`, and it sets the outcome first.
+- `HeatField:93` - an inner loop whose body always runs for valid input.
+
+Reaching them would mean widening visibility or contorting a test, which buys a
+percentage point and costs the meaning of the number.
+
+### Codecov
+
+CI now runs `createDebugUnitTestCoverageReport` alongside the tests (the
+coverage task depends on the test task, so nothing runs twice), uploads the
+report as an artifact, and sends it to Codecov, which hosts the README badge.
+
+**The badge reads *unknown* until a `CODECOV_TOKEN` secret exists** - see
+[`build-environment.md`](build-environment.md#codecov). The upload is
+*skipped* rather than failed when the token is absent, because a fork's pull
+request cannot read secrets and must not go red for it.
+
+Worth keeping: the skip condition lives in a preceding `run` step rather than
+in the upload step's own `if`, because **a step's own `env:` is not in scope
+for its own condition**. The first draft had it inline and would have evaluated
+an empty string every time.
+
+---
+
 ## 2026-09-07 — GPLv2
 
 `LICENSE` added, taken verbatim from GitHub's canonical text (`gh api
