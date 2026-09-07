@@ -28,6 +28,59 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — Fairness field off the main thread, churn dropped
+
+Two items off the open list, one closed by building it and one by deciding not
+to.
+
+### The fairness field no longer rasterises during composition
+
+`FairnessField` computed the density grid, coloured it and allocated the bitmap
+inside a `remember` block - so on the main thread, during composition, every
+time the history or the palette changed. `HeatField` splats a kernel per
+retained winner and up to 2,000 draws are kept, so the cost grows exactly as the
+screen becomes worth opening.
+
+Now a `produceState` on `Dispatchers.Default`, keyed on the winners, the palette
+and the panel size. **The previous bitmap stays on screen until the new one
+arrives**, so a recompute shows a stale field rather than flashing an empty
+panel - which is what `null`-then-recompute would have done.
+
+Keying on `colors` rather than `colors.isDark` came out of the rewrite: `PPColors`
+is a data class, so structural equality already covers the ramp, and the narrower
+key would have missed a palette change that kept the same `isDark`.
+
+Verified on the phone in both palettes - the field renders, the ramp inverts
+correctly between light and dark, nothing in the crash buffer. The theme switch
+is itself the proof that the off-thread recompute path works, since it forces
+one.
+
+No new unit test: nothing new is computable in isolation. The maths in
+`HeatField` was not touched and its tests still cover it; what changed is which
+thread calls it, which the JVM tests cannot see.
+
+### The suspense churn animation is dropped, not deferred
+
+The export specifies every ring pulsing (`scale .94 ↔ 1.06`) during `suspense`.
+It was never built, and it is now **decided against** rather than left open:
+revealing the players one at a time is already the suspense, and pulsing the
+rings between steps overhypes a result that takes a second to read.
+
+Recorded in [`design.md`](design.md) as a deliberate divergence from the export,
+which still shows the churn - behaviour is this document's call, and the export
+is never hand-edited. It will stay a divergence until the Design project is
+updated upstream.
+
+### Building needed a container
+
+The host still has no JDK, so `assembleDebug lint testDebugUnitTest` ran inside
+the devcontainer image instead - repo mounted, SDK into a scratch directory,
+Gradle as the host uid so nothing came back root-owned. Clean: 68 tests, no
+failures, lint "No issues found", no compiler warnings. Worth knowing the option
+exists when the workspace container is not available.
+
+---
+
 ## 2026-09-07 — The hardware finger limit, the JDK, and a device skill
 
 Started as a question - is the ten-finger ceiling the hardware or the app? - and

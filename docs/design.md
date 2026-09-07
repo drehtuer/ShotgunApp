@@ -373,10 +373,19 @@ Starter mode always reveals instantly - there is nothing to stagger.
 | **order** | rank number at 46px, scale 1.12, `accentSoft` fill | rank at 32px, opacity fading `1 → 0.3` by rank |
 | **teams** | — | team letter on the team fill, "TEAM" beneath |
 
-During `suspense` every ring churns (`scale .94 ↔ 1.06`) in accent at 85%
-opacity — the tell that something is being decided. **Specified but not yet
-built**: the staged reveal happens, the churn between steps does not. Tracked
-in [`TODO.md`](TODO.md).
+The design export specifies that during `suspense` every ring churns
+(`scale .94 ↔ 1.06`) in accent at 85% opacity, as the tell that something is
+being decided.
+
+**That churn is dropped, deliberately.** Revealing the players one at a time is
+already the suspense; pulsing the rings between steps overhypes a result that
+takes a second to read anyway. The staged reveal is the whole of `suspense`
+behaviour, and nothing is outstanding here.
+
+This is a decision, not a gap - the export still shows the churn, and this
+document wins on behaviour (see [`CLAUDE.md`](https://github.com/drehtuer/ShotgunApp/blob/main/.claude/CLAUDE.md),
+*Know which source wins*). It stays a divergence until the Design project is
+updated upstream; the export is never hand-edited.
 
 ## Keeping the screen awake
 

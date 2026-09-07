@@ -176,6 +176,14 @@ That is the one thing in this layer that corrupts data silently: the fairness
 field plots every draw ever made, so a record written on one screen size has to
 still mean the same thing on another.
 
+**The fairness field is rasterised off the main thread.** `HeatField` splats a
+kernel per retained winner, so the cost grows with history - and the screen is
+entered exactly when that history is largest. `ResultScreen` runs it in a
+`produceState` on `Dispatchers.Default`, keyed on the winners, the palette and
+the panel size; the previously rendered bitmap stays up until the new one
+arrives, so a recompute shows a stale field rather than an empty panel. The
+maths itself stays in the Logic layer, free of Android types and unit-tested.
+
 ## Timing, and a trap in it
 
 Two timers run on the draw surface: the countdown, and the reveal walking down
