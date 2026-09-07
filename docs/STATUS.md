@@ -85,11 +85,22 @@ so they report without failing a PR.
 
 Validated against Codecov's own endpoint rather than a YAML parser.
 
+### The first emulator run failed, and what it taught
+
+`No device found matching --device pixel_9a`. The **API 37.0 system image
+installed fine** - that was the part expected to break, and it did not. What
+broke was the AVD's hardware profile: the devcontainer's SDK knows `pixel_9a`,
+the GitHub runner's older device catalogue does not.
+
+Fixed by dropping `profile:` altogether rather than substituting another
+device. The hardware profile changes nothing this job measures, and the one
+thing it would change - multi-touch - is exactly what an emulator cannot test
+anyway. That is the same reason the phone exists.
+
 ### Not verified
 
-The emulator job has **never run** - it is new, and nothing local can exercise
-it. API level, device profile, KVM permissions and the discovered report path
-are all reasoned rather than observed, and the first CI run is the test.
+KVM permissions, the emulator actually booting, and the discovered report path
+are still only reasoned - the run died before reaching any of them.
 
 Rendering after the `ringSpec` extraction is checked on the phone for launch and
 one screen, not yet for a full multi-finger draw.

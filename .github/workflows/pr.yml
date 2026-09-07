@@ -176,7 +176,12 @@ jobs:
           api-level: '37.0'
           target: google_apis
           arch: x86_64
-          profile: pixel_9a
+          # No `profile:` on purpose. The devcontainer AVD uses pixel_9a, but
+          # the runner's SDK carries an older device catalogue and fails with
+          # "No device found matching --device pixel_9a". The hardware profile
+          # does not matter here anyway - this job measures what the tests
+          # cover, and the emulator cannot test the thing a profile would
+          # change, which is multi-touch.
           ram-size: 4096M
           disable-animations: true
           script: >-
