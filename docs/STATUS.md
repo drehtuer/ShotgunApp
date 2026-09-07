@@ -28,6 +28,46 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — GPLv2
+
+`LICENSE` added, taken verbatim from GitHub's canonical text (`gh api
+/licenses/gpl-2.0`) rather than retyped - 18,093 bytes, preamble through the
+appendix, checked for all thirteen clauses, *NO WARRANTY* and *END OF TERMS*.
+The licence text itself is never edited, so the copyright notice lives in the
+README instead.
+
+README gains a licence badge - the live GitHub one, which reads the repository's
+detected licence, so it says *not specified* until this merges and *GPL-2.0*
+after - and a *Licence* section carrying the copyright line and the standard
+notice.
+
+**The boilerplate is GPL-2.0-only, not -or-later.** The first draft used the
+GPL appendix's usual wording, *"either version 2 of the License, or (at your
+option) any later version"* - which is the **or-later** grant, not what was
+asked for. Caught before committing and cut back to *"version 2 of the
+License"*. Worth knowing the appendix offers both and the difference is one
+clause, because it is exactly the clause that matters below.
+
+### The part that is not resolved
+
+**GPLv2 is incompatible with the Apache-2.0 dependencies this app is built
+on.** Every runtime dependency - AndroidX, Compose, Room, DataStore, Kotlin and
+kotlinx - is Apache License 2.0, whose patent-termination clause the FSF treats
+as an added restriction GPLv2 does not permit. Apache 2.0 is compatible with
+GPLv3, so the usual fixes are **GPL-2.0-or-later** (a one-line change, and the
+one that ends the conflict most cheaply) or GPLv3.
+
+GPLv2 was asked for and GPLv2 is what was applied; the conflict is recorded in
+[`TODO.md`](TODO.md) under *Decisions needed* with the three options, and noted
+in the README next to the licence. It is not an obstacle while nobody else
+redistributes the app, but it should be settled before anyone forks or ships
+it.
+
+Per-file licence headers were **not** added. They are conventional for GPL
+projects but would touch every source file, and the licence was the ask.
+
+---
+
 ## 2026-09-07 — README badges
 
 Six badges above the title: the four workflows (PR, Code scanning,
