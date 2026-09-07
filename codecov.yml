@@ -2,8 +2,12 @@
 #
 # Two things this file is for: keeping generated code out of the number, and
 # reporting the layers separately. The app is a Compose UI over a small pure
-# core, and one blended percentage describes neither half - the core is tested
-# hard on the JVM, the UI is tested on a device.
+# core, and one blended percentage describes neither half.
+#
+# Both halves are measured on the JVM: the core by plain unit tests, the screens
+# by Robolectric. Nothing here reports the device test set in `androidTest/` -
+# that runs on a phone, by hand, and covers what neither can: multi-touch, real
+# haptics, and how the countdown feels.
 
 coverage:
   status:
@@ -37,7 +41,7 @@ component_management:
         - "app/src/main/java/de/drehtuer/shotgun/result/**"
         - "app/src/main/java/de/drehtuer/shotgun/data/**"
     - component_id: ui
-      name: UI (device-tested)
+      name: UI (Robolectric)
       paths:
         - "app/src/main/java/de/drehtuer/shotgun/ui/**"
 
@@ -45,12 +49,6 @@ flags:
   unittests:
     paths:
       - "app/src/main/java/"
-    carryforward: true
-  instrumented:
-    paths:
-      - "app/src/main/java/"
-    # Instrumented runs are slower and can be skipped; without carryforward a
-    # run that did not include them would read as a coverage collapse.
     carryforward: true
 
 # Generated sources. Room writes these from the DAO and database declarations,

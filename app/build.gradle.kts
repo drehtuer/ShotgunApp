@@ -45,6 +45,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.dokka)
     alias(libs.plugins.ksp)
+    // AGP's enableUnitTestCoverage runs JaCoCo but does not apply the plugin,
+    // so JacocoTaskExtension does not exist until this line does. Without it
+    // the Robolectric fix below cannot be configured at all.
+    jacoco
 }
 
 android {
@@ -93,19 +97,12 @@ android {
             versionNameSuffix = "-debug"
             signingConfig = signingConfigs.getByName("debug")
 
+            // Unit-test coverage only. enableAndroidTestCoverage would
+            // instrument the APK itself, and this app is judged on touch and
+            // countdown timing - a slowed build would misreport how it feels.
+            // Android-framework code is covered on the JVM by Robolectric
+            // instead, which needs no instrumentation and no device.
             enableUnitTestCoverage = true
-
-            // Instrumenting the APK slows it, and this app is judged on touch
-            // and countdown timing - a slowed build misreports how it feels.
-            // So it is off by default, including for every build that goes on
-            // a phone, and switched on only by the CI job that measures what
-            // the instrumented tests cover:
-            //
-            //   ./gradlew createDebugAndroidTestCoverageReport -PandroidTestCoverage=true
-            enableAndroidTestCoverage =
-                providers.gradleProperty("androidTestCoverage")
-                    .map { it.toBoolean() }
-                    .getOrElse(false)
 
             // No applicationIdSuffix on purpose: it would rename the package
             // for debug builds and break every documented adb command.
@@ -144,6 +141,28 @@ android {
     ksp { arg("room.schemaLocation", "$projectDir/schemas") }
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    }
+    testOptions {
+        // Robolectric renders real composables, so it needs the merged
+        // resources - the theme, the bundled Archivo fonts, the strings.
+        // Without this every screen test fails on resource lookup.
+        unitTests { isIncludeAndroidResources = true }
+    }
+}
+
+/**
+ * Makes JaCoCo see what Robolectric ran.
+ *
+ * Robolectric loads application classes through its own sandbox classloader,
+ * and those classes arrive without a source location. JaCoCo skips such classes
+ * by default, so the screen tests passed while every screen still reported zero
+ * coverage - the tests ran, the report just could not see them.
+ */
+tasks.withType<Test>().configureEach {
+    configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        // Instrumenting the JDK's own internals breaks the agent.
+        excludes = listOf("jdk.internal.*")
     }
 }
 
@@ -208,6 +227,17 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    // Robolectric runs the Android framework on the JVM, so the screens are
+    // covered by the same `./gradlew testDebugUnitTest` that covers the rules -
+    // in CI, with no emulator. It does not replace `app/src/androidTest/`:
+    // multi-touch, real haptics and how the countdown feels still need the
+    // phone, and an emulator agreeing with Robolectric would only ever confirm
+    // both simulations at once.
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

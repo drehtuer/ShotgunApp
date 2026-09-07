@@ -225,6 +225,7 @@ The architecture exists mostly to make the risky parts testable.
 | Layer | Tested by | Why there |
 | --- | --- | --- |
 | `DrawEngine`, `HeatField`, `ringSpec`, `normalise`, settings | JVM unit tests | Pure - no device needed, and these are where silent wrongness lives |
+| Screens, navigation, theme | Robolectric, also on the JVM | The framework without a device: that a screen composes, lays out and responds |
 | Multi-touch, Room queries, navigation, controls | Instrumented tests | Only real against a framework |
 | Feel: timing, haptic strength, legibility under a hand | A person, on a phone | No test can judge it |
 

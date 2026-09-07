@@ -28,82 +28,83 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
-## 2026-09-07 — Coverage reporting: the number was measuring the wrong thing
+## 2026-09-07 — Coverage reporting: Robolectric, and three silent failures
 
-Codecov read 16.9%, which sounded like an app that is barely tested. It is not.
-**31 instrumented tests already existed** - `DrawScreenMultiTouchTest` (8),
-`SettingsScreenTest` (8), `RoomDrawHistoryTest` (6), `NavigationStateTest` (5),
-`ResultScreenTest` (4) - covering precisely the files reporting 0%. They had
-never been run in CI and their coverage had never been measured, so the number
-described the JVM half and called it the whole.
+Codecov read 16.9%. **It now reads about 64%** - line coverage 16.3% → 63.8%,
+branch 24.9% → 56.3%, 68 tests → 124. Nothing about the app got much safer in
+the process; most of the gap was measurement.
 
-Three changes, in the order they matter.
+### The CI emulator was the wrong answer, and podsilo already said so
 
-### The instrumented tests are now measured
+The first attempt was a CI job booting an emulator to run the 31 existing
+instrumented tests. It failed three times - a device profile the runner's SDK
+does not have, then a framework that was not up when the action reached it -
+and it was the wrong idea regardless.
 
-A CI job runs them on an emulator at **API 37.0** - the same system image the
-devcontainer AVD uses, and the same API level as the phone. The emulator action
-takes Android's minor-version scheme in `api-level` directly, so nothing had to
-be downgraded for CI, which was the outcome expected before checking.
+`podsilo`'s `ci.yml` forbids exactly this, in capitals, with a reason worth
+repeating: a runner has no device, so such a job can only be skipped, fail, or
+boot an emulator, and *an emulator agreeing with Robolectric is what let three
+of that project's worst bugs through*. Its `--device=/dev/kvm` is the
+devcontainer, which this repository already had, identically. The emulator that
+"works" there is the local one.
 
-`enableAndroidTestCoverage` stays **off by default**. Instrumenting the APK slows
-it, and this app is judged on how touch and countdown timing feel, so a build
-going onto a phone must never carry it; CI turns it on with
-`-PandroidTestCoverage=true` and nothing else does. That keeps the existing
-objection in `build.gradle.kts` intact rather than overruling it.
+Job removed. `enableAndroidTestCoverage` reverted to off, so nothing
+instruments an APK any more.
 
-The report path is **found at runtime rather than assumed**. It is an AGP
-convention, not something this repository sets, and a future AGP that moves it
-would otherwise upload nothing silently; the step now prints what it found.
+### Robolectric, configured the way podsilo configures it
 
-### Logic pulled out of the composable
+`sdk=34` pinned in `robolectric.properties` (it ships no framework jar for this
+module's `targetSdk` of 37), `isIncludeAndroidResources = true`, and the Compose
+test artifacts on the unit-test classpath. 16 new screen and navigation tests.
 
-`DrawScreen` held 314 uncovered lines, and some were real decisions rather than
-layout: who is dimmed, what is emphasised, how a rank maps to size and opacity,
-which letter a team gets. Those are now `ringSpec` in the Logic layer, returning
-a `RingSpec` of roles and numbers with no Android types in it; the screen only
-maps a role onto a colour. Label placement went too - `labelFitsAbove` and
-`labelOffsetY`.
+The device set in `androidTest/` is untouched and still runs on the phone. It
+covers what neither Robolectric nor an emulator can: multi-touch, real haptics,
+how the countdown feels.
 
-**A behaviour change nearly went in unnoticed.** The first draft of `teamLabel`
-dropped the original's `% 26`, which would have relabelled team 26 from "A" to
-"27". The wrap is ambiguous - two teams both called "A" - but it is what the app
-has always done, and a coverage refactor is not where that gets changed.
-Restored, and pinned by a test that states the ambiguity out loud.
+### Three failures that a green build would have hidden
 
-Unit tests went 91 → 108; branch coverage 20.4% → 24.9% before the instrumented
-half is counted at all.
+Worth writing down, because each looked like success:
 
-### codecov.yml
+1. **Two of the first screen tests were wrong about the app, not the app about
+   itself.** `TEAMS` matches two nodes on the home screen - the mode card *and*
+   the stepper's label - and the settings screen scrolls, so `COUNTDOWN` and the
+   version sit below the fold. Fixed by matching unique subtitles and by
+   `performScrollTo`, which also proves those rows are reachable.
 
-There was none. Now: generated Room sources ignored (`*_Impl.kt` - written from
-the DAO declarations, not in the repository, and a test for them would be a test
-of Room), `logic` and `ui` declared as separate components so neither hides
-behind the other, and both flags set to carry forward so a skipped instrumented
-run does not read as a collapse. Project and patch targets are `informational`,
-so they report without failing a PR.
+2. **The Robolectric tests passed while measuring nothing.** 119 tests green,
+   every screen still at 0%. Robolectric loads application classes through its
+   own sandbox classloader; they arrive with no source location, and JaCoCo
+   skips those by default. `isIncludeNoLocationClasses = true` is the fix. Had
+   the build status been the only check, this would have been reported as a win
+   that had not happened.
 
-Validated against Codecov's own endpoint rather than a YAML parser.
+3. **The fix for (2) could not be applied.** `Extension of type
+   'JacocoTaskExtension' does not exist` - AGP's `enableUnitTestCoverage` runs
+   JaCoCo but never applies the JaCoCo *plugin*. Naming `jacoco` in
+   `plugins { }` is what makes the extension exist. That failure at least was
+   loud.
 
-### The first emulator run failed, and what it taught
+### Where the coverage sits
 
-`No device found matching --device pixel_9a`. The **API 37.0 system image
-installed fine** - that was the part expected to break, and it did not. What
-broke was the AVD's hardware profile: the devcontainer's SDK knows `pixel_9a`,
-the GitHub runner's older device catalogue does not.
+| | Line coverage |
+| --- | --- |
+| `HomeScreen` | 100% |
+| `SettingsScreen` | 96% |
+| `ResultScreen` | 93% |
+| `ShotgunNavHost` | 89% |
+| `Stepper`, `ModeMotif`, `Theme`, `Type`, `Color` | 95-100% |
+| `DrawScreen` | 36% |
 
-Fixed by dropping `profile:` altogether rather than substituting another
-device. The hardware profile changes nothing this job measures, and the one
-thing it would change - multi-touch - is exactly what an emulator cannot test
-anyway. That is the same reason the phone exists.
+`DrawScreen` is the multi-touch surface and stays low on purpose - its decisions
+were moved out into `ringSpec`, which is pure and unit-tested, so what is left
+there is drawing. What remains uncovered otherwise is `ShotgunViewModel`,
+`MainActivity`, `Haptics` and `DimMode`: an Android lifecycle and two hardware
+services.
 
 ### Not verified
 
-KVM permissions, the emulator actually booting, and the discovered report path
-are still only reasoned - the run died before reaching any of them.
-
-Rendering after the `ringSpec` extraction is checked on the phone for launch and
-one screen, not yet for a full multi-finger draw.
+The phone has the build installed and launches, but the rings after the
+`ringSpec` extraction have not been checked through a full multi-finger draw.
 
 ---
 
