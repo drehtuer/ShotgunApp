@@ -23,14 +23,9 @@ authoritatively, in the design export itself.
   - [ ] A colour picker for anything finer
   - [ ] Rings and result dots take the chosen colours rather than the palette's
         team fills
-- [ ] The **suspense churn animation** is not implemented. The staged reveal
-      happens; the rings do not pulse between steps.
 - [ ] Whether the **rank labels clear the player's own hand** is a heuristic -
       drawn above the ring, flipping below near the top edge. True for the hands
       it has been tried with, not by construction.
-- [ ] The **fairness field is recomputed on the main thread** when history
-      changes. Fast at the sizes involved, but it belongs off the main thread
-      before the history gets large.
 
 ## Infrastructure
 

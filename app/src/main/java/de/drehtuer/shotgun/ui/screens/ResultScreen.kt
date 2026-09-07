@@ -35,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
+import de.drehtuer.shotgun.data.DrawHistory
 import de.drehtuer.shotgun.data.DrawPoint
 import de.drehtuer.shotgun.data.DrawRecord
 import de.drehtuer.shotgun.result.HeatField
@@ -45,6 +47,8 @@ import de.drehtuer.shotgun.ui.components.ScreenHeader
 import de.drehtuer.shotgun.ui.navigation.DrawMode
 import de.drehtuer.shotgun.ui.theme.PPColors
 import de.drehtuer.shotgun.ui.theme.PPTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 private const val LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -145,20 +149,34 @@ fun ResultScreen(
     }
 }
 
-/** The density field itself, rasterised once per history change. */
+/**
+ * The density field itself, rasterised once per history change.
+ *
+ * **The raster runs off the main thread.** Cost grows with history - every
+ * retained winner splats a kernel over the grid, and up to
+ * [DrawHistory.MAX_RETAINED_DRAWS] of them are kept - so doing it inside
+ * composition janks the way into the screen exactly when the history is worth
+ * looking at. The previous bitmap stays on screen until the new one is ready,
+ * so a recompute shows a stale field rather than an empty panel.
+ */
 @Composable
 private fun FairnessField(winners: List<DrawPoint>, colors: PPColors) {
     var size by remember { mutableStateOf(IntSize.Zero) }
 
-    val bitmap: ImageBitmap? = remember(winners, colors.isDark, size) {
-        if (size.width == 0 || size.height == 0) return@remember null
+    val bitmap: ImageBitmap? by produceState<ImageBitmap?>(null, winners, colors, size) {
+        if (size.width == 0 || size.height == 0) {
+            value = null
+            return@produceState
+        }
         val height = (FIELD_WIDTH * size.height / size.width).coerceAtLeast(1)
         val stops = colors.heatRamp.map { HeatStop(it.position, it.color.toArgb()) }
-        val density = HeatField.density(winners.map { it.x to it.y }, FIELD_WIDTH, height)
-        val pixels = HeatField.colorise(density, stops)
-        android.graphics.Bitmap.createBitmap(
-            pixels, FIELD_WIDTH, height, android.graphics.Bitmap.Config.ARGB_8888,
-        ).asImageBitmap()
+        value = withContext(Dispatchers.Default) {
+            val density = HeatField.density(winners.map { it.x to it.y }, FIELD_WIDTH, height)
+            val pixels = HeatField.colorise(density, stops)
+            android.graphics.Bitmap.createBitmap(
+                pixels, FIELD_WIDTH, height, android.graphics.Bitmap.Config.ARGB_8888,
+            ).asImageBitmap()
+        }
     }
 
     Canvas(
