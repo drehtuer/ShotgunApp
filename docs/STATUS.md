@@ -28,6 +28,74 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — Coverage reporting: the number was measuring the wrong thing
+
+Codecov read 16.9%, which sounded like an app that is barely tested. It is not.
+**31 instrumented tests already existed** - `DrawScreenMultiTouchTest` (8),
+`SettingsScreenTest` (8), `RoomDrawHistoryTest` (6), `NavigationStateTest` (5),
+`ResultScreenTest` (4) - covering precisely the files reporting 0%. They had
+never been run in CI and their coverage had never been measured, so the number
+described the JVM half and called it the whole.
+
+Three changes, in the order they matter.
+
+### The instrumented tests are now measured
+
+A CI job runs them on an emulator at **API 37.0** - the same system image the
+devcontainer AVD uses, and the same API level as the phone. The emulator action
+takes Android's minor-version scheme in `api-level` directly, so nothing had to
+be downgraded for CI, which was the outcome expected before checking.
+
+`enableAndroidTestCoverage` stays **off by default**. Instrumenting the APK slows
+it, and this app is judged on how touch and countdown timing feel, so a build
+going onto a phone must never carry it; CI turns it on with
+`-PandroidTestCoverage=true` and nothing else does. That keeps the existing
+objection in `build.gradle.kts` intact rather than overruling it.
+
+The report path is **found at runtime rather than assumed**. It is an AGP
+convention, not something this repository sets, and a future AGP that moves it
+would otherwise upload nothing silently; the step now prints what it found.
+
+### Logic pulled out of the composable
+
+`DrawScreen` held 314 uncovered lines, and some were real decisions rather than
+layout: who is dimmed, what is emphasised, how a rank maps to size and opacity,
+which letter a team gets. Those are now `ringSpec` in the Logic layer, returning
+a `RingSpec` of roles and numbers with no Android types in it; the screen only
+maps a role onto a colour. Label placement went too - `labelFitsAbove` and
+`labelOffsetY`.
+
+**A behaviour change nearly went in unnoticed.** The first draft of `teamLabel`
+dropped the original's `% 26`, which would have relabelled team 26 from "A" to
+"27". The wrap is ambiguous - two teams both called "A" - but it is what the app
+has always done, and a coverage refactor is not where that gets changed.
+Restored, and pinned by a test that states the ambiguity out loud.
+
+Unit tests went 91 → 108; branch coverage 20.4% → 24.9% before the instrumented
+half is counted at all.
+
+### codecov.yml
+
+There was none. Now: generated Room sources ignored (`*_Impl.kt` - written from
+the DAO declarations, not in the repository, and a test for them would be a test
+of Room), `logic` and `ui` declared as separate components so neither hides
+behind the other, and both flags set to carry forward so a skipped instrumented
+run does not read as a collapse. Project and patch targets are `informational`,
+so they report without failing a PR.
+
+Validated against Codecov's own endpoint rather than a YAML parser.
+
+### Not verified
+
+The emulator job has **never run** - it is new, and nothing local can exercise
+it. API level, device profile, KVM permissions and the discovered report path
+are all reasoned rather than observed, and the first CI run is the test.
+
+Rendering after the `ringSpec` extraction is checked on the phone for launch and
+one screen, not yet for a full multi-finger draw.
+
+---
+
 ## 2026-09-07 — Relicensed GPL-2.0-or-later, and Codecov switched on
 
 ### The licence

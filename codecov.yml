@@ -1,0 +1,66 @@
+# Codecov configuration.
+#
+# Two things this file is for: keeping generated code out of the number, and
+# reporting the layers separately. The app is a Compose UI over a small pure
+# core, and one blended percentage describes neither half - the core is tested
+# hard on the JVM, the UI is tested on a device.
+
+coverage:
+  status:
+    project:
+      default:
+        # Against the parent commit rather than a fixed number, so a PR is
+        # judged on whether it made things worse.
+        target: auto
+        threshold: 1%
+        informational: true
+      logic:
+        paths:
+          - "app/src/main/java/de/drehtuer/shotgun/draw/**"
+          - "app/src/main/java/de/drehtuer/shotgun/result/**"
+          - "app/src/main/java/de/drehtuer/shotgun/data/**"
+        target: 90%
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+        informational: true
+
+# Both halves visible, neither hidden behind the other.
+component_management:
+  individual_components:
+    - component_id: logic
+      name: Logic (JVM-tested)
+      paths:
+        - "app/src/main/java/de/drehtuer/shotgun/draw/**"
+        - "app/src/main/java/de/drehtuer/shotgun/result/**"
+        - "app/src/main/java/de/drehtuer/shotgun/data/**"
+    - component_id: ui
+      name: UI (device-tested)
+      paths:
+        - "app/src/main/java/de/drehtuer/shotgun/ui/**"
+
+flags:
+  unittests:
+    paths:
+      - "app/src/main/java/"
+    carryforward: true
+  instrumented:
+    paths:
+      - "app/src/main/java/"
+    # Instrumented runs are slower and can be skipped; without carryforward a
+    # run that did not include them would read as a coverage collapse.
+    carryforward: true
+
+# Generated sources. Room writes these from the DAO and database declarations,
+# they are not in the repository, and a test for them would be a test of Room.
+ignore:
+  - "**/*_Impl.kt"
+  - "**/*_Impl.java"
+  - "**/ComposableSingletons*"
+  - "app/build/**"
+
+comment:
+  layout: "condensed_header, diff, components, flags"
+  require_changes: true

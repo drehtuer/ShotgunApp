@@ -294,18 +294,43 @@ It depends on `testDebugUnitTest`, so asking for both does not run the tests
 twice. CI does exactly that, and uploads the directory as the `coverage-report`
 artifact.
 
-**Read the branch figure per layer, not overall.** The overall number counts
-Compose UI, navigation and Room's generated DAO, none of which a JVM test can
-reach - it sits near 20% and always will. The number that means something is the
-Logic layer, which is where the rules live and is above 95%:
+That report covers the **JVM tests only**. The instrumented half is measured
+separately - see below.
 
-| | Branch coverage |
-| --- | --- |
-| Logic layer (`DrawEngine`, `HeatField`, settings, records) | **143/147 - 97.3%** |
-| Whole app, including UI | 143/702 - 20.4% |
+**Read the figure per layer, not overall.** The app is a Compose UI over a small
+pure core, and the two are tested by different suites - one blended percentage
+describes neither. `codecov.yml` declares them as components so both are
+reported:
 
-Both numbers come from the same run: every covered branch in the app is in the
-logic layer, which is the split the architecture intends.
+| Component | Tested by | Where |
+| --- | --- | --- |
+| `logic` - `draw/`, `result/`, `data/` | JVM unit tests | `app/src/test/` |
+| `ui` - `ui/` | instrumented tests | `app/src/androidTest/` |
+
+Generated Room sources (`*_Impl.kt`) are excluded: they are written from the DAO
+and database declarations, are not in the repository, and a test for them would
+be a test of Room.
+
+### Instrumented coverage
+
+The instrumented tests reach the screens, navigation and Room - everything a JVM
+test cannot. `enableAndroidTestCoverage` is **off by default**, because
+instrumenting the APK slows it and this app is judged on how touch and countdown
+timing feel; a build that goes on a phone must never carry it. It is switched on
+by a property, for CI only:
+
+```bash
+./gradlew createDebugAndroidTestCoverageReport -PandroidTestCoverage=true
+```
+
+CI runs that on an emulator at **API 37.0** - the same image the devcontainer
+AVD uses, and the same API level as the phone. The action's `api-level` input
+takes Android's minor-version scheme directly, so nothing has to be downgraded
+for CI.
+
+Results go to Codecov under the `instrumented` flag, separately from
+`unittests`. Both flags carry forward: an instrumented run that is skipped or
+fails must not read as a coverage collapse.
 
 A handful of branches in the logic layer are unreachable through the public API
 - `DrawEngine`'s single-finger draw cannot happen because a draw needs two

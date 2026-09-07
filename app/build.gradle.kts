@@ -93,10 +93,19 @@ android {
             versionNameSuffix = "-debug"
             signingConfig = signingConfigs.getByName("debug")
 
-            // Unit-test coverage only. enableAndroidTestCoverage would
-            // instrument the APK itself, and this app is judged on touch and
-            // countdown timing - a slowed build would misreport how it feels.
             enableUnitTestCoverage = true
+
+            // Instrumenting the APK slows it, and this app is judged on touch
+            // and countdown timing - a slowed build misreports how it feels.
+            // So it is off by default, including for every build that goes on
+            // a phone, and switched on only by the CI job that measures what
+            // the instrumented tests cover:
+            //
+            //   ./gradlew createDebugAndroidTestCoverageReport -PandroidTestCoverage=true
+            enableAndroidTestCoverage =
+                providers.gradleProperty("androidTestCoverage")
+                    .map { it.toBoolean() }
+                    .getOrElse(false)
 
             // No applicationIdSuffix on purpose: it would rename the package
             // for debug builds and break every documented adb command.
