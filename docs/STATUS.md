@@ -28,6 +28,45 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — Release 0.1.2
+
+`appVersion` 0.1.1 → 0.1.2, so `versionCode` derives to **102**. One value
+changed; the tag has to match it or `release.yml` refuses the build.
+
+Everything since 0.1.1, in the order it landed:
+
+- **The palette is bound to the design export.** `DesignTokenTest` reads the
+  nine `--pp-*` tokens out of `Shotgun.dc.html` at test time, so a re-export
+  that changes a colour fails the build rather than disagreeing quietly.
+- **The hardware finger limit is documented.** The Pixel 10a's digitizer
+  reports ten simultaneous contacts; the app adds no cap of its own, and
+  deliberately shows no finger count, because it cannot read one.
+- **The fairness field is rasterised off the main thread**, keeping the
+  previous bitmap up until the new one is ready.
+- **Rank labels slide into the ring when a finger lifts**, which is the only
+  placement guaranteed to be readable and on screen.
+- **The suspense churn is dropped** - decided against rather than left open.
+- **Licensed GPL-2.0-or-later**, the "or later" resolving the incompatibility
+  with the Apache-2.0 dependencies.
+- **Coverage went 17% to 68%**, mostly by measuring what was already tested:
+  Robolectric covers the screens on the JVM, and `ringSpec` moved the ring
+  styling rules out of a composable into testable code.
+- **A real bug fixed**, found by a new test: `HeatField.density` allocated its
+  array before validating the dimensions, so a negative width threw from the
+  line written to prevent it.
+- Devcontainer JDK path corrected, a `connect-android-device` skill added, and
+  Wi-Fi debugging's random connect port handled by a `discover` subcommand.
+- README badges, and a Codecov badge that now reads 68%.
+
+### Cutting it
+
+`release.yml` fires on the tag alone, refuses to build without
+`RELEASE_KEYSTORE_BASE64` - an immutable release of unsigned artifacts would
+burn the version number for good - and attaches the APK and AAB to a *draft*,
+publishing only once the upload finished.
+
+---
+
 ## 2026-09-07 — Coverage reporting: Robolectric, and three silent failures
 
 Codecov read 16.9%. **It now reads about 64%** - line coverage 16.3% → 63.8%,
