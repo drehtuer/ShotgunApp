@@ -62,6 +62,23 @@ You need JDK 21 and an Android SDK with `platforms;android-37.0` and
 `local.properties` containing `sdk.dir=/path/to/sdk`. `local.properties` is
 gitignored.
 
+**A JRE is not enough - it must be a JDK.** Gradle needs the compiler, and a
+runtime-only install fails every task with:
+
+```
+Failed to calculate the value of task ':app:compileDebugJavaWithJavac'
+  property 'javaCompiler'.
+> Toolchain installation '/usr/lib/jvm/java-21-openjdk-amd64' does not provide
+  the required capabilities: [JAVA_COMPILER]
+```
+
+The give-away is that `java -version` works while `javac -version` is missing.
+On Debian/Ubuntu the `openjdk-21-jre` package alone does this; install
+`openjdk-21-jdk`. Inside the devcontainer this cannot happen - the base image
+ships a full JDK at `/usr/lib/jvm/msopenjdk-current`, and the Dockerfile asserts
+`javac` is present so a base-image change that dropped it would fail the image
+build rather than the first Gradle run.
+
 ## Building
 
 ```bash
@@ -297,14 +314,32 @@ phone.
 ```bash
 # Phone: Developer options > Wireless debugging > Pair device with pairing code
 ./.devcontainer/connect-device.sh pair <ip>:<pairingPort> <code>
-./.devcontainer/connect-device.sh connect <ip>:5555
+./.devcontainer/connect-device.sh connect <ip>:<port>
 ./gradlew installDebug
 ```
 
 The pairing port and the connect port are **different** - the pairing dialog
-shows one, the Wireless debugging screen shows the other. Run the script with
-no arguments for the full notes, including the older `adb tcpip 5555` route for
-pre-Android-11 devices.
+shows one, the Wireless debugging screen shows the other. On Android 11+ the
+connect port is a **random ephemeral port, not 5555**; 5555 only applies to the
+older `adb tcpip` route for pre-Android-11 devices.
+
+If the phone is not to hand, find the port:
+
+```bash
+./.devcontainer/connect-device.sh discover <ip>
+```
+
+It scans 30000-50000 and tries each open port until one accepts an adb
+connection. That is crude, but `adb mdns services` finds nothing here: mDNS is
+link-local and does not cross the container's NAT.
+
+The pairing port stays open after pairing and looks like a candidate, but
+connecting to it leaves the device `offline` - `adb disconnect <ip>:<pairingPort>`
+and use the other one. `discover` already skips it.
+
+Run the script with no arguments for the full notes. The
+[`connect-android-device`](https://github.com/drehtuer/ShotgunApp/blob/main/.claude/skills/connect-android-device/SKILL.md)
+skill wraps this whole flow, including reading a draw back out of the database.
 
 With both an emulator and a phone attached, target one explicitly:
 
@@ -435,6 +470,10 @@ serve it from that path rather than opening the files directly.
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Debug keystore changed. `adb uninstall de.drehtuer.shotgun`, then reinstall. |
 | `x86_64 emulation currently requires hardware acceleration` | `/dev/kvm` missing or not writable. |
 | Emulator says `Unknown AVD name` | `ANDROID_AVD_HOME` is not set; the AVD lives in the SDK volume. |
+| `does not provide the required capabilities: [JAVA_COMPILER]` | A JRE, not a JDK. Install `openjdk-21-jdk`, or build inside the devcontainer. |
+| `failed to connect to '<ip>:5555'` | Android 11+ picks a random connect port. `connect-device.sh discover <ip>`. |
+| Device stuck `offline` after pairing | Connected to the pairing port. Disconnect it and use the Wireless debugging port. |
+| `adb mdns services` lists nothing | Expected under bridge networking; mDNS does not cross the NAT. Use `discover`. |
 
 ## The design export
 

@@ -101,10 +101,14 @@ works without host networking.
 ```bash
 # Android 11+: Developer options > Wireless debugging > Pair device with code
 ./.devcontainer/connect-device.sh pair 192.168.1.42:41234 123456
-./.devcontainer/connect-device.sh connect 192.168.1.42:5555
+./.devcontainer/connect-device.sh connect 192.168.1.42:43227
 
 ./gradlew installDebug
 ```
+
+On Android 11+ the connect port is a **random port, not 5555**, and it differs
+from the pairing port. If the phone is not to hand,
+`./.devcontainer/connect-device.sh discover 192.168.1.42` finds it.
 
 Run `./.devcontainer/connect-device.sh` with no arguments for the full notes,
 including the older `adb tcpip 5555` route.
