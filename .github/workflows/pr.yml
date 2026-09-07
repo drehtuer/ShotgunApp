@@ -183,6 +183,15 @@ jobs:
           # cover, and the emulator cannot test the thing a profile would
           # change, which is multi-touch.
           ram-size: 4096M
+          cores: 4
+          # A fresh boot every time. Loading a snapshot races the framework
+          # coming up, and the first failure here was the action reaching the
+          # device before `settings` existed - "cmd: Can't find service:
+          # settings" - rather than the emulator never starting.
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -no-snapshot -camera-back none
+          emulator-boot-timeout: 900
           disable-animations: true
           script: >-
             ./gradlew createDebugAndroidTestCoverageReport
