@@ -6,7 +6,7 @@
 [![Release](https://github.com/drehtuer/ShotgunApp/actions/workflows/release.yml/badge.svg)](https://github.com/drehtuer/ShotgunApp/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/drehtuer/ShotgunApp?label=release)](https://github.com/drehtuer/ShotgunApp/releases/latest)
 [![Dependabot](https://img.shields.io/badge/dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](https://github.com/drehtuer/ShotgunApp/blob/main/.github/dependabot.yml)
-[![Licence](https://img.shields.io/github/license/drehtuer/ShotgunApp)](https://github.com/drehtuer/ShotgunApp/blob/main/LICENSE)
+[![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue)](https://github.com/drehtuer/ShotgunApp/blob/main/LICENSE)
 [![Coverage](https://codecov.io/gh/drehtuer/ShotgunApp/branch/main/graph/badge.svg)](https://codecov.io/gh/drehtuer/ShotgunApp)
 
 An Android app for settling *who goes first*. Everyone puts a finger on the
@@ -202,15 +202,17 @@ an API 37 emulator; multi-touch still needs the real phone.
 
 ## Licence
 
-**GNU General Public License, version 2** - the full text is in
-[`LICENSE`](https://github.com/drehtuer/ShotgunApp/blob/main/LICENSE).
+**GNU General Public License, version 2 or later**
+(`SPDX-License-Identifier: GPL-2.0-or-later`) - the full text of version 2 is
+in [`LICENSE`](https://github.com/drehtuer/ShotgunApp/blob/main/LICENSE).
 
 ```
 Copyright (C) 2026 drehtuer
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
-Foundation; version 2 of the License.
+Foundation; either version 2 of the License, or (at your option) any later
+version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
@@ -221,10 +223,10 @@ The design sources under `design/` are exports from a Claude Design project and
 the bound **Modernist** design system; they are included as the specification
 this app is built from, not as GPL'd source.
 
-> **Note on dependencies.** Every runtime dependency here - AndroidX, Compose,
-> Room, DataStore, the Kotlin and kotlinx libraries - is under **Apache
-> License 2.0**, which the Free Software Foundation considers *incompatible with
-> GPLv2* (its patent-termination clause is an added restriction GPLv2 does not
-> permit). Apache 2.0 is compatible with GPLv3, so the usual remedies are to
-> license as **GPL-2.0-or-later** or to move to GPLv3. This is recorded rather
-> than resolved - see [`docs/TODO.md`](docs/TODO.md).
+> **Why "or later".** Every runtime dependency here - AndroidX, Compose, Room,
+> DataStore, the Kotlin and kotlinx libraries - is under **Apache License 2.0**,
+> which the Free Software Foundation considers *incompatible with GPLv2*: its
+> patent-termination clause is an added restriction GPLv2 does not permit.
+> Apache 2.0 **is** compatible with GPLv3, so the "or later" clause is what
+> resolves it - a recipient may take the work under GPLv3 terms, where the
+> conflict does not arise. Under GPL-2.0-only it would.
