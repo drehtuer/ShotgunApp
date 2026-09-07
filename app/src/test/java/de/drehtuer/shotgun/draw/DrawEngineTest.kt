@@ -353,4 +353,109 @@ class DrawEngineTest {
         assertEquals(9, drawn.outcome.order.size)
         assertTrue(4L !in drawn.outcome.order)
     }
+
+    // ---- guards: the paths taken when there is nothing to act on ------------
+
+    /**
+     * These are the early returns. They are cheap to get wrong and invisible
+     * when they are - a stray pointer id from the framework, or a timer tick
+     * arriving one frame after the phase moved on, must do nothing at all.
+     */
+
+    @Test
+    fun `nothing is revealed before a draw has happened`() {
+        val e = engine()
+        assertEquals(false, e.isRevealed(1))
+    }
+
+    @Test
+    fun `a finger that was not in the draw is never revealed`() {
+        val e = engine(mode = DrawMode.ORDER, instant = true)
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)
+        e.tick(now = 10_000)
+        assertEquals(true, e.isRevealed(1))
+        assertEquals(false, e.isRevealed(99))
+    }
+
+    @Test
+    fun `progress is zero when idle and full once drawn`() {
+        val e = engine(mode = DrawMode.ORDER, instant = true)
+        assertEquals(0f, e.progress(now = 0), 1e-4f)
+        e.onDown(1, 0f, 0f, now = 0)
+        assertEquals(0f, e.progress(now = 0), 1e-4f)   // one finger: still idle
+        e.onDown(2, 0f, 0f, now = 0)
+        e.tick(now = 10_000)
+        assertEquals(1f, e.progress(now = 10_000), 1e-4f)
+    }
+
+    @Test
+    fun `a latecomer cannot join a draw that is still revealing`() {
+        val e = engine(mode = DrawMode.ORDER, instant = false)
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)
+        e.tick(now = 10_000)
+        assertEquals(DrawPhase.REVEALING, e.phase)
+
+        assertNull(e.onDown(3, 0f, 0f, now = 10_100))
+        assertEquals(2, e.fingers.size)
+    }
+
+    @Test
+    fun `moving a finger that is not down does nothing`() {
+        val e = engine()
+        e.onDown(1, 10f, 10f, now = 0)
+        e.onMove(99, 500f, 500f)
+        assertEquals(listOf(10f to 10f), e.fingers.map { it.x to it.y })
+    }
+
+    @Test
+    fun `lifting a finger that is not down does nothing`() {
+        val e = engine(seconds = 3)
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)
+        e.onUp(99, now = 100)
+        assertEquals(2, e.fingers.size)
+        assertEquals(DrawPhase.COUNTING, e.phase)
+    }
+
+    @Test
+    fun `lifting the only finger leaves the surface idle`() {
+        val e = engine()
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onUp(1, now = 100)
+        assertEquals(DrawPhase.IDLE, e.phase)
+        assertEquals(0, e.fingers.size)
+    }
+
+    @Test
+    fun `revealing more does nothing when nothing is being revealed`() {
+        val e = engine(mode = DrawMode.ORDER, instant = true)
+        e.revealNext()                                  // no outcome at all
+        assertEquals(0, e.revealedCount)
+
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)
+        e.tick(now = 10_000)                            // instant: straight to REVEALED
+        assertEquals(DrawPhase.REVEALED, e.phase)
+        val shown = e.revealedCount
+        e.revealNext()
+        assertEquals(shown, e.revealedCount)
+    }
+
+    @Test
+    fun `a staged reveal ends at revealed and then stops counting`() {
+        val e = engine(mode = DrawMode.ORDER, instant = false)
+        e.onDown(1, 0f, 0f, now = 0)
+        e.onDown(2, 0f, 0f, now = 0)
+        e.tick(now = 10_000)
+        assertEquals(1, e.revealedCount)                // the first is free
+
+        e.revealNext()
+        assertEquals(DrawPhase.REVEALED, e.phase)
+        assertEquals(2, e.revealedCount)
+
+        e.revealNext()                                  // past the end
+        assertEquals(2, e.revealedCount)
+    }
 }

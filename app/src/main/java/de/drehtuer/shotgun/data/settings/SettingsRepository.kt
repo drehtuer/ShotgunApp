@@ -76,16 +76,32 @@ class SettingsRepository(private val context: Context) {
      * is why the countdown appeared to ignore the setting.
      */
     suspend fun stepCountdown(steps: Int) = edit { prefs ->
-        val current = prefs[Keys.COUNTDOWN]
-            ?: prefs[Keys.LEGACY_COUNTDOWN_SECONDS]?.times(1_000)
-            ?: Settings.DEFAULT_COUNTDOWN_MILLIS
-        prefs[Keys.COUNTDOWN] = (current + steps * Settings.COUNTDOWN_STEP_MILLIS)
-            .coerceAtLeast(Settings.MIN_COUNTDOWN_MILLIS)
+        prefs[Keys.COUNTDOWN] = steppedCountdown(
+            stored = prefs[Keys.COUNTDOWN],
+            legacySeconds = prefs[Keys.LEGACY_COUNTDOWN_SECONDS],
+            steps = steps,
+        )
     }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         context.dataStore.edit(block)
     }
+}
+
+/**
+ * The countdown a step applies to, resolved and stepped.
+ *
+ * Pulled out of [SettingsRepository.stepCountdown] so it can be tested without
+ * a DataStore. The fallback to [legacySeconds] is a migration that runs once
+ * per upgrade and never again - exactly the kind of path that is never
+ * exercised by hand, so it is pinned here instead.
+ */
+internal fun steppedCountdown(stored: Int?, legacySeconds: Int?, steps: Int): Int {
+    val current = stored
+        ?: legacySeconds?.times(1_000)
+        ?: Settings.DEFAULT_COUNTDOWN_MILLIS
+    return (current + steps * Settings.COUNTDOWN_STEP_MILLIS)
+        .coerceAtLeast(Settings.MIN_COUNTDOWN_MILLIS)
 }
 
 /**

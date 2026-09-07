@@ -38,8 +38,12 @@ object HeatField {
      * would libel the draw as unfair when it is not.
      */
     fun density(points: List<Pair<Float, Float>>, width: Int, height: Int): FloatArray {
+        // The size guard has to come before the allocation, not after it: a
+        // negative dimension makes `width * height` negative, and FloatArray
+        // throws on that long before the guard below could catch it.
+        if (width <= 0 || height <= 0) return FloatArray(0)
         val cells = FloatArray(width * height)
-        if (points.isEmpty() || width <= 0 || height <= 0) return cells
+        if (points.isEmpty()) return cells
 
         val radius = max(MIN_RADIUS, min(width, height) * RADIUS_FRACTION)
         val radiusSquared = radius * radius

@@ -280,6 +280,54 @@ Lint must pass clean. Suppress a genuine false positive *narrowly*, with
 There is one standing false positive: `R.mipmap.ic_launcher_round` is reported
 unused, but it is referenced from the manifest's `android:roundIcon`.
 
+### Coverage
+
+`enableUnitTestCoverage` is on for the debug build type, so the unit tests are
+instrumented by JaCoCo. The report is a separate task:
+
+```bash
+./gradlew createDebugUnitTestCoverageReport
+# app/build/reports/coverage/test/debug/index.html   (report.xml beside it)
+```
+
+It depends on `testDebugUnitTest`, so asking for both does not run the tests
+twice. CI does exactly that, and uploads the directory as the `coverage-report`
+artifact.
+
+**Read the branch figure per layer, not overall.** The overall number counts
+Compose UI, navigation and Room's generated DAO, none of which a JVM test can
+reach - it sits near 20% and always will. The number that means something is the
+Logic layer, which is where the rules live and is above 95%:
+
+| | Branch coverage |
+| --- | --- |
+| Logic layer (`DrawEngine`, `HeatField`, settings, records) | **143/147 - 97.3%** |
+| Whole app, including UI | 143/702 - 20.4% |
+
+Both numbers come from the same run: every covered branch in the app is in the
+logic layer, which is the split the architecture intends.
+
+A handful of branches in the logic layer are unreachable through the public API
+- `DrawEngine`'s single-finger draw cannot happen because a draw needs two
+fingers, and `revealNext` cannot find a null outcome because only a draw sets
+that phase. They are defensive, and left uncovered rather than reached by
+contorting a test.
+
+#### Codecov
+
+Coverage is uploaded to [Codecov](https://codecov.io/gh/drehtuer/ShotgunApp),
+which hosts the README badge and comments diff coverage on pull requests.
+
+It needs a `CODECOV_TOKEN` repository secret. **Without it the upload step is
+skipped, not failed** - the workflow checks for the token in a preceding step,
+because a step's own `env:` is not in scope for its own `if:`, and because a
+fork's pull request cannot read secrets at all. Until the token is added the
+badge reads *unknown*.
+
+To set it up: sign in to Codecov with the GitHub account, add the repository,
+copy the upload token, and save it as `CODECOV_TOKEN` under
+*Settings > Secrets and variables > Actions*.
+
 ## Emulator
 
 ```bash
