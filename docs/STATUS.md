@@ -28,6 +28,86 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — Coverage reporting: Robolectric, and three silent failures
+
+Codecov read 16.9%. **It now reads about 64%** - line coverage 16.3% → 63.8%,
+branch 24.9% → 56.3%, 68 tests → 124. Nothing about the app got much safer in
+the process; most of the gap was measurement.
+
+### The CI emulator was the wrong answer, and podsilo already said so
+
+The first attempt was a CI job booting an emulator to run the 31 existing
+instrumented tests. It failed three times - a device profile the runner's SDK
+does not have, then a framework that was not up when the action reached it -
+and it was the wrong idea regardless.
+
+`podsilo`'s `ci.yml` forbids exactly this, in capitals, with a reason worth
+repeating: a runner has no device, so such a job can only be skipped, fail, or
+boot an emulator, and *an emulator agreeing with Robolectric is what let three
+of that project's worst bugs through*. Its `--device=/dev/kvm` is the
+devcontainer, which this repository already had, identically. The emulator that
+"works" there is the local one.
+
+Job removed. `enableAndroidTestCoverage` reverted to off, so nothing
+instruments an APK any more.
+
+### Robolectric, configured the way podsilo configures it
+
+`sdk=34` pinned in `robolectric.properties` (it ships no framework jar for this
+module's `targetSdk` of 37), `isIncludeAndroidResources = true`, and the Compose
+test artifacts on the unit-test classpath. 16 new screen and navigation tests.
+
+The device set in `androidTest/` is untouched and still runs on the phone. It
+covers what neither Robolectric nor an emulator can: multi-touch, real haptics,
+how the countdown feels.
+
+### Three failures that a green build would have hidden
+
+Worth writing down, because each looked like success:
+
+1. **Two of the first screen tests were wrong about the app, not the app about
+   itself.** `TEAMS` matches two nodes on the home screen - the mode card *and*
+   the stepper's label - and the settings screen scrolls, so `COUNTDOWN` and the
+   version sit below the fold. Fixed by matching unique subtitles and by
+   `performScrollTo`, which also proves those rows are reachable.
+
+2. **The Robolectric tests passed while measuring nothing.** 119 tests green,
+   every screen still at 0%. Robolectric loads application classes through its
+   own sandbox classloader; they arrive with no source location, and JaCoCo
+   skips those by default. `isIncludeNoLocationClasses = true` is the fix. Had
+   the build status been the only check, this would have been reported as a win
+   that had not happened.
+
+3. **The fix for (2) could not be applied.** `Extension of type
+   'JacocoTaskExtension' does not exist` - AGP's `enableUnitTestCoverage` runs
+   JaCoCo but never applies the JaCoCo *plugin*. Naming `jacoco` in
+   `plugins { }` is what makes the extension exist. That failure at least was
+   loud.
+
+### Where the coverage sits
+
+| | Line coverage |
+| --- | --- |
+| `HomeScreen` | 100% |
+| `SettingsScreen` | 96% |
+| `ResultScreen` | 93% |
+| `ShotgunNavHost` | 89% |
+| `Stepper`, `ModeMotif`, `Theme`, `Type`, `Color` | 95-100% |
+| `DrawScreen` | 36% |
+
+`DrawScreen` is the multi-touch surface and stays low on purpose - its decisions
+were moved out into `ringSpec`, which is pure and unit-tested, so what is left
+there is drawing. What remains uncovered otherwise is `ShotgunViewModel`,
+`MainActivity`, `Haptics` and `DimMode`: an Android lifecycle and two hardware
+services.
+
+### Not verified
+
+The phone has the build installed and launches, but the rings after the
+`ringSpec` extraction have not been checked through a full multi-finger draw.
+
+---
+
 ## 2026-09-07 — Relicensed GPL-2.0-or-later, and Codecov switched on
 
 ### The licence

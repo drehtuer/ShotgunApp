@@ -50,6 +50,10 @@ import de.drehtuer.shotgun.data.settings.Settings
 import de.drehtuer.shotgun.draw.DrawEffect
 import de.drehtuer.shotgun.draw.DrawEngine
 import de.drehtuer.shotgun.draw.DrawOutcome
+import de.drehtuer.shotgun.draw.RingRole
+import de.drehtuer.shotgun.draw.labelFitsAbove
+import de.drehtuer.shotgun.draw.labelOffsetY
+import de.drehtuer.shotgun.draw.ringSpec
 import de.drehtuer.shotgun.draw.DrawPhase
 import de.drehtuer.shotgun.draw.Finger
 import de.drehtuer.shotgun.ui.components.Rule
@@ -66,7 +70,6 @@ private const val REVEAL_STEP_MILLIS = 500L
 /** How long a refusal stays on screen. */
 private const val REFUSAL_MILLIS = 2_400L
 
-private const val LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 /** Test tags. Multi-touch cannot be exercised any other way without hardware. */
 const val TAG_FINGER_RING = "finger-ring"
@@ -362,66 +365,37 @@ private fun FingerRing(
 ) {
     val colors = PPTheme.colors
     val diameter = PPTheme.dimens.ringDiameter
-    val assignment = outcome?.assignment?.get(finger.id)
 
-    var ring = colors.ink
-    var fill = Color.Transparent
-    var alpha = 1f
-    var scale = 1f
-    var label: String? = null
-    var sub: String? = null
-    var labelSize = 40.sp
-    var labelColor = colors.ink
+    // What the ring should look like is decided in `ringSpec`, which is pure
+    // and unit-tested; everything below only turns roles into colours.
+    val spec = ringSpec(finger.id, outcome, phase, revealed)
+    val team = spec.teamIndex?.let { colors.teamFills[it % colors.teamFills.size] }
 
-    when {
-        // Still waiting its turn while the reveal walks down the order.
-        phase == DrawPhase.REVEALING && !(revealed && assignment != null) -> {
-            ring = colors.accent
-            alpha = 0.85f
-        }
-
-        // An assignment only exists alongside an outcome, so matching on both
-        // here lets the compiler see they are non-null for the whole branch.
-        revealed && outcome != null && assignment != null -> when (outcome.mode) {
-            DrawMode.STARTER -> {
-                val won = finger.id == outcome.winnerId
-                ring = if (won) colors.accent else colors.line
-                alpha = if (won) 1f else 0.2f
-                scale = if (won) 1.14f else 0.88f
-                if (won) {
-                    fill = colors.accentSoft
-                    label = "WON"
-                    labelSize = 28.sp
-                    labelColor = colors.accent
-                }
-            }
-
-            DrawMode.ORDER -> {
-                val total = outcome.fingers.size
-                val t = if (total > 1) (assignment - 1f) / (total - 1f) else 0f
-                ring = colors.accent
-                alpha = 1f - t * 0.7f
-                scale = if (assignment == 1) 1.12f else 1f
-                label = assignment.toString()
-                labelSize = if (assignment == 1) 46.sp else 34.sp
-                labelColor = colors.accent
-                if (assignment == 1) fill = colors.accentSoft
-            }
-
-            DrawMode.TEAMS -> {
-                val team = colors.teamFills[assignment % colors.teamFills.size]
-                ring = team.bg
-                fill = team.bg.copy(alpha = 0.25f)
-                label = LETTERS.getOrNull(assignment % 26)?.toString() ?: "${assignment + 1}"
-                labelColor = team.bg
-                sub = "TEAM"
-            }
-        }
+    val ring = when (spec.role) {
+        RingRole.IDLE -> colors.ink
+        RingRole.PENDING, RingRole.WINNER, RingRole.RANKED -> colors.accent
+        RingRole.LOSER -> colors.line
+        RingRole.TEAM -> team?.bg ?: colors.ink
     }
+    val labelColor = when (spec.role) {
+        RingRole.TEAM -> team?.bg ?: colors.ink
+        else -> colors.accent
+    }
+    val fill = when {
+        !spec.filled -> Color.Transparent
+        spec.role == RingRole.TEAM -> (team?.bg ?: colors.ink).copy(alpha = 0.25f)
+        else -> colors.accentSoft
+    }
+
+    val alpha = spec.alpha
+    val scale = spec.scale
+    val label = spec.label
+    val sub = spec.sub
+    val labelSize = spec.labelSp.sp
 
     val density = LocalDensity.current
     val radiusPx = with(density) { diameter.toPx() } / 2f
-    val strokeWidth = if (revealed && assignment != null) 10.dp else 4.dp
+    val strokeWidth = if (spec.answered) 10.dp else 4.dp
 
     Box(
         modifier = Modifier
@@ -444,7 +418,12 @@ private fun FingerRing(
     if (label != null) {
         val labelHeight = 64.dp
         val gap = 10.dp
-        val above = finger.y > with(density) { (radiusPx + (labelHeight + gap).toPx()) }
+        val above = labelFitsAbove(
+            fingerY = finger.y,
+            radiusPx = radiusPx,
+            labelHeightPx = with(density) { labelHeight.toPx() },
+            gapPx = with(density) { gap.toPx() },
+        )
         val labelWidth = diameter
         val slide by animateFloatAsState(
             targetValue = if (lifted) 1f else 0f,
@@ -454,16 +433,18 @@ private fun FingerRing(
         Column(
             modifier = Modifier
                 .offset {
-                    val beside = if (above) {
-                        -radiusPx * scale - (labelHeight + gap).toPx()
-                    } else {
-                        radiusPx * scale + gap.toPx()
-                    }
-                    // Centred on the ring, which is centred on the finger.
-                    val inside = -labelHeight.toPx() / 2f
                     IntOffset(
                         (finger.x - labelWidth.toPx() / 2f).roundToInt(),
-                        (finger.y + beside + (inside - beside) * slide).roundToInt(),
+                        (
+                            finger.y + labelOffsetY(
+                                radiusPx = radiusPx,
+                                scale = scale,
+                                labelHeightPx = labelHeight.toPx(),
+                                gapPx = gap.toPx(),
+                                above = above,
+                                slide = slide,
+                            )
+                            ).roundToInt(),
                     )
                 }
                 .size(width = labelWidth, height = labelHeight)

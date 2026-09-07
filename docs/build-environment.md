@@ -294,24 +294,55 @@ It depends on `testDebugUnitTest`, so asking for both does not run the tests
 twice. CI does exactly that, and uploads the directory as the `coverage-report`
 artifact.
 
-**Read the branch figure per layer, not overall.** The overall number counts
-Compose UI, navigation and Room's generated DAO, none of which a JVM test can
-reach - it sits near 20% and always will. The number that means something is the
-Logic layer, which is where the rules live and is above 95%:
+That report covers the **JVM tests only**. The instrumented half is measured
+separately - see below.
 
-| | Branch coverage |
-| --- | --- |
-| Logic layer (`DrawEngine`, `HeatField`, settings, records) | **143/147 - 97.3%** |
-| Whole app, including UI | 143/702 - 20.4% |
+**Read the figure per layer, not overall.** The app is a Compose UI over a small
+pure core. `codecov.yml` declares them as components so both are reported:
 
-Both numbers come from the same run: every covered branch in the app is in the
-logic layer, which is the split the architecture intends.
+| Component | Tested by | Where |
+| --- | --- | --- |
+| `logic` - `draw/`, `result/`, `data/` | plain JVM unit tests | `app/src/test/` |
+| `ui` - `ui/` | Robolectric, also on the JVM | `app/src/test/` |
 
-A handful of branches in the logic layer are unreachable through the public API
-- `DrawEngine`'s single-finger draw cannot happen because a draw needs two
-fingers, and `revealNext` cannot find a null outcome because only a draw sets
-that phase. They are defensive, and left uncovered rather than reached by
-contorting a test.
+Generated Room sources (`*_Impl.kt`) are excluded: they are written from the DAO
+and database declarations, are not in the repository, and a test for them would
+be a test of Room.
+
+### Robolectric
+
+The screens are covered by **Robolectric**, which runs the Android framework on
+the JVM. `./gradlew testDebugUnitTest` therefore covers the rules *and* the
+screens, in CI, with no emulator.
+
+Three pieces of configuration make it work, and each fails in its own quiet way:
+
+- `testOptions { unitTests { isIncludeAndroidResources = true } }`. Robolectric
+  renders real composables, so it needs the merged resources - the theme, the
+  bundled fonts. Without it every screen test fails on resource lookup.
+- `app/src/test/resources/robolectric.properties` pins `sdk=34`. Robolectric
+  ships framework jars below this module's `targetSdk` of 37, so it cannot run
+  at 37 at all. These tests do not prove behaviour on Android 17 - the phone
+  does that - only that the screens compose, lay out and respond.
+- The **`jacoco` plugin, applied explicitly**, and
+  `isIncludeNoLocationClasses = true` on the test task. This one is the trap:
+  Robolectric loads application classes through its own sandbox classloader and
+  they arrive with no source location, which JaCoCo skips by default. Without
+  it the screen tests pass and every screen still reports **zero** coverage -
+  the tests run, the report cannot see them. AGP's `enableUnitTestCoverage`
+  runs JaCoCo but does not apply the plugin, so `JacocoTaskExtension` does not
+  exist until the plugin is named in `plugins { }`.
+
+**Robolectric does not replace `app/src/androidTest/`.** The device set covers
+what neither it nor an emulator can: multi-touch, real haptics, and how the
+countdown feels. It is run by hand on the phone - see *Real device over Wi-Fi* -
+and deliberately not in CI. A hosted runner has no device, so such a job could
+only be skipped, fail, or boot an emulator, and an emulator agreeing with
+Robolectric would confirm two simulations at once rather than the thing itself.
+
+`DrawScreen` stays largely uncovered on the JVM for that reason: it is the
+multi-touch surface. Its decisions were moved into `ringSpec`, which is pure and
+unit-tested, so what remains there is the drawing.
 
 #### Codecov
 
