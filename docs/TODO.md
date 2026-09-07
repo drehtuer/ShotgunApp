@@ -23,9 +23,6 @@ authoritatively, in the design export itself.
   - [ ] A colour picker for anything finer
   - [ ] Rings and result dots take the chosen colours rather than the palette's
         team fills
-- [ ] Whether the **rank labels clear the player's own hand** is a heuristic -
-      drawn above the ring, flipping below near the top edge. True for the hands
-      it has been tried with, not by construction.
 
 ## Infrastructure
 
