@@ -1,5 +1,12 @@
 # Shotgun!
 
+[![PR](https://github.com/drehtuer/ShotgunApp/actions/workflows/pr.yml/badge.svg?branch=main)](https://github.com/drehtuer/ShotgunApp/actions/workflows/pr.yml)
+[![Code scanning](https://github.com/drehtuer/ShotgunApp/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/drehtuer/ShotgunApp/actions/workflows/codeql.yml)
+[![Documentation](https://github.com/drehtuer/ShotgunApp/actions/workflows/docs.yml/badge.svg)](https://github.com/drehtuer/ShotgunApp/actions/workflows/docs.yml)
+[![Release](https://github.com/drehtuer/ShotgunApp/actions/workflows/release.yml/badge.svg)](https://github.com/drehtuer/ShotgunApp/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/drehtuer/ShotgunApp?label=release)](https://github.com/drehtuer/ShotgunApp/releases/latest)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](https://github.com/drehtuer/ShotgunApp/blob/main/.github/dependabot.yml)
+
 An Android app for settling *who goes first*. Everyone puts a finger on the
 screen, a countdown runs, and the app draws — a starting player, a full player
 order, or teams.

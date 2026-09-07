@@ -28,6 +28,41 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — README badges
+
+Six badges above the title: the four workflows (PR, Code scanning,
+Documentation, Release), the latest release version, and Dependabot.
+
+Each was fetched before being committed rather than trusted to the usual URL
+shape - all four workflow badges report `passing`, and the release badge
+resolves to `v0.1.1`.
+
+Two details worth keeping:
+
+- **`?branch=main` only on the two workflows that run on `main`.** `pr.yml` and
+  `codeql.yml` take it. `docs.yml` and `release.yml` fire on a `v*` tag, so their
+  runs sit on the tag ref, not `main` - pinning the branch would have shown them
+  as *no status*. Both were checked with and without.
+- **The Dependabot badge is static, and honestly so.** Dependabot publishes no
+  status endpoint, so nothing can report whether it last ran or what it found.
+  The badge says `enabled` and links to
+  [`.github/dependabot.yml`](https://github.com/drehtuer/ShotgunApp/blob/main/.github/dependabot.yml),
+  which is the claim it can actually support. It cannot go stale on its own, so
+  if that config is ever removed the badge has to go with it.
+
+Badge URLs are absolute, so they work both on GitHub and on the Jekyll site,
+which renders this README unchanged.
+
+### Found, not fixed
+
+**There is no `LICENSE` file**, and GitHub reports the repository's licence as
+none - which is why there is no licence badge. For a public repository that
+means default copyright: nobody may reuse the code, which may or may not be
+intended. Left alone, because picking a licence is a decision rather than a
+documentation fix. Logged in [`TODO.md`](TODO.md).
+
+---
+
 ## 2026-09-07 — Rank labels slide into the ring when the finger lifts
 
 Closes the last of the "true for the hands it has been tried with" items, by
