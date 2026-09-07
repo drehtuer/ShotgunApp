@@ -306,7 +306,7 @@ settings    { haptics, dim, countdown, timing, themePref }
 | `idle` | start, or all fingers lifted | a 2nd finger lands |
 | `counting` | ≥2 fingers down | countdown expires, or count drops below 2 |
 | `suspense` | draw fires, if not instant | the last player has been revealed |
-| `revealed` | draw fires (instant) or suspense ends | all fingers lifted |
+| `revealed` | draw fires (instant) or suspense ends | the next draw starts - a finger lands while none are down - or the surface is left |
 
 ## Behaviour
 
@@ -337,6 +337,11 @@ countdown itself was not adjustable. Now that it is, the countdown is a
 | Drag an existing ring | **Repositions it — never counts as a new player** |
 | Lift a finger | Removes that player |
 | Press during suspense/revealed | Ignored |
+
+**A result outlives the hand that made it.** Lifting every finger does *not*
+clear `revealed` - that is the whole point, since you have to lift to see what
+was under your own fingers. It is cleared by the next draw starting, or by
+leaving the surface.
 
 **Divergence from the export.** The prototype was driven by a mouse, which
 cannot lift, so it removed a player on double-tap and kept rings on screen after
@@ -372,6 +377,30 @@ Starter mode always reveals instantly - there is nothing to stagger.
 | **starter** | accent ring, `accentSoft` fill, scale 1.14, bloom animation | `line` ring, opacity 0.2, scale 0.88 |
 | **order** | rank number at 46px, scale 1.12, `accentSoft` fill | rank at 32px, opacity fading `1 → 0.3` by rank |
 | **teams** | — | team letter on the team fill, "TEAM" beneath |
+
+#### Where the label sits
+
+**Beside the ring while the finger is down; inside it once the finger lifts.**
+
+A fingertip lands on the ring's centre, so a label drawn there is under the very
+finger it belongs to - you would have to lift your hand to read your own number.
+It is drawn above the ring instead, flipping below when the finger is too near
+the top edge for that to fit.
+
+But *beside* is only a guess at free glass. The app knows a contact point, not
+where the hand is: it cannot tell which direction an arm came from, which
+fingers share a hand, or who owns any of them. For a player reaching across from
+the far side, the space above their fingertip is under their own palm, and
+nothing flips - the finger is nowhere near the top edge.
+
+So the label does not have to be readable while the hand is down. **When a
+finger lifts, its label slides into the ring centre over 240 ms.** The rings
+already outlive the fingers that made them - the outcome is drawn from the
+record, not from live pointers - so lifting is the natural moment to read the
+answer, and the centre of a ring is on screen by construction and covered by
+nothing.
+
+This is per finger, not per hand: each label moves as its own finger comes off.
 
 The design export specifies that during `suspense` every ring churns
 (`scale .94 ↔ 1.06`) in accent at 85% opacity, as the tell that something is

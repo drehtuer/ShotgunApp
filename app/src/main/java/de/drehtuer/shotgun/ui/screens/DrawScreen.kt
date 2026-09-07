@@ -1,6 +1,7 @@
 package de.drehtuer.shotgun.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -247,8 +248,18 @@ fun DrawScreen(
         // under it, and that must not erase the answer.
         val settled = phase == DrawPhase.REVEALED || phase == DrawPhase.REVEALING
         val shown = if (settled && outcome != null) outcome.fingers else fingers
+        // A ring outlives the finger that drew it, so some of these no longer
+        // have a hand on them. Those are the ones that can hold their label
+        // inside the ring - see FingerRing.
+        val stillDown = fingers.mapTo(mutableSetOf()) { it.id }
         shown.forEach { finger ->
-            FingerRing(finger, outcome, phase, revealed = engine.isRevealed(finger.id))
+            FingerRing(
+                finger,
+                outcome,
+                phase,
+                revealed = engine.isRevealed(finger.id),
+                lifted = settled && finger.id !in stillDown,
+            )
         }
 
         // Chrome: fades out the moment the first finger lands.
@@ -330,10 +341,14 @@ private fun EdgeGlow(alpha: Float) {
  *
  * Two things here exist because of how a hand actually sits on glass:
  *
- * - **The label is drawn above the ring, not inside it.** A fingertip lands on
- *   the ring's centre, so a centred number or letter is under the very finger
- *   it belongs to. It flips below the ring near the top edge, where there is no
- *   room above.
+ * - **The label sits beside the ring while the finger is down, and slides into
+ *   it once the finger lifts.** A fingertip lands on the ring's centre, so a
+ *   centred label would be under the very finger it belongs to; it is drawn
+ *   above instead, flipping below near the top edge where there is no room.
+ *   Beside is only a guess at free glass, though - the app knows a contact
+ *   point, not where the hand is - so once the hand comes off, the label moves
+ *   to the ring's centre, which is on screen by construction and covered by
+ *   nothing.
  * - **The ring thickens on reveal.** The colour is the answer in teams mode,
  *   and a 4dp band around a fingertip is not enough of it to read at a glance.
  */
@@ -343,6 +358,7 @@ private fun FingerRing(
     outcome: DrawOutcome?,
     phase: DrawPhase,
     revealed: Boolean,
+    lifted: Boolean,
 ) {
     val colors = PPTheme.colors
     val diameter = PPTheme.dimens.ringDiameter
@@ -422,24 +438,32 @@ private fun FingerRing(
             .border(strokeWidth, ring, CircleShape),
     )
 
-    // Placed above the ring so it clears the hand, and below it when the finger
-    // is too near the top of the screen for that.
+    // Beside the ring while a hand is on the glass - above it, or below when
+    // the finger is too near the top edge for that - and inside the ring once
+    // the finger lifts, where nothing covers it and it cannot fall off screen.
     if (label != null) {
         val labelHeight = 64.dp
         val gap = 10.dp
         val above = finger.y > with(density) { (radiusPx + (labelHeight + gap).toPx()) }
         val labelWidth = diameter
+        val slide by animateFloatAsState(
+            targetValue = if (lifted) 1f else 0f,
+            animationSpec = tween(durationMillis = 240),
+            label = "labelSlide",
+        )
         Column(
             modifier = Modifier
                 .offset {
-                    val dy = if (above) {
-                        -radiusPx * scale - with(density) { (labelHeight + gap).toPx() }
+                    val beside = if (above) {
+                        -radiusPx * scale - (labelHeight + gap).toPx()
                     } else {
-                        radiusPx * scale + with(density) { gap.toPx() }
+                        radiusPx * scale + gap.toPx()
                     }
+                    // Centred on the ring, which is centred on the finger.
+                    val inside = -labelHeight.toPx() / 2f
                     IntOffset(
-                        (finger.x - with(density) { labelWidth.toPx() } / 2f).roundToInt(),
-                        (finger.y + dy).roundToInt(),
+                        (finger.x - labelWidth.toPx() / 2f).roundToInt(),
+                        (finger.y + beside + (inside - beside) * slide).roundToInt(),
                     )
                 }
                 .size(width = labelWidth, height = labelHeight)

@@ -28,6 +28,51 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — Rank labels slide into the ring when the finger lifts
+
+Closes the last of the "true for the hands it has been tried with" items, by
+changing the rule rather than improving the guess.
+
+### The problem the old placement could not solve
+
+A label drawn at the ring's centre is under the fingertip that made it. So it
+was drawn above the ring, flipping below near the top edge - and that flip was
+the *only* condition ever checked. It asks whether the label fits on screen,
+never whether the space is actually free.
+
+It cannot ask. The app has a contact point and nothing else: no arm direction,
+no grouping of fingers into hands, no idea who owns which. A player reaching
+across from the far side has their palm over exactly the space above their
+fingertip, and nothing flips, because the finger is nowhere near the top edge.
+
+### The rule now
+
+**Beside the ring while the finger is down, sliding to the ring's centre over
+240 ms once it lifts.** Per finger, not per hand - each label moves as its own
+finger comes off.
+
+This works because the rings already outlive the fingers that drew them:
+`DrawEngine.onUp` deliberately holds `REVEALED` when the last hand leaves, since
+you have to lift to see what was under your own fingers. Lifting was already the
+moment you read the answer; the label now moves somewhere guaranteed legible
+when you do. A ring's centre is a point that was touched, so it is on screen by
+construction - which also covers a label that would otherwise sit off the edge.
+
+Verified on the phone.
+
+### A documentation bug fell out of it
+
+`design.md`'s state table said `revealed` is left when **"all fingers lifted"**.
+That is exactly what the engine refuses to do, and had it been true this feature
+could not exist - the rings would vanish on lift. `REVEALED` ends when the next
+draw starts (a finger lands while none are down) or the surface is left.
+
+Worth recording as a near miss: the table was read while designing the change,
+and it described behaviour opposite to the code. The row is corrected and the
+rule now also stated in prose under *Behaviour*, where it is harder to skim past.
+
+---
+
 ## 2026-09-07 — Fairness field off the main thread, churn dropped
 
 Two items off the open list, one closed by building it and one by deciding not
