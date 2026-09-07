@@ -241,6 +241,53 @@ the other nine undisturbed.
 The teams guard still applies: fewer fingers than teams is refused, whatever the
 numbers are.
 
+#### The hardware sets the real limit
+
+**The ceiling is the digitizer, and it varies by device.** A panel tracks a
+fixed number of simultaneous contacts; past that, a finger generates no pointer
+at all, so neither the app nor Android ever learns it was there. It is not a
+number the app can raise.
+
+The **Pixel 10a** - the target device - is the worked example. Its touchscreen
+reports, over `adb shell getevent -pl`:
+
+```
+name: "focal_ts"
+ABS_MT_SLOT : value 0, min 0, max 9
+```
+
+and Android's own input stack agrees, in `adb shell dumpsys input`:
+
+```
+Touch Input Mapper (mode - DIRECT):
+    Slot: min=0, max=9
+```
+
+**`max 9` is the highest slot *index*, and slots are zero-based - so that is ten
+simultaneous contacts, not nine.** The off-by-one is easy to misread, and it is
+the reason to write the number down here rather than re-derive it.
+
+Verified on the phone: a ten-finger PLAYER ORDER draw recorded ten `draw_points`
+rows with ranks 1-10 and exactly one winner, with nothing in the crash buffer.
+
+Other devices will differ - five and ten are both common - so treat ten as this
+phone's number, not a constant.
+
+#### Why this is not shown in the app
+
+**The app cannot read it, so it does not claim it.** Both `/proc/bus/input/devices`
+and `/dev/input/event*` are `Permission denied` under the app's uid; the numbers
+above come from `adb`, which is not available at runtime. The only public API is
+the `PackageManager` feature tier, and its top tier -
+`android.hardware.touchscreen.multitouch.jazzhand` - means only *"5 or more
+points tracked distinctly"*. That is a floor, not a maximum: on the Pixel 10a it
+would report five for a panel that does ten.
+
+So there is deliberately no finger-count row in [Settings](#settings). Showing
+the tier would understate the hardware, and showing a running high-water mark
+would dress an observation up as a hardware fact. An app whose fairness field
+exists to show its work should not guess here.
+
 ## State model
 
 ```

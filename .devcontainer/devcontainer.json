@@ -35,8 +35,11 @@
         "mathiasfrohlich.Kotlin"
       ],
       "settings": {
+        // The base image's JDK. It is NOT under /usr/local/sdkman - that path
+        // belongs to an older base image and silently leaves the extension
+        // with no JDK, while Gradle (which reads JAVA_HOME) still works.
         "java.configuration.runtimes": [
-          { "name": "JavaSE-21", "path": "/usr/local/sdkman/candidates/java/current", "default": true }
+          { "name": "JavaSE-21", "path": "/usr/lib/jvm/msopenjdk-current", "default": true }
         ]
       }
     }

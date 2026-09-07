@@ -15,6 +15,7 @@ design/         the Claude Design export (spec), the identity spec and the
                 bound Modernist system
 docs/           all documentation except README.md
 .devcontainer/  Android SDK, emulator, adb helpers
+.claude/skills/ task recipes - connect-android-device wraps Wi-Fi debugging
 ```
 
 | Document | What it is for |
@@ -184,12 +185,14 @@ debugging works without host networking:
 ```bash
 # Phone: Developer options > Wireless debugging > Pair device with pairing code
 ./.devcontainer/connect-device.sh pair <ip>:<pairingPort> <code>
-./.devcontainer/connect-device.sh connect <ip>:5555
+./.devcontainer/connect-device.sh connect <ip>:<port>
 ./gradlew installDebug
 ```
 
-Run the script with no arguments for the full notes, including the older
-`adb tcpip 5555` route.
+The connect port is random on Android 11+ and is not the pairing port; use
+`./.devcontainer/connect-device.sh discover <ip>` to find it. Run the script
+with no arguments for the full notes, including the older `adb tcpip 5555`
+route. The `connect-android-device` skill wraps the whole flow.
 
 If both an emulator and a phone are attached, target one explicitly:
 

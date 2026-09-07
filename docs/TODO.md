@@ -34,6 +34,17 @@ authoritatively, in the design export itself.
 
 ## Infrastructure
 
+- [ ] **The corrected devcontainer JDK path is unverified in the editor.**
+      `devcontainer.json` pointed the Java extension at a SDKMAN path absent
+      from the base image; it now points at `/usr/lib/jvm/msopenjdk-current`,
+      confirmed present by running the image. Nobody has rebuilt the workspace
+      container and checked the extension actually resolves it - Gradle reads
+      `JAVA_HOME` and never cared either way, which is why this went unnoticed.
+- [ ] **`connect-device.sh discover` scans a guessed range.** 30000-50000 covers
+      what Android has picked so far, but the port is only documented as
+      ephemeral. A phone that lands outside the range fails with "no open ports"
+      and no hint that the range is the problem.
+
 - [ ] **Two secret-scanning options would not enable.**
       `secret_scanning_non_provider_patterns` (generic secrets, which is what a
       keystore password looks like) and `secret_scanning_validity_checks` both

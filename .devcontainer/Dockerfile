@@ -27,4 +27,12 @@ RUN mkdir -p "${CMDLINE_TOOLS}" \
 
 ENV PATH="${CMDLINE_TOOLS}/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:${PATH}"
 
+# The base image ships a full JDK 21 at /usr/lib/jvm/msopenjdk-current. Gradle
+# needs the compiler, not just a runtime: against a JRE every build dies with
+# "Toolchain installation ... does not provide the required capabilities:
+# [JAVA_COMPILER]", and only at build time, long after the image looks fine.
+# Assert it here so a base-image change that drops the JDK fails the image
+# build instead.
+RUN javac -version && java -version
+
 USER vscode

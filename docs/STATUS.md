@@ -28,6 +28,88 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — The hardware finger limit, the JDK, and a device skill
+
+Started as a question - is the ten-finger ceiling the hardware or the app? - and
+turned into three fixes.
+
+### The limit is the hardware, and it is ten, not nine
+
+Confirmed on the phone. The Pixel 10a's digitizer reports `ABS_MT_SLOT ... max 9`
+via `getevent -pl`, and `dumpsys input` agrees with `Slot: min=0, max=9`.
+
+**The nine is an off-by-one.** Slots are zero-based, so `max 9` is slots 0-9 -
+**ten** simultaneous contacts. That misreading is exactly why the number is now
+written down in [`design.md`](design.md#how-many-fingers) with the raw output
+beside it.
+
+The app adds no cap of its own, as designed: a ten-finger PLAYER ORDER draw
+recorded ten `draw_points` rows, ranks 1-10, one winner, empty crash buffer.
+
+Reading the count back out of the database was the fiddly part. Room runs in
+**WAL mode**, so pulling `shotgun.db` alone gives `no such table: draws` - the
+schema is still in the `-wal` file. All three files have to come across. There is
+no `sqlite3` on the device either, so the query runs locally in Python. Both
+traps are now in the skill.
+
+### A settings row was asked for, then dropped - deliberately
+
+The plan was to show the hardware maximum in Settings, above the version. It
+cannot be done honestly. The app is sandboxed out of `/proc/bus/input/devices`
+and `/dev/input/*` (`Permission denied` under its uid), and the only public API,
+the `PackageManager` feature tier, tops out at `multitouch.jazzhand` = *"5 or
+more"*. On a panel that does ten it would report five.
+
+So nothing was added. Showing the tier understates the hardware; showing a
+running high-water mark dresses an observation up as a hardware fact. The
+reasoning is recorded in [`design.md`](design.md#why-this-is-not-shown-in-the-app)
+so it does not get re-proposed.
+
+### The JDK: the devcontainer was fine, its config was not
+
+`./gradlew installDebug` failed with *"Toolchain installation ... does not
+provide the required capabilities: `[JAVA_COMPILER]`"* - a JRE with no `javac`.
+
+**The devcontainer was not the culprit.** That session was running on the WSL2
+host, which has only `openjdk-21-jre`. The base image ships a full JDK 21,
+verified by running it: `javac 21.0.12.1` at `/usr/lib/jvm/msopenjdk-current`.
+
+Chasing it did turn up a real defect. `devcontainer.json` pointed the Java
+extension at `/usr/local/sdkman/candidates/java/current`, which **does not exist
+in this image** - a leftover from an older base image that used SDKMAN. Gradle
+never noticed because it reads `JAVA_HOME`, so the breakage was invisible and
+editor-only. Path corrected, and the Dockerfile now asserts `javac` at image
+build so a base image that dropped the JDK fails there instead of at someone's
+first build. Image rebuilt to confirm.
+
+### Wireless debugging needed a port scan
+
+`connect-device.sh` documented `:5555`, which is wrong for Android 11+ - the
+connect port is random (43227 this time). `adb mdns services` found nothing,
+because mDNS is link-local and does not cross the container's NAT, so the
+documented recipe had no way to succeed.
+
+Added a `discover` subcommand that scans 30000-50000 and tries each open port.
+It also handles the trap that cost time here: the **pairing port stays open**
+afterwards and looks like a candidate, but connecting to it leaves the device
+`offline`. Tested end to end against the phone - two open ports found, pairing
+port skipped, connected.
+
+Wrapped the whole flow in a
+[`connect-android-device`](https://github.com/drehtuer/ShotgunApp/blob/main/.claude/skills/connect-android-device/SKILL.md)
+skill, the first in this repo.
+
+### Not verified
+
+The devcontainer changes were checked by building the image and running `javac`
+in it, not by rebuilding the workspace container - so the corrected editor path
+is reasoned from the image contents, not observed in VS Code. Gradle and the
+test suite were never run this session: the host has no JDK, so the ten-finger
+check used the existing `Shotgun-debug-0.1.1.apk`, first confirming no source
+file was newer than it.
+
+---
+
 ## 2026-09-06 — Binding the palette to the design export
 
 **Outcome: done, and the first version of it was useless in a way that only a
