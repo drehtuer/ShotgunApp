@@ -101,10 +101,13 @@ there is drawing. What remains uncovered otherwise is `ShotgunViewModel`,
 `MainActivity`, `Haptics` and `DimMode`: an Android lifecycle and two hardware
 services.
 
-### Not verified
+### Verified on the phone
 
-The phone has the build installed and launches, but the rings after the
-`ringSpec` extraction have not been checked through a full multi-finger draw.
+A full multi-finger draw was run after the `ringSpec` extraction and the rings
+render correctly - ranks, the fade by rank, and the label sliding in on lift.
+That was the last thing outstanding: the extraction moved the styling rules out
+of the composable, and unit tests pin the rules, but only the phone can show
+that the pixels still agree.
 
 ---
 
