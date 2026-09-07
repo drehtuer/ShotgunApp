@@ -28,6 +28,43 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-07 — Relicensed GPL-2.0-or-later, and Codecov switched on
+
+### The licence
+
+Changed from GPL-2.0-only to **GPL-2.0-or-later**, which settles the conflict
+recorded a few entries down: the app's dependencies are all Apache-2.0, which
+the FSF holds incompatible with GPLv2, but *is* compatible with GPLv3. The "or
+later" clause lets a recipient take the work under GPLv3 terms, where the
+conflict does not arise.
+
+The change is one clause in the notice, not a new licence file. `LICENSE` still
+holds the GPLv2 text, because that is what "version 2 or later" points at - the
+grant lives in the notice, and licence texts are not edited. `SPDX-License-Identifier:
+GPL-2.0-or-later` is stated in the README for the machine-readable form.
+
+**The licence badge had to stop being the live one.** GitHub detects the licence
+by reading `LICENSE`, and that file is the GPLv2 text, so
+`img.shields.io/github/license` can only ever report *GPL-2.0*. That is not
+wrong, but it is not the licence either - or-later is a distinct SPDX
+identifier, and the difference is the entire point of this change. Swapped for a
+static badge reading `GPL-2.0-or-later`. The tradeoff is the usual one: it is
+accurate now and cannot notice if the licence changes later, so it has to be
+edited by hand if it ever does.
+
+The dependency note in the README is rewritten from *"here is an unresolved
+problem"* to *"here is why the licence says or later"* - same facts, now an
+explanation rather than a warning. The decision is off `TODO.md`.
+
+### Codecov
+
+The `CODECOV_TOKEN` secret was added, so the upload step stops skipping. Before
+this it was working correctly but doing nothing: CI logged *"No CODECOV_TOKEN -
+skipping the upload"* and marked the step `skipped`, which was the intended
+behaviour and also the reason the badge read *unknown*.
+
+---
+
 ## 2026-09-07 — Coverage: the gaps, a bug they found, and Codecov
 
 Branch coverage was measured, then the gaps filled. **The logic layer went from

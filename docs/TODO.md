@@ -9,20 +9,6 @@ authoritatively, in the design export itself.
 
 ## Decisions needed
 
-- **GPLv2 and the Apache-2.0 dependencies do not agree.** The app is licensed
-  GPL-2.0-only, but every runtime dependency - AndroidX, Compose, Room,
-  DataStore, Kotlin and kotlinx - is Apache License 2.0, which the FSF holds
-  *incompatible with GPLv2*: its patent-termination clause is an added
-  restriction GPLv2 forbids. Apache 2.0 *is* compatible with GPLv3, so the
-  question is which of these to take:
-  - relicense as **GPL-2.0-or-later**, the one-line change - a recipient may
-    then use the work under GPLv3 terms, where the conflict disappears;
-  - move to **GPLv3** outright;
-  - keep GPL-2.0-only and accept that distributed binaries carry the conflict.
-
-  Nothing is broken while the app is not redistributed by third parties, but
-  this should be settled before anyone forks or ships it.
-
 - **Where does the COLOURS list live** - edited once and persisted, or set up
   per draw? It decides the navigation and whether it is stored at all, so the
   mode cannot be built until it is answered.
