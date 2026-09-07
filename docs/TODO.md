@@ -26,6 +26,12 @@ authoritatively, in the design export itself.
 
 ## Infrastructure
 
+- [ ] **No `LICENSE` file.** The repository is public but carries no licence, so
+      GitHub reports it as unlicensed and the default is all rights reserved -
+      nobody may reuse the code. Needs a decision rather than a fix: pick a
+      licence, or record that the omission is deliberate. Until then the README
+      carries no licence badge.
+
 - [ ] **The corrected devcontainer JDK path is unverified in the editor.**
       `devcontainer.json` pointed the Java extension at a SDKMAN path absent
       from the base image; it now points at `/usr/lib/jvm/msopenjdk-current`,
