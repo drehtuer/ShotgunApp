@@ -81,6 +81,12 @@ pills both ways, and a teams record with **no** team count, which is a row from
 a build that did not store one and must read as something rather than crash the
 screen that plots history.
 
+### Verified on the phone
+
+The visibility change is behaviour-neutral, but it is in the draw surface's
+file, so the build went on the Pixel: **all three modes still track touch and
+draw**. Cheap to check, and the one change nobody should take on trust.
+
 ### Still uncovered, and now the list is short
 
 - **The pointer loop and the countdown's frame loop** in `DrawScreen` - 42
