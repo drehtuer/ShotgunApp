@@ -79,6 +79,33 @@ ships a full JDK at `/usr/lib/jvm/msopenjdk-current`, and the Dockerfile asserts
 `javac` is present so a base-image change that dropped it would fail the image
 build rather than the first Gradle run.
 
+#### Building in the devcontainer image, from outside the devcontainer
+
+A host with no JDK can still build by running Gradle inside the image the
+devcontainer is built from, against the same named volumes, so nothing is
+downloaded twice:
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp/home -e GRADLE_USER_HOME=/home/vscode/.gradle \
+  -v "$PWD":/work -w /work \
+  -v playerpicker-android-sdk:/opt/android-sdk \
+  -v playerpicker-gradle:/home/vscode/.gradle \
+  shotgun-dev:latest bash -lc 'mkdir -p /tmp/home && ./gradlew assembleDebug lint'
+```
+
+Two details, both of which fail confusingly if missed:
+
+- **Run as the host uid, not the image's `vscode`.** The volumes were created by
+  the devcontainer bind, so their contents belong to the *host* user. Running as
+  `vscode` (uid 1000) dies with `Could not create parent directory for lock file
+  /home/vscode/.gradle/wrapper/...` before Gradle starts.
+- **`HOME` must point somewhere writable** for that uid, and
+  `GRADLE_USER_HOME` at the volume - otherwise Gradle re-downloads its
+  distribution and every dependency into a home directory it does not own.
+
+It builds and runs the unit tests; it cannot install or talk to a device.
+
 ## Building
 
 ```bash
