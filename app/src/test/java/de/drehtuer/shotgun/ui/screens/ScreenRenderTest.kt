@@ -275,4 +275,56 @@ class ScreenRenderTest {
         compose.onNodeWithText("SOURCE →").performScrollTo().performClick()
         compose.onNodeWithText("SOURCE →").assertIsDisplayed()
     }
+
+    /**
+     * At the floor the minus is handed no action at all, so tapping it must
+     * report nothing. The plus still has to work, or the setting is a trap.
+     */
+    @Test
+    fun `the countdown minus does nothing at the floor`() {
+        val steps = mutableListOf<Int>()
+        settingsContent(
+            settings = Settings(countdownMillis = Settings.MIN_COUNTDOWN_MILLIS),
+            onStep = { steps += it },
+        )
+
+        compose.onNodeWithContentDescription("shorter countdown").performScrollTo().performClick()
+        assertEquals(emptyList<Int>(), steps)
+
+        compose.onNodeWithContentDescription("longer countdown").performScrollTo().performClick()
+        assertEquals(listOf(1), steps)
+    }
+
+    @Test
+    fun `the reveal timing can be switched either way`() {
+        val chosen = mutableListOf<RevealTiming>()
+        settingsContent(settings = Settings(revealTiming = RevealTiming.INSTANT), onTiming = { chosen += it })
+
+        compose.onNodeWithText("Suspense").performScrollTo().performClick()
+        compose.onNodeWithText("Instant").performScrollTo().performClick()
+
+        assertEquals(listOf(RevealTiming.SUSPENSE, RevealTiming.INSTANT), chosen)
+    }
+
+    /**
+     * A teams record written without a count is a row from a build that did not
+     * store one. It has to read as something rather than crash the screen that
+     * plots history.
+     */
+    @Test
+    fun `a teams result with no count still describes itself`() {
+        val record = DrawRecord(
+            mode = DrawMode.TEAMS,
+            teamCount = null,
+            timestamp = 0L,
+            points = listOf(DrawPoint(x = 0.5f, y = 0.5f, won = false, assignment = 0)),
+        )
+        compose.setContent {
+            ShotgunTheme(ThemePreference.DARK) {
+                ResultScreen(winners = emptyList(), latest = record, totalDraws = 1, onClose = {})
+            }
+        }
+
+        compose.onNodeWithText("0 teams").assertIsDisplayed()
+    }
 }
