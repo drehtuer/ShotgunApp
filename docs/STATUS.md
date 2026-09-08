@@ -28,6 +28,48 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-08 — HAPTICS is the only switch
+
+A decision, made against what the last change recorded as deliberate.
+
+Fixing [#39](https://github.com/drehtuer/ShotgunApp/issues/39) established that
+Android takes a short, simple vibration for touch feedback and drops it on a
+phone with *Touch feedback* switched off. The result buzzes were cut into steps
+to get past that; **the tick was deliberately left to be dropped**, on the
+argument that a per-finger tick really is feedback for touching and belongs to
+the system's setting.
+
+Overruled, and rightly: it made the app's own toggle mean two different things
+on two phones - buzzes but no ticks on one, both on the other - with nothing on
+screen to explain the difference. HAPTICS on now gives ticks **and** buzzes;
+HAPTICS off gives neither.
+
+The tick goes through the same `spread`, so it leaves as `[3, 0, 3, 0, 3, 0, 3]`:
+seven steps, 12 ms of buzz, gaps of nothing between the pieces. Identical to the
+hand, invisible to the classifier.
+
+### Verified on the phone
+
+A finger landed on the draw surface by `adb shell input tap`, and the history
+agrees:
+
+```
+23:20:15 | finished | usage: UNKNOWN |
+played: [3ms@1.00, 0ms, 3ms@1.00, 0ms, 3ms@1.00, 0ms, 3ms@1.00]
+```
+
+Before this it read `ignored_for_settings | usage: TOUCH`, which is the same
+line the starter buzz used to have.
+
+**A checking mistake worth keeping:** the first two attempts looked like the
+tick had not fired at all, because `grep shotgun | tail -1` returns the last
+line *in the file*, and `dumpsys` groups vibrations by usage - `UNKNOWN` is
+printed before `TOUCH`, so a working tick lands in the middle of the dump and a
+dropped one at the end. The check was wrong, not the app, and it looked exactly
+like the bug it was meant to catch.
+
+---
+
 ## 2026-09-08 — Coverage, second pass: the draw surface, piece by piece
 
 **Line coverage 86.6% → 93.0%, branch 70.5% → 76.3%, 181 tests → 207.**

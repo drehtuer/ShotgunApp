@@ -43,7 +43,8 @@ class HapticsTest {
     private fun gaps(steps: LongArray) = steps.filterIndexed { i, _ -> i % 2 == 1 }.sum()
 
     @Test
-    fun `every result effect has more steps than Android takes for feedback`() {
+    fun `every effect the app sends has more steps than Android takes for feedback`() {
+        assertTrue(Haptics.spread(Haptics.TICK).size > Haptics.HAPTIC_FEEDBACK_MAX_STEPS)
         DrawMode.entries.forEach { mode ->
             val steps = Haptics.spread(Haptics.resultPattern(mode))
             assertTrue(
@@ -99,12 +100,25 @@ class HapticsTest {
         }
     }
 
+    /**
+     * HAPTICS is the only switch that governs this app: on gives ticks and
+     * buzzes, off gives neither. So the tick is spread like a result buzz -
+     * left as one short step, Android would take it for touch feedback and a
+     * phone with that switched off would drop it, and the app's own toggle
+     * would mean two different things on two phones.
+     */
     @Test
-    fun `a finger tick is short and stays a one-shot`() {
+    fun `the tick is 12 ms of buzz, in enough steps to reach the vibrator`() {
         Haptics.tick(context, enabled = true)
-        val shadow = shadowOf(vibrator())
-        assertTrue(shadow.isVibrating)
-        assertEquals(Haptics.FINGER_TICK_MS, shadow.milliseconds)
+
+        val steps = shadowOf(vibrator()).pattern
+        assertTrue(
+            "a ${steps.size}-step tick would be dropped as touch feedback",
+            steps.size > Haptics.HAPTIC_FEEDBACK_MAX_STEPS,
+        )
+        assertEquals(Haptics.FINGER_TICK_MS, buzz(steps))
+        // Contiguous: the pieces run together, so it is felt as one tick.
+        assertEquals(0L, gaps(steps))
     }
 
     @Test

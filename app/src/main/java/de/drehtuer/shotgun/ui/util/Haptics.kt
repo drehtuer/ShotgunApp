@@ -36,13 +36,19 @@ import de.drehtuer.shotgun.ui.navigation.DrawMode
  * The cuts are zero-length, so the buzz is contiguous and unchanged - what the
  * hand feels is still `docs/design.md`'s `[90]`.
  *
- * The finger tick is deliberately left alone. It really *is* touch feedback, so
- * a phone told not to give touch feedback is right to drop it.
+ * **The tick goes through the same treatment**, so HAPTICS is the only switch
+ * that governs this app: on gives ticks and buzzes, off gives neither. Leaving
+ * the tick classified as touch feedback was tried and rejected - it made the
+ * app's own toggle mean two different things depending on a system setting the
+ * player never connected to it.
  */
 object Haptics {
 
     /** A keyboard-style tick as a finger lands. */
     const val FINGER_TICK_MS = 12L
+
+    /** The tick as a pattern, so it is spread like any other. */
+    val TICK: LongArray = longArrayOf(FINGER_TICK_MS)
 
     /** One firm buzz: the starter has been picked. */
     val WINNER: LongArray = longArrayOf(90)
@@ -61,12 +67,7 @@ object Haptics {
     fun resultPattern(mode: DrawMode): LongArray =
         if (mode == DrawMode.STARTER) WINNER else RESULT
 
-    fun tick(context: Context, enabled: Boolean) {
-        if (!enabled) return
-        vibrator(context)?.vibrate(
-            VibrationEffect.createOneShot(FINGER_TICK_MS, VibrationEffect.DEFAULT_AMPLITUDE)
-        )
-    }
+    fun tick(context: Context, enabled: Boolean) = pattern(context, enabled, TICK)
 
     /** The result buzz for [mode], once the draw has landed. */
     fun result(context: Context, enabled: Boolean, mode: DrawMode) =

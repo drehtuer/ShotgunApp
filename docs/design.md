@@ -473,13 +473,16 @@ the vibrator plays them back to back, so what the hand feels is exactly the
 pattern above. The double buzz had four steps and always worked; the starter's
 single buzz had two and was never played at all.
 
-### The finger tick follows the system setting
+### HAPTICS is the only switch
 
-The tick is genuinely touch feedback, so it is left as a single short step and a
-phone told not to give touch feedback drops it. **On a phone with Touch feedback
-off, HAPTICS on gives the result buzzes but no per-finger tick.** That is
-deliberate: the result is the app's answer and belongs to the app's own toggle,
-while the tick is feedback for touching and belongs to the system's.
+**On gives ticks and buzzes; off gives neither.** The tick is cut into steps the
+same way a result buzz is, so it reaches the vibrator whatever the phone's own
+*Touch feedback* setting says.
+
+Leaving the tick to the system was tried, and rejected: it made the app's own
+toggle mean two different things on two phones — buzzes but no ticks on one,
+both on another — with nothing on screen to explain the difference. A player who
+turns HAPTICS on has said what they want from this app.
 
 ## Dim mode
 

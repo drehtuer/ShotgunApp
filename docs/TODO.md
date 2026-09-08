@@ -9,14 +9,6 @@ authoritatively, in the design export itself.
 
 ## Decisions needed
 
-- **Should the finger tick override the system's touch-feedback setting?** It
-  does not today: the tick is one short step, so Android classifies it as touch
-  feedback, and a phone with *Touch feedback* off drops it - HAPTICS on then
-  gives the result buzzes and no ticks. Found while fixing
-  [#39](https://github.com/drehtuer/ShotgunApp/issues/39), and true of the
-  target Pixel right now. The same splitting the result buzz uses would force it
-  through, so this is a decision about whose setting wins, not a bug.
-
 - **Where does the COLOURS list live** - edited once and persisted, or set up
   per draw? It decides the navigation and whether it is stored at all, so the
   mode cannot be built until it is answered.
@@ -86,3 +78,4 @@ re-litigate otherwise.
 | DIM MODE | Lowers screen brightness like an alarm clock - halves the current level, app window only. |
 | Draw history | Recorded to a database, so the fairness field plots real draws. |
 | Double-tap to lift a player | Deliberately absent. Lifting a finger removes its ring, so it has no purpose on a touchscreen. |
+| Should the tick follow the system's touch-feedback setting? | **No.** HAPTICS is the only switch: on gives ticks and buzzes, off gives neither. Deferring to the system made the app's own toggle mean different things on different phones. |
