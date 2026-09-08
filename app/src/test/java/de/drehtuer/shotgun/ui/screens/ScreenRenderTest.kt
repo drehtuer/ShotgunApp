@@ -217,4 +217,62 @@ class ScreenRenderTest {
         compose.onNodeWithText("COLD").assertIsDisplayed()
         compose.onNodeWithText("HOT").assertIsDisplayed()
     }
+
+    /**
+     * Each mode labels its own result, and only teams carries a count - a
+     * record written in one mode must never be described as another.
+     */
+    @Test
+    fun `a starter result is labelled as a starting player`() {
+        resultWith(DrawMode.STARTER, teamCount = null, assignment = null)
+
+        compose.onNodeWithText("Starting player").assertIsDisplayed()
+        compose.onNodeWithText("2 PLAYERS").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a teams result is labelled with how many teams`() {
+        resultWith(DrawMode.TEAMS, teamCount = 3, assignment = 0)
+
+        compose.onNodeWithText("3 teams").assertIsDisplayed()
+        compose.onNodeWithText("3 TEAMS · 2 PLAYERS").assertIsDisplayed()
+    }
+
+    @Test
+    fun `an order result counts the players in it`() {
+        resultWith(DrawMode.ORDER, teamCount = null, assignment = 1)
+
+        compose.onNodeWithText("Player order").assertIsDisplayed()
+        compose.onNodeWithText("2 IN ORDER").assertIsDisplayed()
+    }
+
+    private fun resultWith(mode: DrawMode, teamCount: Int?, assignment: Int?) {
+        val record = DrawRecord(
+            mode = mode,
+            teamCount = teamCount,
+            timestamp = 0L,
+            points = listOf(
+                DrawPoint(x = 0.3f, y = 0.3f, won = mode != DrawMode.TEAMS, assignment = assignment),
+                DrawPoint(x = 0.7f, y = 0.7f, won = false, assignment = assignment?.plus(1)),
+            ),
+        )
+        compose.setContent {
+            ShotgunTheme(ThemePreference.DARK) {
+                ResultScreen(winners = emptyList(), latest = record, totalDraws = 1, onClose = {})
+            }
+        }
+    }
+
+    /**
+     * The source link opens a browser, and nothing guarantees one exists. The
+     * guard around it is why a phone with no browser does not take the app down
+     * with it, so the tap has to be exercised rather than assumed harmless.
+     */
+    @Test
+    fun `the source link can be tapped without a browser to open`() {
+        settingsContent()
+
+        compose.onNodeWithText("SOURCE →").performScrollTo().performClick()
+        compose.onNodeWithText("SOURCE →").assertIsDisplayed()
+    }
 }

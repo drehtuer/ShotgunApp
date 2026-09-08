@@ -28,6 +28,79 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-08 — Coverage: the data layer, the view model and the window
+
+**Line coverage 64.3% → 86.6%, branch 58.8% → 70.5%, 134 tests → 181.** As
+Codecov reports it - generated Room sources excluded - **73.2% → 87.3%** line.
+Both figures are given because they differ, and the second is the one the badge
+shows.
+
+No production code changed. Everything below was already shipped and working;
+none of it was checked by anything.
+
+### What had no tests at all
+
+| Area | Was | Why it mattered |
+| --- | --- | --- |
+| `RoomDrawHistory` + the DAO | 0% | The winners query joins two tables and orders by a column in the other one. No compiler checks SQL. |
+| `ShotgunDatabase` | 0% | The real, file-backed open path - and there is deliberately no destructive-migration fallback, so an open that goes wrong takes the history with it. |
+| `SettingsRepository` | 0% | `SettingsTest` covered what a stored preference *means*, never that a write lands. |
+| `ShotgunViewModel` | 0% | `recordDraw` decides who won and where the fingers were, as a fraction of the surface. Both are written to the database and can never be recomputed. |
+| `DimScreen` / `dimTarget` | 0% | Two wrong answers shipped before this one - a fixed level made an already-dim phone *brighter*. |
+| `MainActivity` | 0% | Nothing covered the app actually starting. |
+
+47 new tests across seven files. The ones worth naming:
+
+- **The winners query is order-sensitive, so the test inserts out of order** -
+  newest draw last - which is the only way to tell "ordered by the joined
+  draw's timestamp" from "in insertion order".
+- **Pruning is tested through the cascade**: the oldest draw is evicted and its
+  points must go with it, or orphans accumulate for the life of the install.
+- **`recordDraw` is tested per mode**, because who "won" differs in each -
+  starter by id, order by rank 1, teams not at all - and against a degenerate
+  surface, where positions must collapse to the centre rather than divide by
+  zero.
+- **Dim mode is tested for the failure it shipped with**: dimming a dim screen
+  must not raise it, and must never blank it.
+
+### Two traps, one of which crashes the compiler
+
+**A test in `ui.components` cannot use `@Rule`.** The app has a `Rule()`
+composable - the 2px line the design is built from - and in that package the
+name also has to serve as JUnit's annotation. It does not produce an error. It
+crashes the Kotlin backend outright:
+
+```
+Backend Internal error: Exception during IR lowering
+  The root cause java.lang.NullPointerException was thrown at:
+  JvmAnnotationImplementationTransformer$AnnotationPropertyImplementor
+```
+
+- naming only the file, no line, no symbol. It took a bisect of one test file
+to find. `ComponentRenderTest` now lives one package up **and** aliases the
+import, so either half would do and nobody has to rediscover it.
+
+**Compose's pointer injection does not reach the composable under
+Robolectric.** Two attempts - freezing the clock and pumping frames, then
+letting it auto-advance - both landed zero rings from a `down()` that works on
+the phone. Advancing `System.currentTimeMillis` with `ShadowSystemClock` did not
+help, because nothing was tracking pointers to begin with. So the draw
+surface's touch paths stay device-only, which is where they were already, and
+`DrawScreen`'s 35% is not a gap anyone should try to close on the JVM.
+
+### What is still uncovered, deliberately
+
+- **`DrawScreen`, 166 lines.** The multi-touch surface. Its decisions live in
+  `ringSpec`, which is pure and tested; what remains is drawing and pointer
+  plumbing, covered by `app/src/androidTest/` on the phone.
+- **Room's generated open delegate**, the schema-creation half. Excluded from
+  Codecov as generated code, and a test for it would be a test of Room.
+- **`ShotgunMark`'s canvas.** Robolectric lays composables out but does not
+  rasterise them, so a `Canvas` draw lambda never runs. Only a real screen can
+  cover it, and only an eye can judge it.
+
+---
+
 ## 2026-09-08 — The starter had no buzz ([#39](https://github.com/drehtuer/ShotgunApp/issues/39))
 
 Reported from the phone: with HAPTICS on, order and teams buzz when the result

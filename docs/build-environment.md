@@ -371,6 +371,25 @@ Robolectric would confirm two simulations at once rather than the thing itself.
 multi-touch surface. Its decisions were moved into `ringSpec`, which is pure and
 unit-tested, so what remains there is the drawing.
 
+**Pointer injection does not work here.** `performTouchInput { down(...) }`
+drives the draw surface on the phone and lands *nothing* under Robolectric - no
+rings, no countdown - with the clock frozen or auto-advancing, and advancing
+`System.currentTimeMillis` with `ShadowSystemClock` does not change it. Do not
+spend an afternoon on it a second time: those paths are covered in
+`app/src/androidTest/`, on hardware.
+
+Two more limits worth knowing before writing a test that cannot pass:
+
+- **Robolectric lays out composables but does not rasterise them**, so a
+  `Canvas` draw lambda never runs and cannot be covered. `ShotgunMark` is the
+  example.
+- **A test in `de.drehtuer.shotgun.ui.components` cannot use `@Rule`.** The app
+  has a `Rule()` composable, and the clash crashes the Kotlin backend rather
+  than reporting an error - *"Backend Internal error: Exception during IR
+  lowering"*, an NPE in `JvmAnnotationImplementationTransformer`, naming only
+  the file. Put the test in another package, or alias the import
+  (`import org.junit.Rule as JUnitRule`). `ComponentRenderTest` does both.
+
 #### Codecov
 
 Coverage is uploaded to [Codecov](https://codecov.io/gh/drehtuer/ShotgunApp),
