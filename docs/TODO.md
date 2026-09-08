@@ -59,6 +59,12 @@ authoritatively, in the design export itself.
 
 ## Polish
 
+- [ ] **The starter haptics fix is unfelt.**
+      [#39](https://github.com/drehtuer/ShotgunApp/issues/39) was fixed without a
+      device attached: the single buzz is now a one-shot and the result buzzes
+      run at full amplitude, but nobody has run a starter draw on the Pixel to
+      confirm it is felt. The issue should not be closed until they have.
+
 - [ ] Check the in-app mark optically against
       [`assets/logo/`](https://github.com/drehtuer/ShotgunApp/tree/main/assets/logo)
       on a real screen at small sizes.

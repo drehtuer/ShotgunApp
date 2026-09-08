@@ -449,8 +449,19 @@ The tick fires on **finger down only** — never on drag, and never on lift.
 Dragging is repositioning, not joining, and buzzing on it would contradict
 that. Both are suppressed entirely when HAPTICS is off.
 
+A pattern is read as **on** durations alternating with the gaps between them, so
+`[90]` is one buzz and `[90, 60, 90]` is two.
+
+Both result buzzes play at the vibrator's **maximum amplitude** where the device
+supports amplitude control; the tick stays at the device default, so the result
+is still the stronger of the two. This is not decoration: a draw ends with
+several hands pressing the phone against a table, which damps the actuator, and
+the default amplitude was not reliably felt through it.
+
 On Android this is `VibratorManager` / `VibrationEffect`; the app already
-declares `android.permission.VIBRATE`.
+declares `android.permission.VIBRATE`. **A single buzz is sent as a one-shot**,
+not as a one-step waveform — see [`STATUS.md`](STATUS.md) for why that
+distinction cost the starter its haptics.
 
 ## Dim mode
 

@@ -134,11 +134,7 @@ fun DrawScreen(
             is DrawEffect.FingerTick -> Haptics.tick(context, settings.haptics)
             is DrawEffect.Refused -> refusal = effect.message
             is DrawEffect.Drawn -> {
-                Haptics.pattern(
-                    context,
-                    settings.haptics,
-                    if (effect.outcome.mode == DrawMode.STARTER) Haptics.WINNER else Haptics.RESULT,
-                )
+                Haptics.result(context, settings.haptics, effect.outcome.mode)
                 onDrawComplete(effect.outcome, surface.first, surface.second)
             }
             null -> Unit

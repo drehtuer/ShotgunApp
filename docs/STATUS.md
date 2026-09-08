@@ -28,6 +28,66 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-08 — The starter had no buzz ([#39](https://github.com/drehtuer/ShotgunApp/issues/39))
+
+Reported from the phone: with HAPTICS on, order and teams buzz when the result
+lands and **starter does not**.
+
+### The three modes share a code path, so the effect was the difference
+
+`DrawScreen` handles one `DrawEffect.Drawn` for every mode and buzzes before it
+records anything, so nothing mode-specific could swallow the call. What did
+differ was the *shape* of the effect handed to the vibrator:
+
+| What | Was built as | Felt |
+| --- | --- | --- |
+| A finger lands | `createOneShot(12 ms)` | yes |
+| Order / teams result | `createWaveform([0, 90, 60, 90])` | yes |
+| Starter result | `createWaveform([0, 90])` | **no** |
+
+The starter was the only **single-step waveform** in the app - a waveform whose
+entire content is one buzz behind a zero-length pause. The two effects that
+worked were the two ordinary shapes: a one-shot, and a waveform with something
+to alternate.
+
+### What changed
+
+- **A single buzz is a one-shot.** `Haptics.pattern` now sends
+  `createOneShot(90, …)` for a one-element pattern and keeps the waveform for
+  the double buzz.
+- **Result buzzes play at full amplitude** (255) where the vibrator reports
+  `hasAmplitudeControl()`, the device default otherwise. The tick is left at the
+  default, so the result stays the stronger of the two. A draw ends with several
+  hands pressing the phone against a table, which damps the actuator - the one
+  physical difference between this app and anything else that buzzes.
+- **The patterns now read as [`design.md`](design.md#haptics) writes them** -
+  `[90]` and `[90, 60, 90]`, on-durations alternating with gaps - with the
+  amplitudes spelled out. That is not cosmetic: `createWaveform(timings, repeat)`
+  starts with a **pause**, so handing it `[90, 60, 90]` and letting it fill in
+  the amplitudes would have produced one 240 ms buzz instead of two.
+- The mode-to-pattern choice moved out of the composable into
+  `Haptics.resultPattern`, where it is tested.
+
+Seven new tests, on the JVM under Robolectric, assert what the app actually
+sends the vibrator: a one-shot of 90 ms for starter, the `[90, 60, 90]` waveform
+for order and teams, nothing at all when HAPTICS is off, and that the
+alternating amplitudes silence the gaps. 124 unit tests became 131.
+
+### Not verified on the phone, and the root cause is inferred
+
+**No device was attached this session** - `adb devices` came back empty - so the
+fix has not been felt, only reasoned. The two candidate causes are the effect
+shape and the amplitude being too low to survive the damping, and the change
+addresses both; which of them it was cannot be told from here, and it may be
+both. `TODO.md` carries this until someone runs a starter draw on the Pixel.
+
+Gradle ran in the `shotgun-dev` image against the devcontainer's own volumes,
+because the WSL2 host still has no JDK - the recipe, and the two ways it fails,
+are now in
+[`build-environment.md`](build-environment.md#building-in-the-devcontainer-image-from-outside-the-devcontainer).
+
+---
+
 ## 2026-09-07 — Release 0.1.2
 
 `appVersion` 0.1.1 → 0.1.2, so `versionCode` derives to **102**. One value
