@@ -9,6 +9,14 @@ authoritatively, in the design export itself.
 
 ## Decisions needed
 
+- **Should the finger tick override the system's touch-feedback setting?** It
+  does not today: the tick is one short step, so Android classifies it as touch
+  feedback, and a phone with *Touch feedback* off drops it - HAPTICS on then
+  gives the result buzzes and no ticks. Found while fixing
+  [#39](https://github.com/drehtuer/ShotgunApp/issues/39), and true of the
+  target Pixel right now. The same splitting the result buzz uses would force it
+  through, so this is a decision about whose setting wins, not a bug.
+
 - **Where does the COLOURS list live** - edited once and persisted, or set up
   per draw? It decides the navigation and whether it is stored at all, so the
   mode cannot be built until it is answered.
@@ -59,11 +67,6 @@ authoritatively, in the design export itself.
 
 ## Polish
 
-- [ ] **The starter haptics fix is unfelt.**
-      [#39](https://github.com/drehtuer/ShotgunApp/issues/39) was fixed without a
-      device attached: the single buzz is now a one-shot and the result buzzes
-      run at full amplitude, but nobody has run a starter draw on the Pixel to
-      confirm it is felt. The issue should not be closed until they have.
 
 - [ ] Check the in-app mark optically against
       [`assets/logo/`](https://github.com/drehtuer/ShotgunApp/tree/main/assets/logo)

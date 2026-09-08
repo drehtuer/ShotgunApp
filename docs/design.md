@@ -452,16 +452,34 @@ that. Both are suppressed entirely when HAPTICS is off.
 A pattern is read as **on** durations alternating with the gaps between them, so
 `[90]` is one buzz and `[90, 60, 90]` is two.
 
-Both result buzzes play at the vibrator's **maximum amplitude** where the device
-supports amplitude control; the tick stays at the device default, so the result
-is still the stronger of the two. This is not decoration: a draw ends with
-several hands pressing the phone against a table, which damps the actuator, and
-the default amplitude was not reliably felt through it.
-
 On Android this is `VibratorManager` / `VibrationEffect`; the app already
-declares `android.permission.VIBRATE`. **A single buzz is sent as a one-shot**,
-not as a one-step waveform — see [`STATUS.md`](STATUS.md) for why that
-distinction cost the starter its haptics.
+declares `android.permission.VIBRATE`.
+
+### A result buzz is cut into steps
+
+The app sends an effect with no `VibrationAttributes`, so its usage is
+`UNKNOWN` — and Android then guesses: **an unknown vibration of three steps or
+fewer is re-classified as touch feedback**, which a phone with *Touch feedback*
+switched off drops before it reaches the vibrator. Measured on the Pixel 10a:
+
+| Effect | Steps | Duration | Outcome |
+| --- | --- | --- | --- |
+| `[0, 400]` | 2 | 400 ms | ignored, re-classified `TOUCH` |
+| `[0, 30, 0, 30]` | 4 | 60 ms | played, stayed `UNKNOWN` |
+
+It is the step count, not the length. So a result pattern is **cut into more
+steps than that heuristic accepts**, with zero-length gaps between the pieces —
+the vibrator plays them back to back, so what the hand feels is exactly the
+pattern above. The double buzz had four steps and always worked; the starter's
+single buzz had two and was never played at all.
+
+### The finger tick follows the system setting
+
+The tick is genuinely touch feedback, so it is left as a single short step and a
+phone told not to give touch feedback drops it. **On a phone with Touch feedback
+off, HAPTICS on gives the result buzzes but no per-finger tick.** That is
+deliberate: the result is the app's answer and belongs to the app's own toggle,
+while the tick is feedback for touching and belongs to the system's.
 
 ## Dim mode
 

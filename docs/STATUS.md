@@ -33,60 +33,96 @@ documentation site is live. What is left is a fourth draw mode and polish.
 Reported from the phone: with HAPTICS on, order and teams buzz when the result
 lands and **starter does not**.
 
-### The three modes share a code path, so the effect was the difference
+### It was never played — Android dropped it before the vibrator saw it
 
-`DrawScreen` handles one `DrawEffect.Drawn` for every mode and buzzes before it
-records anything, so nothing mode-specific could swallow the call. What did
-differ was the *shape* of the effect handed to the vibrator:
+The three modes share one code path, so nothing mode-specific could swallow the
+call, and reading the code only said the effect handed to the vibrator was
+different: `createWaveform([0, 90])` for starter against `[0, 90, 60, 90]` for
+the other two. **Two theories were wrong before the phone settled it**, and both
+were plausible enough to ship:
 
-| What | Was built as | Felt |
-| --- | --- | --- |
-| A finger lands | `createOneShot(12 ms)` | yes |
-| Order / teams result | `createWaveform([0, 90, 60, 90])` | yes |
-| Starter result | `createWaveform([0, 90])` | **no** |
+1. *The single-step waveform is the odd shape out* — so send a one-shot instead.
+2. *A 90 ms buzz is too short to survive several hands damping the phone* — so
+   pad it and raise the amplitude.
 
-The starter was the only **single-step waveform** in the app - a waveform whose
-entire content is one buzz behind a zero-length pause. The two effects that
-worked were the two ordinary shapes: a one-shot, and a waveform with something
-to alternate.
+`dumpsys vibrator_manager` keeps every vibration the device has been asked for,
+with a status. It showed something neither theory predicted: **the app's own
+finger tick was logged under `usage: TOUCH` and `ignored_for_settings`**, and
+in three days of history there was not one `[0, 90]` entry — the starter buzz
+had never reached the vibrator at all.
+
+The app calls `Vibrator.vibrate(effect)` with no `VibrationAttributes`, so the
+usage is `UNKNOWN` and the framework *guesses* one. Two probes through
+`cmd vibrator_manager -u 0`, which sends as `UNKNOWN` from the shell, pinned the
+rule:
+
+| Effect | Steps | Duration | Outcome |
+| --- | --- | --- | --- |
+| `[0, 400]` | 2 | 400 ms | ignored, re-classified `TOUCH` |
+| `[0, 30, 0, 30]` | 4 | 60 ms | played, stayed `UNKNOWN` |
+
+**It is the step count, not the duration.** An unknown vibration of three steps
+or fewer is taken for haptic feedback, and this phone has *Touch feedback*
+switched off in Android's Vibration & haptics settings, so it is dropped. The
+double buzz has four steps and survived by accident; the starter's two never
+stood a chance. The second theory's fix — padding to 200 ms — was built,
+installed, and **failed on the phone exactly as the first would have**: still
+two steps, still `TOUCH`, still ignored.
 
 ### What changed
 
-- **A single buzz is a one-shot.** `Haptics.pattern` now sends
-  `createOneShot(90, …)` for a one-element pattern and keeps the waveform for
-  the double buzz.
-- **Result buzzes play at full amplitude** (255) where the vibrator reports
-  `hasAmplitudeControl()`, the device default otherwise. The tick is left at the
-  default, so the result stays the stronger of the two. A draw ends with several
-  hands pressing the phone against a table, which damps the actuator - the one
-  physical difference between this app and anything else that buzzes.
-- **The patterns now read as [`design.md`](design.md#haptics) writes them** -
-  `[90]` and `[90, 60, 90]`, on-durations alternating with gaps - with the
-  amplitudes spelled out. That is not cosmetic: `createWaveform(timings, repeat)`
-  starts with a **pause**, so handing it `[90, 60, 90]` and letting it fill in
-  the amplitudes would have produced one 240 ms buzz instead of two.
-- The mode-to-pattern choice moved out of the composable into
-  `Haptics.resultPattern`, where it is tested.
+`Haptics.spread` cuts a short pattern into more steps than the heuristic
+accepts, separating the pieces with **zero-length** gaps so the vibrator plays
+them back to back. The starter's `[90]` goes out as `[23, 0, 23, 0, 22, 0, 22]`:
+seven steps, 90 ms of buzz, no silence in it. What the hand feels is unchanged;
+only what the framework counts is.
 
-Seven new tests, on the JVM under Robolectric, assert what the app actually
-sends the vibrator: a one-shot of 90 ms for starter, the `[90, 60, 90]` waveform
-for order and teams, nothing at all when HAPTICS is off, and that the
-alternating amplitudes silence the gaps. 124 unit tests became 131.
+That also caught a regression the rewrite had introduced. Writing the patterns
+as `design.md` writes them — `[90, 60, 90]`, on-durations first — dropped the
+old leading zero and took the double buzz from four steps to **three**, which
+would have silenced order and teams too. `spread` covers every result pattern,
+and a test asserts the step count for all three modes rather than for the one
+that was reported.
 
-### Not verified on the phone, and the root cause is inferred
+### Verified on the phone, twice, and objectively
 
-**No device was attached this session** - `adb devices` came back empty - so the
-fix has not been felt, only reasoned. The two candidate causes are the effect
-shape and the amplitude being too low to survive the damping, and the change
-addresses both; which of them it was cannot be told from here, and it may be
-both. `TODO.md` carries this until someone runs a starter draw on the Pixel.
+The failed attempt and the fix were both installed as **release** builds over
+the top of the existing one - the phone carries the released app, not a debug
+build, and the release key is local, so the draw history and settings survived
+each install. `adb install -r` of a debug APK would have needed an uninstall.
+
+- Starter draw, after the fix: felt, and the history agrees —
+  `finished | usage: UNKNOWN | played: [23ms@1.00, 0ms, 23ms@1.00, 0ms, 22ms@1.00, 0ms, 22ms@1.00]`.
+- Nine unit tests under Robolectric assert what the app actually sends the
+  vibrator: the step count for every mode, that splitting preserves the buzzing
+  and the silence exactly, and that a pattern with enough steps is left alone.
+  124 unit tests became 134.
+- `assembleDebug lint` clean, `assembleRelease` builds.
+
+### Found on the way: the finger tick is off on this phone
+
+The tick is a single 12 ms step, so it is classified as touch feedback and
+dropped for the same reason — **on a phone with Touch feedback off, HAPTICS on
+gives the result buzzes but no per-finger tick.** Left that way deliberately:
+the tick *is* feedback for touching and belongs to the system's setting, while
+the result is the app's answer and belongs to the app's toggle. Written down in
+[`design.md`](design.md#the-finger-tick-follows-the-system-setting) so it is a
+decision rather than a surprise, and on [`TODO.md`](TODO.md) as a question
+someone may want answered differently.
+
+### Lesson
+
+**"The code paths are identical, so the difference must be in the effect" was
+right, and still produced two wrong fixes.** Neither was testable on the JVM:
+Robolectric records what the app *asks* for, and the app asked correctly every
+time. The device kept the answer in a log nobody had looked at - the fix took
+minutes once `dumpsys vibrator_manager` was read, after an hour of reasoning
+about actuators and waveform shapes.
 
 Gradle ran in the `shotgun-dev` image against the devcontainer's own volumes,
 because the WSL2 host still has no JDK - the recipe, and the two ways it fails,
 are now in
 [`build-environment.md`](build-environment.md#building-in-the-devcontainer-image-from-outside-the-devcontainer).
-
----
 
 ## 2026-09-07 — Release 0.1.2
 

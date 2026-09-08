@@ -15,18 +15,29 @@ import de.drehtuer.shotgun.ui.navigation.DrawMode
  * first, alternating with the gaps between them: `[90]` is one buzz,
  * `[90, 60, 90]` is two.
  *
- * Two things here are deliberate, and both come from the starter buzz going
- * unfelt on the phone:
+ * ### Why a result buzz is cut into steps
  *
- * - **A single buzz is a one-shot, not a waveform.** A one-element pattern was
- *   previously sent as `createWaveform(longArrayOf(0, 90), -1)` - a waveform
- *   whose only content is one step, behind a zero-length pause. The tick, which
- *   has always been felt, is a one-shot; the double buzz, also felt, is a real
- *   multi-step waveform. The single-step waveform was the odd one out.
- * - **Result buzzes play at full amplitude where the device allows it.** This
- *   app is used with several hands pressing the phone against a table, which
- *   damps the actuator hard. The tick stays at the default amplitude, so the
- *   result is still the stronger of the two.
+ * The app hands `Vibrator.vibrate` an effect and no `VibrationAttributes`, so
+ * the usage is `UNKNOWN` - and Android then *guesses*: an unknown vibration of
+ * **three steps or fewer** is re-classified as `USAGE_TOUCH`, which a phone
+ * with *Touch feedback* switched off drops before it reaches the vibrator.
+ *
+ * That is what silenced the starter. Measured on the phone, with
+ * `cmd vibrator_manager` and `dumpsys vibrator_manager`:
+ *
+ * | Effect | Steps | Duration | Outcome |
+ * | --- | --- | --- | --- |
+ * | `[0, 400]` | 2 | 400 ms | ignored, re-classified `TOUCH` |
+ * | `[0, 30, 0, 30]` | 4 | 60 ms | played, stayed `UNKNOWN` |
+ *
+ * It is the step count, not the length. The old double buzz survived on four
+ * steps by accident; the starter's single buzz had two and never played once.
+ * So [spread] cuts a short pattern into more steps than the heuristic accepts.
+ * The cuts are zero-length, so the buzz is contiguous and unchanged - what the
+ * hand feels is still `docs/design.md`'s `[90]`.
+ *
+ * The finger tick is deliberately left alone. It really *is* touch feedback, so
+ * a phone told not to give touch feedback is right to drop it.
  */
 object Haptics {
 
@@ -38,6 +49,13 @@ object Haptics {
 
     /** A heavier double buzz: an order or teams result. */
     val RESULT: LongArray = longArrayOf(90, 60, 90)
+
+    /**
+     * Android takes an `UNKNOWN` vibration of this many steps or fewer for
+     * haptic feedback. The number is the framework's and is not public API, so
+     * it is pinned by a device measurement rather than by a document.
+     */
+    const val HAPTIC_FEEDBACK_MAX_STEPS = 3
 
     /** Which buzz a mode's result gets. Starter has one answer, so one buzz. */
     fun resultPattern(mode: DrawMode): LongArray =
@@ -56,36 +74,43 @@ object Haptics {
 
     fun pattern(context: Context, enabled: Boolean, timings: LongArray) {
         if (!enabled || timings.isEmpty()) return
-        val vibrator = vibrator(context) ?: return
-        val strength = strength(vibrator)
-        vibrator.vibrate(
-            if (timings.size == 1) {
-                VibrationEffect.createOneShot(timings[0], strength)
-            } else {
-                VibrationEffect.createWaveform(timings, amplitudes(timings.size, strength), -1)
-            }
+        val steps = spread(timings)
+        vibrator(context)?.vibrate(
+            VibrationEffect.createWaveform(steps, amplitudes(steps.size), -1)
         )
+    }
+
+    /**
+     * Cuts the first buzz into enough pieces that the effect is not mistaken
+     * for haptic feedback - see the note above.
+     *
+     * The pieces are separated by **zero-length** gaps, so the vibrator plays
+     * them back to back and the buzz is exactly as long as it was. Splitting
+     * always adds pairs of entries, so the on/off alternation survives it. A
+     * pattern that already has enough steps is handed back untouched.
+     */
+    internal fun spread(timings: LongArray): LongArray {
+        if (timings.size > HAPTIC_FEEDBACK_MAX_STEPS) return timings
+        val pieces = HAPTIC_FEEDBACK_MAX_STEPS + 2 - timings.size
+        val buzz = timings.first()
+        val out = ArrayList<Long>(timings.size + (pieces - 1) * 2)
+        repeat(pieces) { piece ->
+            if (piece > 0) out += 0L
+            // The remainder goes to the earliest pieces, so the total is exact.
+            out += buzz / pieces + if (piece < buzz % pieces) 1L else 0L
+        }
+        timings.drop(1).forEach { out += it }
+        return out.toLongArray()
     }
 
     /**
      * Amplitudes for a pattern that **starts on**: the even entries buzz, the
      * odd ones are the gaps. `createWaveform(timings, repeat)` assumes the
-     * opposite - it starts with a pause - which is why the amplitudes are
-     * spelled out rather than left to it.
+     * opposite - it starts with a pause - which is why they are spelled out
+     * rather than left to it.
      */
-    internal fun amplitudes(size: Int, strength: Int): IntArray =
-        IntArray(size) { if (it % 2 == 0) strength else 0 }
-
-    /**
-     * The strongest amplitude the API accepts. `VibrationEffect` documents the
-     * range as 1-255 but publishes no constant for the top of it - only
-     * `DEFAULT_AMPLITUDE`, which is whatever the device thinks is average.
-     */
-    private const val FULL_AMPLITUDE = 255
-
-    /** Full strength where the actuator can be driven; the device default otherwise. */
-    private fun strength(vibrator: Vibrator): Int =
-        if (vibrator.hasAmplitudeControl()) FULL_AMPLITUDE else VibrationEffect.DEFAULT_AMPLITUDE
+    internal fun amplitudes(size: Int): IntArray =
+        IntArray(size) { if (it % 2 == 0) VibrationEffect.DEFAULT_AMPLITUDE else 0 }
 
     private fun vibrator(context: Context): Vibrator? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

@@ -1,6 +1,7 @@
 package de.drehtuer.shotgun.ui.util
 
 import android.content.Context
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.test.core.app.ApplicationProvider
@@ -17,10 +18,12 @@ import org.robolectric.Shadows.shadowOf
 /**
  * What the app actually asks the vibrator for.
  *
- * These exist because of a bug the design could not show: the starter's single
- * buzz was built as a one-step waveform and went unfelt on the phone, while the
- * tick (a one-shot) and the double buzz (a real waveform) both worked. The
- * *shape* of the effect is therefore worth pinning, not just the timings.
+ * These exist because of a bug no amount of reading the design could show: an
+ * `UNKNOWN` vibration of three steps or fewer is taken for touch feedback, and
+ * a phone with touch feedback switched off drops it before it reaches the
+ * vibrator. The starter's single buzz had two steps and never played once; the
+ * double buzz survived on four, by accident. So the *step count* of a result
+ * effect is a correctness property here, not a matter of taste.
  *
  * How it feels is still the phone's answer to give - see `app/src/androidTest/`.
  */
@@ -33,20 +36,40 @@ class HapticsTest {
         (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager)
             .defaultVibrator
 
+    /** Buzzing time: the even entries. The odd ones are the gaps. */
+    private fun buzz(steps: LongArray) = steps.filterIndexed { i, _ -> i % 2 == 0 }.sum()
+
+    /** Silence: the odd entries. */
+    private fun gaps(steps: LongArray) = steps.filterIndexed { i, _ -> i % 2 == 1 }.sum()
+
     @Test
-    fun `the starter result is a single buzz, sent as a one-shot`() {
-        Haptics.result(context, enabled = true, mode = DrawMode.STARTER)
-        val shadow = shadowOf(vibrator())
-        assertTrue("nothing was sent to the vibrator", shadow.isVibrating)
-        // A one-shot reports its duration; a waveform reports timings instead
-        // and leaves this at zero. That is the distinction this test is for.
-        assertEquals(90L, shadow.milliseconds)
+    fun `every result effect has more steps than Android takes for feedback`() {
+        DrawMode.entries.forEach { mode ->
+            val steps = Haptics.spread(Haptics.resultPattern(mode))
+            assertTrue(
+                "$mode's result buzz is ${steps.size} steps and would be dropped",
+                steps.size > Haptics.HAPTIC_FEEDBACK_MAX_STEPS,
+            )
+        }
     }
 
     @Test
-    fun `order gets the double buzz as a waveform`() {
+    fun `the starter still buzzes for 90 ms, in pieces with no gaps between them`() {
+        Haptics.result(context, enabled = true, mode = DrawMode.STARTER)
+        val steps = shadowOf(vibrator()).pattern
+        assertTrue(steps.size > Haptics.HAPTIC_FEEDBACK_MAX_STEPS)
+        assertEquals(90L, buzz(steps))
+        // Zero-length gaps: the pieces run together, so it is one buzz.
+        assertEquals(0L, gaps(steps))
+    }
+
+    @Test
+    fun `order still buzzes twice, 90 ms apiece, 60 ms apart`() {
         Haptics.result(context, enabled = true, mode = DrawMode.ORDER)
-        assertArrayEquals(longArrayOf(90, 60, 90), shadowOf(vibrator()).pattern)
+        val steps = shadowOf(vibrator()).pattern
+        assertTrue(steps.size > Haptics.HAPTIC_FEEDBACK_MAX_STEPS)
+        assertEquals(180L, buzz(steps))
+        assertEquals(60L, gaps(steps))
     }
 
     @Test
@@ -58,7 +81,26 @@ class HapticsTest {
     }
 
     @Test
-    fun `a finger tick is short and does not repeat`() {
+    fun `a pattern with enough steps already is left alone`() {
+        val long = longArrayOf(90, 60, 90, 60)
+        assertArrayEquals(long, Haptics.spread(long))
+    }
+
+    /**
+     * The split must not change what the hand feels - only how many steps the
+     * framework counts.
+     */
+    @Test
+    fun `splitting preserves the buzzing and the silence exactly`() {
+        listOf(longArrayOf(90), longArrayOf(90, 60, 90), longArrayOf(7)).forEach { pattern ->
+            val steps = Haptics.spread(pattern)
+            assertEquals(buzz(pattern), buzz(steps))
+            assertEquals(gaps(pattern), gaps(steps))
+        }
+    }
+
+    @Test
+    fun `a finger tick is short and stays a one-shot`() {
         Haptics.tick(context, enabled = true)
         val shadow = shadowOf(vibrator())
         assertTrue(shadow.isVibrating)
@@ -80,14 +122,14 @@ class HapticsTest {
     }
 
     /**
-     * The gaps must be silent, or a `[90, 60, 90]` double buzz is one long
-     * 240 ms buzz - which is what leaving the amplitudes to the framework's
-     * `createWaveform(timings, repeat)` would have given, since that one starts
-     * with a pause instead.
+     * The gaps must be silent, or `[90, 60, 90]` is one long 240 ms buzz -
+     * which is what leaving the amplitudes to `createWaveform(timings, repeat)`
+     * would give, since that one starts with a pause instead.
      */
     @Test
     fun `amplitudes buzz on the even entries and rest on the odd ones`() {
-        assertArrayEquals(intArrayOf(255, 0, 255), Haptics.amplitudes(3, 255))
-        assertArrayEquals(intArrayOf(255), Haptics.amplitudes(1, 255))
+        val d = VibrationEffect.DEFAULT_AMPLITUDE
+        assertArrayEquals(intArrayOf(d, 0, d), Haptics.amplitudes(3))
+        assertArrayEquals(intArrayOf(d, 0), Haptics.amplitudes(2))
     }
 }
