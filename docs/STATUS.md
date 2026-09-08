@@ -93,6 +93,9 @@ each install. `adb install -r` of a debug APK would have needed an uninstall.
 
 - Starter draw, after the fix: felt, and the history agrees —
   `finished | usage: UNKNOWN | played: [23ms@1.00, 0ms, 23ms@1.00, 0ms, 22ms@1.00, 0ms, 22ms@1.00]`.
+- **Order and teams re-checked on the phone**, because the split changed their
+  step list too — both still buzz, and unchanged to the hand. Worth the second
+  draw: this branch had already broken them once, silently, on the way past.
 - Nine unit tests under Robolectric assert what the app actually sends the
   vibrator: the step count for every mode, that splitting preserves the buzzing
   and the silence exactly, and that a pattern with enough steps is left alone.
