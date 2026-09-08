@@ -367,9 +367,12 @@ and deliberately not in CI. A hosted runner has no device, so such a job could
 only be skipped, fail, or boot an emulator, and an emulator agreeing with
 Robolectric would confirm two simulations at once rather than the thing itself.
 
-`DrawScreen` stays largely uncovered on the JVM for that reason: it is the
-multi-touch surface. Its decisions were moved into `ringSpec`, which is pure and
-unit-tested, so what remains there is the drawing.
+`DrawScreen` is the multi-touch surface, so its *driving* is covered only on the
+phone. Its decisions were moved into `ringSpec`, which is pure and unit-tested,
+and its pieces - the rings, the hint, the refusal bar, the reveal bar - are
+`internal` rather than private so each can be rendered directly with the state
+it would have had mid-draw. What is left uncovered on the JVM is the pointer
+loop and the countdown's frame loop, which nothing here can drive.
 
 **Pointer injection does not work here.** `performTouchInput { down(...) }`
 drives the draw surface on the phone and lands *nothing* under Robolectric - no

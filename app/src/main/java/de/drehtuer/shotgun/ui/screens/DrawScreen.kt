@@ -300,6 +300,14 @@ fun DrawScreen(
 }
 
 /**
+ * The surface's own pieces are `internal` rather than private for one reason:
+ * **multi-touch cannot be injected on the JVM**, so a test can never drive the
+ * surface into the states that draw them. Rendering each piece directly is the
+ * only way they are covered anywhere but the phone. Nothing outside this module
+ * calls them.
+ */
+
+/**
  * The accent glow that grows inward from every edge as the countdown runs.
  *
  * Drawn as one blurred stroke around the border rather than four edge
@@ -308,7 +316,7 @@ fun DrawScreen(
  * countdown - it was the first thing noticed on a real screen.
  */
 @Composable
-private fun EdgeGlow(alpha: Float) {
+internal fun EdgeGlow(alpha: Float) {
     if (alpha <= 0f) return
     val accent = PPTheme.colors.accent
     Canvas(Modifier.fillMaxSize()) {
@@ -352,7 +360,7 @@ private fun EdgeGlow(alpha: Float) {
  *   and a 4dp band around a fingertip is not enough of it to read at a glance.
  */
 @Composable
-private fun FingerRing(
+internal fun FingerRing(
     finger: Finger,
     outcome: DrawOutcome?,
     phase: DrawPhase,
@@ -466,7 +474,7 @@ private fun FingerRing(
 }
 
 @Composable
-private fun Hint(fingerCount: Int, modifier: Modifier = Modifier) {
+internal fun Hint(fingerCount: Int, modifier: Modifier = Modifier) {
     val (title, subtitle) = if (fingerCount == 0) {
         "EVERYONE, ONE FINGER DOWN." to
             "The edge glow is the countdown, and it restarts whenever someone joins or leaves. Drag to reposition; a moving finger is not a new player."
@@ -488,7 +496,7 @@ private fun Hint(fingerCount: Int, modifier: Modifier = Modifier) {
 
 /** The accent bar that says why a draw could not run. */
 @Composable
-private fun Refusal(message: String, modifier: Modifier = Modifier) {
+internal fun Refusal(message: String, modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxWidth()
@@ -510,7 +518,7 @@ private fun Refusal(message: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun RevealBar(onOpenResult: () -> Unit, modifier: Modifier = Modifier) {
+internal fun RevealBar(onOpenResult: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Rule()
         Row(
@@ -535,7 +543,7 @@ private fun RevealBar(onOpenResult: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 /** The label shown top-right while the surface is still bare. */
-private fun DrawMode.label(teamCount: Int): String = when (this) {
+internal fun DrawMode.label(teamCount: Int): String = when (this) {
     DrawMode.STARTER -> "STARTING PLAYER"
     DrawMode.ORDER -> "PLAYER ORDER"
     DrawMode.TEAMS -> "$teamCount TEAMS"

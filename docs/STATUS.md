@@ -28,6 +28,70 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-08 — Coverage, second pass: the draw surface, piece by piece
+
+**Line coverage 86.6% → 93.0%, branch 70.5% → 76.3%, 181 tests → 207.**
+Excluding generated Room sources, as Codecov counts it: **87.3% → 94.6%** line.
+`DrawScreen` alone went **35% → 84%**.
+
+### The surface's pieces are `internal` now, and that is the whole trick
+
+The first pass concluded the draw surface could not be covered on the JVM
+because pointer injection does not reach it. That was true and beside the point:
+the surface cannot be *driven*, but its pieces can be *rendered*, each with the
+state it would have had mid-draw.
+
+`EdgeGlow`, `FingerRing`, `Hint`, `Refusal`, `RevealBar` and `DrawMode.label`
+changed from `private` to `internal` - the only production change in this pass,
+and no behaviour with it. Eleven tests then render a ring for every role a draw
+can give a finger: an order ring showing its rank, a teams ring showing its
+letter and the word TEAM, a ring whose turn has not come showing nothing at all,
+and a lifted ring still carrying its answer - the rule that a label sits beside
+the ring while the finger is down and slides into it when the finger lifts.
+
+Two Robolectric traps cost a cycle each here, and both are the kind that read as
+a broken assertion rather than a broken test:
+
+- **A `Box` that wraps its content clips every ring out of view.** The rings
+  place themselves by absolute offset, so the host has to fill the screen or the
+  nodes exist and report "not displayed".
+- **Robolectric's default screen is 320x470dp.** A ring at phone-sized
+  coordinates lands off it, and a label drawn *beside* a ring near the top edge
+  goes off it upwards.
+
+### Back, which is where the worst bug lived
+
+Seven tests on the navigation graph, all of which end by asserting a screen is
+still on display - "did not crash" is not the property, "is not blank" is. They
+cover back from every destination, back twice from a stack one deep (the pop
+that used to empty the graph and leave a live, blank window), and `popSafely`
+directly: false at the start destination, true behind it.
+
+The one test that could not be written is the double tap. Compose's test
+framework settles between clicks, so the first tap navigates and the second
+finds its node gone - "the node is no longer in the tree", which is the guard
+working and not something an assertion can say. Testing `popSafely` directly is
+what replaced it.
+
+### The rest
+
+The stepper at its floor (the minus greyed rather than live and inert - a bug
+this shipped with once), the mode motifs for all three modes, the reveal-timing
+pills both ways, and a teams record with **no** team count, which is a row from
+a build that did not store one and must read as something rather than crash the
+screen that plots history.
+
+### Still uncovered, and now the list is short
+
+- **The pointer loop and the countdown's frame loop** in `DrawScreen` - 42
+  lines. Nothing on the JVM can drive them; `app/src/androidTest/` does, on the
+  phone.
+- **`ShotgunMark`'s canvas.** Robolectric lays out but does not rasterise, so a
+  `Canvas` draw lambda never runs.
+- **Room's generated open delegate**, excluded from Codecov as generated code.
+
+---
+
 ## 2026-09-08 — Coverage: the data layer, the view model and the window
 
 **Line coverage 64.3% → 86.6%, branch 58.8% → 70.5%, 134 tests → 181.** As
