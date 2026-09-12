@@ -4,13 +4,19 @@ import java.util.Properties
 
 /**
  * Signing material never lives in this repository - it is public. Values come
- * from keystore.properties (local, gitignored) or, in CI, from environment
- * variables fed by GitHub Actions secrets. When neither is present the build
- * still works: debug falls back to the SDK's own debug key, and release is
- * produced unsigned.
+ * from keystore/keystore.properties (local, gitignored) or, in CI, from
+ * environment variables fed by GitHub Actions secrets. When neither is present
+ * the build still works: debug falls back to the SDK's own debug key, and
+ * release is produced unsigned.
+ *
+ * The file sits with the keystores it points at, under the one directory that
+ * is gitignored whole - so everything secret is in a single place, and there is
+ * one rule to get wrong rather than two. The `storeFile` values in it stay
+ * relative to the repository root, which is what `signingValue` resolves them
+ * against and what the CI environment variables use.
  */
 val keystoreProperties = Properties().apply {
-    val f = rootProject.file("keystore.properties")
+    val f = rootProject.file("keystore/keystore.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
 

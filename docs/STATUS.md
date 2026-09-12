@@ -28,6 +28,49 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-12 — `keystore.properties` moved into `keystore/`
+
+A one-line change to where a gitignored file lives, for one reason: everything
+secret is now under a single directory. The keystores were already in
+`keystore/`; the file naming them and carrying their passwords sat in the
+repository root, so the rule for "do not commit this" had two halves, and the
+half at the root looked like every other root config file.
+
+`app/build.gradle.kts` reads `keystore/keystore.properties` now. The `storeFile`
+values inside it are unchanged and stay relative to the **repository root** -
+that is what Gradle resolves them against, and the same paths the CI environment
+variables use, so nothing about the workflows changed.
+
+`.gitignore` already covered it twice over: `keystore/` matches the directory,
+and the bare `keystore.properties` pattern matches the name at any depth. Both
+kept. The second is redundant for the new path and deliberately so - a stray
+copy at the repository root is exactly the mistake worth catching twice, and
+this is the one failure the project cannot recover from.
+
+### Verified by what the APKs are actually signed with
+
+The failure mode here is silent by design: when the properties file is not
+found, the build does not fail - debug falls back to the SDK's own debug key and
+release comes out unsigned. So a build succeeding proves nothing. `apksigner`
+was asked instead:
+
+```
+debug:   CN=Shotgun! Debug, OU=Development, O=drehtuer, C=DE
+release: CN=Shotgun!, OU=Release, O=drehtuer, C=DE
+```
+
+Both are the project's own keys, read from the new location. `lint` and
+`testDebugUnitTest` green alongside.
+
+**A checking mistake worth keeping:** the first pass grepped apksigner's output
+for `Signer #1 certificate DN`, which it does not print - the line reads
+`V2 Signer: certificate DN`. Nothing matched, and the release APK was written
+down as unsigned. It was correctly signed all along; the check was looking for a
+string that never existed. A grep that finds nothing looks exactly like the bug
+it was written to catch.
+
+---
+
 ## 2026-09-12 — Coverage moved from Codecov to SonarQube Cloud
 
 Same JaCoCo report, a different service reading it. Codecov is gone: no
