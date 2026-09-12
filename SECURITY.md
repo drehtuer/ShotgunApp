@@ -35,8 +35,10 @@ have heard nothing, say so on the same advisory.
 
 **No signing key is ever committed to this repository - it is public.** Both the
 dev and the release key are held as encrypted GitHub Actions secrets, restored
-during a workflow run and deleted in an `always()` step; `*.keystore`, `*.jks`,
-`keystore/` and `keystore.properties` are gitignored.
+during a workflow run and deleted in an `always()` step. Everything local lives
+in `keystore/` - the keystores and the `keystore.properties` that points at
+them - and `*.keystore`, `*.jks`, `keystore/` and `keystore.properties` are all
+gitignored.
 
 **If you find a keystore, a key password or a private key anywhere in this
 repository or in a published artifact, that is a vulnerability and we want to

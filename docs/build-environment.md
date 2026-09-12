@@ -165,7 +165,12 @@ Two deliberate omissions in `debug`:
 ## Signing
 
 **This repository is public. No signing material is ever committed to it.**
-`.gitignore` covers `*.keystore`, `*.jks`, `keystore/` and `keystore.properties`.
+Everything local lives in one directory, `keystore/` - both keystores and the
+`keystore.properties` that points at them - so there is a single rule to get
+right. `.gitignore` covers `*.keystore`, `*.jks`, `keystore/` and
+`keystore.properties`; the last is kept although `keystore/` already covers the
+file, because a stray copy at the repository root is exactly the mistake worth
+catching twice.
 
 There are two keys:
 
@@ -181,7 +186,7 @@ is not exposed to pull requests from forks.
 
 ### Local setup
 
-Gradle reads `keystore.properties` from the repository root:
+Gradle reads `keystore/keystore.properties`:
 
 ```properties
 debug.storeFile=keystore/debug.keystore
@@ -195,8 +200,10 @@ release.keyAlias=shotgun-release
 release.keyPassword=…
 ```
 
-Both the file and the keystores are gitignored. If they are missing the build
-still works: `debug` falls back to the SDK's own debug key, and `release` is
+The `storeFile` paths are relative to the **repository root**, not to the file
+itself - that is what Gradle resolves them against, and what the CI environment
+variables use. Everything in `keystore/` is gitignored. If it is missing the
+build still works: `debug` falls back to the SDK's own debug key, and `release` is
 produced **unsigned**.
 
 ### Generating a key
@@ -245,7 +252,7 @@ backup.** A backup has to hold two things, and both are now off this machine:
 | Piece | Where it lives |
 | --- | --- |
 | `keystore/release.keystore` | the build machine, and a password manager |
-| The password | `keystore.properties` on the build machine, and the same password manager |
+| The password | `keystore/keystore.properties` on the build machine, and the same password manager |
 
 Within each keystore the store password and the key password are the same
 value; the debug and release passwords differ from each other.
@@ -257,7 +264,7 @@ you - so it is not a copy of either piece, and never counts towards this.
 unusable, and then no future build can ever update an installed app: Android
 identifies an app by its signature and there is no recovery. If the key is ever
 rotated, the password manager has to be updated in the same pass as
-`keystore.properties` and the GitHub secrets.
+`keystore/keystore.properties` and the GitHub secrets.
 
 The release key is 4096-bit RSA, `SHA384withRSA`, valid until **2056-08-29**, so
 the expiry is not the thing to worry about. Losing the password was.
