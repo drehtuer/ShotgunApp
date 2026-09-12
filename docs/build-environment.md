@@ -339,10 +339,11 @@ pure core, and one blended percentage describes neither half:
 | `draw/`, `result/`, `data/` | plain JVM unit tests | `app/src/test/` |
 | `ui/` | Robolectric, also on the JVM | `app/src/test/` |
 
-SonarQube has no equivalent of Codecov's components on this plan, so the split
-is read by drilling into the directories in
+The two are not reported as separate numbers. The split is read by drilling
+into the directories in
 [*Measures > Coverage*](https://sonarcloud.io/component_measures?id=drehtuer_ShotgunApp&metric=coverage)
-rather than being reported as two numbers.
+on the
+[SonarQube project](https://sonarcloud.io/project/overview?id=drehtuer_ShotgunApp).
 
 Nothing is excluded, and nothing needs to be. Room's generated sources - written
 from the DAO and database declarations, and not in the repository - live under
