@@ -173,6 +173,31 @@ tasks.withType<Test>().configureEach {
 }
 
 /**
+ * What SonarQube measures coverage over.
+ *
+ * The variant is pinned to `debug` because that is the only one JaCoCo
+ * instruments (`enableUnitTestCoverage` above), and the report path is given
+ * explicitly: AGP's `createDebugUnitTestCoverageReport` is not a `JacocoReport`
+ * task, so the scanner's own auto-detection does not find it and coverage
+ * arrives as zero without a word of complaint.
+ *
+ * Nothing is excluded, and nothing needs to be. Room's generated sources live
+ * under `build/generated`, and the scanner sets `sonar.sources` to
+ * `src/main/{java,res,AndroidManifest.xml}` - generated code is outside the
+ * analysis to begin with, so it cannot be measured or counted against us.
+ */
+sonar {
+    properties {
+        property("sonar.androidVariant", "debug")
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            layout.buildDirectory.file("reports/coverage/test/debug/report.xml")
+                .get().asFile.path,
+        )
+    }
+}
+
+/**
  * Name the APKs for people rather than for Gradle: `Shotgun-0.1.0.apk` and
  * `Shotgun-debug-0.1.0.apk`, instead of `app-release.apk` and `app-debug.apk`.
  * A release asset has to say what it is and which version it is without being
