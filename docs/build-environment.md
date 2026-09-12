@@ -400,6 +400,27 @@ rings, no countdown - with the clock frozen or auto-advancing, and advancing
 spend an afternoon on it a second time: those paths are covered in
 `app/src/androidTest/`, on hardware.
 
+#### The settings store is a singleton, so tests are given their own
+
+`preferencesDataStore` caches **one store per process** - the delegate holds it,
+not the `Context` - which is right for an app and wrong for a test suite. Every
+test in the JVM otherwise shares one store and one internal scope, and
+Robolectric's fresh filesystem does not help: the cached store keeps serving
+what the last test wrote. A probe proved it, writing `haptics = false` in one
+test and reading it back in the next.
+
+It cost a CI failure before it was understood. `ShotgunViewModelTest` hung for a
+full minute - `UncompletedCoroutinesError: the test body did not run to
+completion` - because the shared store also runs on `Dispatchers.IO`, so its
+work lands on real threads while `runTest` drives a virtual clock.
+
+`SettingsRepository` therefore takes a `DataStore<Preferences>`; the `Context`
+constructor is kept and is what the app uses. Tests build one through
+`IsolatedSettingsStore`, which gives each test its own file **and** puts the
+store on the test's own dispatcher, so a write and the read waiting for it share
+a clock. `SettingsStoreIsolationTest` holds the invariant: what one test writes,
+the next must not see.
+
 Two more limits worth knowing before writing a test that cannot pass:
 
 - **Robolectric lays out composables but does not rasterise them**, so a

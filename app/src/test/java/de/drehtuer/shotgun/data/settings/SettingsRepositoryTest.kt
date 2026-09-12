@@ -1,12 +1,15 @@
 package de.drehtuer.shotgun.data.settings
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import de.drehtuer.shotgun.ui.theme.ThemePreference
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
@@ -18,14 +21,28 @@ import org.robolectric.RobolectricTestRunner
  * write lands, that it is read back as itself, and that the countdown's
  * read-modify-write really is one transaction.
  *
- * Every test writes what it needs before reading it, because the store outlives
- * a single test method.
+ * Every test writes what it needs before reading it. That used to be a
+ * requirement rather than a habit - the process-wide store outlived the test
+ * method and carried its values into the next one. Each test now gets its own
+ * store, so the habit is only good manners.
  */
 @RunWith(RobolectricTestRunner::class)
 class SettingsRepositoryTest {
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val repository = SettingsRepository(context)
+    @get:Rule
+    val tempFolder = TemporaryFolder()
+
+    private lateinit var store: IsolatedSettingsStore
+    private lateinit var repository: SettingsRepository
+
+    @Before
+    fun setUp() {
+        store = IsolatedSettingsStore(UnconfinedTestDispatcher(), tempFolder.newFolder())
+        repository = store.repository()
+    }
+
+    @After
+    fun tearDown() = store.close()
 
     @Test
     fun `every setting is read back as it was written`() = runTest {

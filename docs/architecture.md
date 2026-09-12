@@ -209,6 +209,12 @@ fingers come off.
 | State | Lives in | Survives |
 | --- | --- | --- |
 | Settings | DataStore, via `SettingsRepository` | process death |
+
+`SettingsRepository` takes the `DataStore` rather than opening one from a
+`Context`. The app passes the context and gets the process-wide store as
+before; tests pass their own, because that singleton is shared by every test
+in the JVM - see *Testing* in
+[`build-environment.md`](build-environment.md#the-settings-store-is-a-singleton-so-tests-are-given-their-own).
 | Draw history | Room, via `DrawHistory` | process death |
 | Team count | `ShotgunViewModel` | navigation, not process death |
 | Draw in progress | `DrawEngine`, remembered by `DrawScreen` | nothing - a draw is of the moment |

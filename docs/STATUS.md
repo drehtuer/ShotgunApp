@@ -28,6 +28,69 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-12 — The flaky test, and what was actually wrong
+
+The intermittent hang recorded at 0.1.3 is fixed, and the cause was not where
+the failure pointed.
+
+### It was reproduced, which changed the fix
+
+The CI failure said `UncompletedCoroutinesError: After waiting for 1m, the test
+body did not run to completion` in `ShotgunViewModelTest`, and that test would
+not fail again - six runs of the class, three of the whole suite on two CPUs.
+Guessing from the stack trace would have produced a `withTimeout` and a shrug.
+
+So the *suspicion* was tested instead of the symptom. A throwaway probe wrote
+`haptics = false` in one test method and read the setting in the next:
+
+```
+PROBE-A: wrote haptics=false
+PROBE-B: haptics=false   (true = isolated, false = LEAKED from test a)
+```
+
+That is not something a fresh install could ever do, and Robolectric had reset
+the filesystem in between. **`preferencesDataStore` caches one store per
+process** - the delegate holds it, not the `Context` - so every test in the JVM
+was sharing one store and one internal scope, `ShotgunViewModelTest` and
+`SettingsRepositoryTest` included.
+
+The evidence was in the repository all along, written as a habit rather than
+read as a defect: `SettingsRepositoryTest` carried the line *"Every test writes
+what it needs before reading it, because the store outlives a single test
+method."* Someone met this, worked around it, and wrote the workaround down.
+
+### The hang, then
+
+Two halves. The shared store is one; the other is that it runs on
+`Dispatchers.IO`, so its work lands on real threads while `runTest` drives a
+virtual clock. A resumption crossing between the two is exactly what a test body
+that never completes looks like - and why it needed a loaded CI runner to show
+up.
+
+### The fix
+
+`SettingsRepository` takes a `DataStore<Preferences>`. The `Context` constructor
+is kept, so the app is unchanged and still gets the singleton it wants. Tests
+build one through `IsolatedSettingsStore`, which gives each test its own file
+*and* runs the store on the test's own dispatcher, so a write and the read
+waiting for it are on one clock.
+
+`SettingsStoreIsolationTest` keeps it honest: the probe, kept as a test. It is a
+test about the tests, and it earns its place - it fails against the shared store
+with `expected:<true> but was:<false>`, which is how the defect was found.
+
+### Verified
+
+209 tests, up from 207, zero failures. Five full runs pinned to two CPUs, all
+green; `lint`, `assembleDebug` and `assembleRelease` clean.
+
+What cannot be claimed: that the original hang is gone, because it was never
+reproducible to begin with. What can be claimed is that the coupling underneath
+it was real, was demonstrated, and is gone - and that if it returns, a named
+test fails on it rather than a different test hanging for a minute.
+
+---
+
 ## 2026-09-12 — Release 0.1.3
 
 `appVersion` 0.1.2 → 0.1.3, so `versionCode` derives to **103**. One value
