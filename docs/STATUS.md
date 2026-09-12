@@ -35,6 +35,14 @@ Same JaCoCo report, a different service reading it. Codecov is gone: no
 instead, and the README now carries **two** coverage badges - line and branch -
 rather than one blended figure.
 
+The documentation was swept for the old service afterwards, which turned up a
+**dead link**: an entry below pointed at `build-environment.md#codecov`, and
+that section is *SonarQube Cloud* now, so the anchor resolved to nothing. The
+dated entries still name Codecov where they describe what happened on the day -
+this log is a record, and one that hid the tool actually in use would be a
+falsified one - but anything written in the present tense was put into the past,
+so nothing reads as though Codecov is still in play.
+
 ### How it is wired
 
 The scan runs from Gradle (`org.sonarqube` 7.5.0.8588, applied at the root), not
@@ -144,7 +152,8 @@ like the bug it was meant to catch.
 ## 2026-09-08 — Coverage, second pass: the draw surface, piece by piece
 
 **Line coverage 86.6% → 93.0%, branch 70.5% → 76.3%, 181 tests → 207.**
-Excluding generated Room sources, as Codecov counts it: **87.3% → 94.6%** line.
+Excluding generated Room sources, as Codecov counted it then: **87.3% → 94.6%**
+line.
 `DrawScreen` alone went **35% → 84%**.
 
 ### The surface's pieces are `internal` now, and that is the whole trick
@@ -207,16 +216,17 @@ draw**. Cheap to check, and the one change nobody should take on trust.
   phone.
 - **`ShotgunMark`'s canvas.** Robolectric lays out but does not rasterise, so a
   `Canvas` draw lambda never runs.
-- **Room's generated open delegate**, excluded from Codecov as generated code.
+- **Room's generated open delegate**, excluded from the coverage figure as
+  generated code.
 
 ---
 
 ## 2026-09-08 — Coverage: the data layer, the view model and the window
 
 **Line coverage 64.3% → 86.6%, branch 58.8% → 70.5%, 134 tests → 181.** As
-Codecov reports it - generated Room sources excluded - **73.2% → 87.3%** line.
-Both figures are given because they differ, and the second is the one the badge
-shows.
+Codecov reported it then - generated Room sources excluded - **73.2% → 87.3%**
+line. Both figures are given because they differ, and the second is the one the
+badge showed.
 
 No production code changed. Everything below was already shipped and working;
 none of it was checked by anything.
@@ -277,7 +287,8 @@ surface's touch paths stay device-only, which is where they were already, and
   `ringSpec`, which is pure and tested; what remains is drawing and pointer
   plumbing, covered by `app/src/androidTest/` on the phone.
 - **Room's generated open delegate**, the schema-creation half. Excluded from
-  Codecov as generated code, and a test for it would be a test of Room.
+  the coverage figure as generated code, and a test for it would be a test of
+  Room.
 - **`ShotgunMark`'s canvas.** Robolectric lays composables out but does not
   rasterise them, so a `Canvas` draw lambda never runs. Only a real screen can
   cover it, and only an eye can judge it.
@@ -365,7 +376,7 @@ dropped for the same reason — **on a phone with Touch feedback off, HAPTICS on
 gives the result buzzes but no per-finger tick.** Left that way deliberately:
 the tick *is* feedback for touching and belongs to the system's setting, while
 the result is the app's answer and belongs to the app's toggle. Written down in
-[`design.md`](design.md#the-finger-tick-follows-the-system-setting) so it is a
+[`design.md`](design.md#haptics-is-the-only-switch) so it is a
 decision rather than a surprise, and on [`TODO.md`](TODO.md) as a question
 someone may want answered differently.
 
@@ -411,7 +422,7 @@ Everything since 0.1.1, in the order it landed:
   line written to prevent it.
 - Devcontainer JDK path corrected, a `connect-android-device` skill added, and
   Wi-Fi debugging's random connect port handled by a `discover` subcommand.
-- README badges, and a Codecov badge that now reads 68%.
+- README badges, and a Codecov badge that read 68% at the time.
 
 ### Cutting it
 
@@ -424,7 +435,7 @@ publishing only once the upload finished.
 
 ## 2026-09-07 — Coverage reporting: Robolectric, and three silent failures
 
-Codecov read 16.9%. **It now reads about 64%** - line coverage 16.3% → 63.8%,
+Codecov read 16.9%. **It went to about 64%** - line coverage 16.3% → 63.8%,
 branch 24.9% → 56.3%, 68 tests → 124. Nothing about the app got much safer in
 the process; most of the gap was measurement.
 
@@ -607,10 +618,11 @@ percentage point and costs the meaning of the number.
 
 CI now runs `createDebugUnitTestCoverageReport` alongside the tests (the
 coverage task depends on the test task, so nothing runs twice), uploads the
-report as an artifact, and sends it to Codecov, which hosts the README badge.
+report as an artifact, and sent it to Codecov, which hosted the README badge.
 
 **The badge reads *unknown* until a `CODECOV_TOKEN` secret exists** - see
-[`build-environment.md`](build-environment.md#codecov). The upload is
+[`build-environment.md`](build-environment.md#sonarqube-cloud), which covers
+the service that replaced it. The upload is
 *skipped* rather than failed when the token is absent, because a fork's pull
 request cannot read secrets and must not go red for it.
 
