@@ -52,6 +52,28 @@ authoritatively, in the design export itself.
       rule and would be lost by a re-export: the haptics change and the
       HAPTICS/DIM MODE toggle copy. They need making in the Design project
       itself. `DesignTokenTest` covers the palette, not copy.
+- [ ] **`ShotgunViewModelTest` has one intermittently hanging test.** *"settings
+      written through the view model are read back through it"* failed once in
+      CI with `kotlinx.coroutines.test.UncompletedCoroutinesError: After waiting
+      for 1m, the test body did not run to completion` - the body hung, so
+      `viewModel.settings.first { … }` never saw a matching value. It has not
+      been reproduced: six runs of the class and three of the whole suite
+      pinned to two CPUs, all green, and every run of `main` around it passed.
+
+      The suspect is the combination the test sets up rather than the assertion:
+      a **process-wide DataStore** (`preferencesDataStore` caches on the
+      `Context`, and `SettingsRepositoryTest` opens the same `settings` file),
+      real file I/O on `Dispatchers.IO`, `runTest`'s virtual clock, and a
+      `stateIn(viewModelScope, WhileSubscribed(5_000))` whose stop timeout is a
+      virtual `delay`. The fix that would remove the coupling outright is to let
+      `SettingsRepository` take a `DataStore<Preferences>` so each test owns
+      one - a production change, and not one to make on the strength of a
+      failure that has been seen exactly once. A `withTimeout` around the wait
+      would at least turn a 60s hang into a legible failure.
+
+      Do not "fix" this by re-running until green without recording it: a test
+      that hangs once a month is a real defect, and the next person deserves to
+      know it was seen rather than to rediscover it.
 - [ ] **Decide on Gradle dependency verification.** SonarQube raises two
       findings for it (`kotlin:S6474`, `text:S8569`) and they are the only
       security findings left open. Generating

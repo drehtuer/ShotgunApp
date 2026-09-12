@@ -61,6 +61,22 @@ Everything since 0.1.2, in the order it landed:
 - The lockup now opens the README, and `keystore.properties` moved in beside
   the keystores it names.
 
+### A flaky test, not a broken release
+
+The first CI run on the release PR went red on
+`ShotgunViewModelTest > settings written through the view model are read back
+through it`: `UncompletedCoroutinesError: After waiting for 1m, the test body
+did not run to completion`. The body hung, so `viewModel.settings.first { … }`
+never saw a value matching all four writes.
+
+It was checked rather than waved through. The branch changes `appVersion`,
+`README.md` and this file - no test references the version, and no code
+changed. `main` was green on the commit underneath. The test would not
+reproduce: six runs of the class and three of the whole suite pinned to two
+CPUs, all green. So: a genuine intermittent, unrelated to the release, and
+on [`TODO.md`](TODO.md) with the suspected mechanism rather than quietly
+re-run until green.
+
 ### What a user actually gets
 
 Two haptics fixes and one behaviour change. The rest is tests, tooling and
