@@ -22,10 +22,10 @@ jobs:
           java-version: '21'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
       - name: Set up the Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
 
       # The artifacts are named from `appVersion` in the build file, not from
       # the tag. If the two disagree, a v0.2.0 release would carry files called
@@ -104,7 +104,7 @@ jobs:
       # is published, and assets cannot be added afterwards, so the upload has
       # to finish first.
       - name: Draft the release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           draft: true
           generate_release_notes: true

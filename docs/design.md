@@ -523,6 +523,14 @@ Every completed draw records, for each finger:
 Normalising at write time is what makes old records still usable after a screen
 size change. Storing raw pixels would silently skew the field.
 
+**The history never leaves the device.** `allowBackup` is `false`, so neither
+the draw database nor the settings are copied into a cloud backup or reachable
+by `adb backup`. No row carries a name or any other identifier - a draw is a
+mode, a timestamp and positions - so this is not about protecting a secret; it
+is that nothing here is worth that reach. The cost is real and is accepted:
+normalising was what would have let a restored history stay meaningful on a new
+phone, and replacing the phone now starts the fairness field from empty.
+
 ### Rendering
 
 - Density kernel: radius `max(18, min(W,H) × 0.13)`, quartic falloff

@@ -14,9 +14,28 @@
         android:name="android.hardware.touchscreen.multitouch.distinct"
         android:required="true" />
 
+    <!-- No backup, and no clear text.
+
+         allowBackup=false keeps the draw database and the settings on the
+         device. Neither carries a name or any other identifier - a draw row is
+         a mode, a timestamp and finger positions as fractions of the surface -
+         so this is not about protecting a secret. It is that backup copies
+         them into a cloud account and into the reach of `adb backup`, and
+         nothing here is worth that reach.
+
+         What it costs is worth stating plainly: positions are normalised
+         precisely so records stay comparable across devices, so a restored
+         history would have worked. That is the convenience being given up -
+         replacing the phone now starts the fairness field from empty.
+
+         usesCleartextTraffic=false states what is already true: the app asks
+         for no INTERNET permission and makes no requests. Declaring it stops
+         the platform from implicitly permitting clear text on older releases,
+         and makes a future accidental http:// call fail loudly. -->
     <application
         android:name=".ShotgunApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"

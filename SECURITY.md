@@ -28,7 +28,10 @@ have heard nothing, say so on the same advisory.
 - The app in [`app/`](app/) - anything it stores, displays or exposes to other
   apps on the device.
 - The build and release pipeline in [`.github/workflows/`](.github/workflows/),
-  including how signing material is handled.
+  including how signing material is handled. Third-party actions are pinned to
+  a full commit SHA rather than a tag, and the only write permissions in any
+  workflow are `pages: write` and `id-token: write`, granted to the single job
+  that publishes the site.
 - Anything published to the [GitHub Pages site](https://drehtuer.github.io/ShotgunApp/).
 
 ### Signing material, specifically

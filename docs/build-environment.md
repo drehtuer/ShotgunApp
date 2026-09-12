@@ -286,6 +286,11 @@ JSON gives a real before-and-after to write it against.
 the fairness field evidence rather than decoration, so a schema change must
 migrate it, not discard it.
 
+**Neither store is backed up.** `android:allowBackup="false"` keeps both on the
+device, out of cloud backup and out of reach of `adb backup` - see
+[`design.md`](design.md#what-gets-recorded) for what that costs. It is also why
+the two `run-as` commands below are the only way to look at them.
+
 Inspecting either on a device:
 
 ```bash
@@ -706,6 +711,37 @@ no login and no network.
 
 Repository settings, all on: private vulnerability reporting, Dependabot alerts
 and security updates, secret scanning with push protection.
+
+### Workflow hardening
+
+**Third-party actions are pinned to a full commit SHA**, with the version in a
+trailing comment:
+
+```yaml
+uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+```
+
+A tag is a moving pointer that the action's owner can repoint at any commit, so
+`@v6` is a standing instruction to run whatever that account publishes next. A
+SHA cannot move. Dependabot updates these in place - it rewrites both the SHA
+and the comment - so pinning costs nothing in maintenance. `actions/*` and
+`github/*` are left on tags: they are GitHub's own, published from the same
+platform that runs them.
+
+**Write permissions are granted per job, not per workflow.** `docs.yml` is the
+only workflow that needs any: it is `contents: read` at the top, and `pages:
+write` plus `id-token: write` on the `deploy` job alone. The job that builds the
+site runs Gradle, Jekyll and a third-party action, and none of that should be
+able to publish.
+
+**Dependency verification is deliberately not used.** Gradle can checksum every
+artifact through `gradle/verification-metadata.xml`, and SonarQube asks for it.
+Generating it here produces 3,745 lines covering 536 components - and any
+dependency change invalidates it. Dependabot cannot regenerate it, so every
+weekly Gradle pull request would fail until someone regenerated the file by
+hand and pushed it, which is exactly the automation `dependabot.yml` is built
+around. Recorded as a decision on [`TODO.md`](TODO.md) rather than taken
+quietly.
 
 **Dependabot deliberately does not raise AGP or the Gradle wrapper.** They move
 together with `compileSdk` and the Kotlin version - and AGP 9 removed the

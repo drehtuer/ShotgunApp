@@ -28,6 +28,77 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-12 — SonarQube's security findings: 14 of 16 fixed
+
+SonarQube reported 16 security findings and no hotspots. Fourteen are fixed
+here; the remaining two are one decision, recorded rather than taken quietly.
+
+### Third-party actions pinned to a commit SHA (10 findings)
+
+`gradle/actions/setup-gradle`, `android-actions/setup-android` and
+`softprops/action-gh-release` were on `@v6` / `@v4` / `@v3`. A tag is a moving
+pointer the action's owner can repoint at any commit, so that is a standing
+instruction to run whatever that account publishes next. Now pinned to the SHA
+each tag pointed at, with the version in a trailing comment so Dependabot keeps
+updating them - it rewrites the SHA and the comment together.
+
+Worth noting what the rule does **not** flag: `actions/*` and `github/*` stay on
+tags, because they are GitHub's own, published from the platform that runs them.
+The rule draws the line at the supply chain that is actually third-party, and
+that is the right line.
+
+### Pages write permissions scoped to the job that publishes (2 findings)
+
+`docs.yml` granted `pages: write` and `id-token: write` at workflow level, so
+the *build* job held them too - a job that runs Gradle, Jekyll and a third-party
+action. Now `contents: read` at the top, with the two write scopes on `deploy`
+alone.
+
+### The manifest: no backup, no clear text (2 findings)
+
+`allowBackup` is `false` and `usesCleartextTraffic` is explicitly `false`. The
+second is free: the app asks for no INTERNET permission, so this only states
+what is already true and makes a future accidental `http://` call fail loudly.
+
+The first is a real behaviour change and is written down as one. No row carries
+a name or an identifier - a draw is a mode, a timestamp and finger positions -
+so it is not about protecting a secret; it is that backup copies them into a
+cloud account and into reach of `adb backup`. **The cost is that replacing the
+phone now starts the fairness field from empty**, and normalising positions was
+exactly what would have let a restored history stay meaningful. In
+[`design.md`](design.md#what-gets-recorded) now, because that is behaviour.
+
+**A rationale that had to be corrected.** The first version of the manifest
+comment justified the change by claiming the history has "no value off the
+phone". `design.md` says the opposite in as many words - positions are
+normalised so records "stay comparable across devices and orientations" - so the
+justification was false and was rewritten to state the trade honestly instead. A
+tidy reason for a change is worth less than a true one.
+
+### The two left open, and why
+
+`kotlin:S6474` and `text:S8569` ask for Gradle dependency verification.
+Generating `gradle/verification-metadata.xml` was measured rather than guessed
+at: **3,745 lines, 536 components, 42 seconds**. The file is not the problem.
+The problem is that any dependency change invalidates it and Dependabot cannot
+regenerate it, so every weekly Gradle pull request would fail until someone
+regenerated it by hand - against the grouping in `dependabot.yml` that exists so
+those PRs pass CI on their own. On [`TODO.md`](TODO.md) as a decision, with the
+numbers.
+
+### Verified
+
+`assembleDebug`, `lint`, `testDebugUnitTest` and `assembleRelease` green; all
+four workflow files parse as YAML. The manifest was checked where it counts
+rather than in the source - `aapt2 dump xmltree` on the release APK reports
+`allowBackup=false` and `usesCleartextTraffic=false` as shipped.
+
+One self-inflicted bug on the way: rewriting the manifest comment left the
+`-->` in the middle of it, putting the second half outside the comment and the
+XML in an invalid state. Caught by parsing the file rather than reading it.
+
+---
+
 ## 2026-09-12 — `keystore.properties` moved into `keystore/`
 
 A one-line change to where a gitignored file lives, for one reason: everything
