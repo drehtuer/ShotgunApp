@@ -41,8 +41,21 @@ fun formatCountdown(millis: Int): String =
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-/** Reads and writes [Settings]. Backed by DataStore, so writes survive death. */
-class SettingsRepository(private val context: Context) {
+/**
+ * Reads and writes [Settings]. Backed by DataStore, so writes survive death.
+ *
+ * The store is taken as a parameter rather than opened from a [Context],
+ * because `preferencesDataStore` caches **one instance for the whole process** -
+ * the delegate, not the context, holds it. That is right for an app, which
+ * wants exactly one, and wrong for a test suite: every test in the JVM then
+ * shares one store and one internal scope, so state written by one test is
+ * visible to the next even though Robolectric gives each a fresh filesystem.
+ * A test that hung once in CI was traced back to it. Tests pass their own
+ * store; the app uses the [Context] constructor and still gets the singleton.
+ */
+class SettingsRepository(private val dataStore: DataStore<Preferences>) {
+
+    constructor(context: Context) : this(context.dataStore)
 
     private object Keys {
         val THEME = stringPreferencesKey("theme_preference")
@@ -55,7 +68,7 @@ class SettingsRepository(private val context: Context) {
         val TIMING = stringPreferencesKey("reveal_timing")
     }
 
-    val settings: Flow<Settings> = context.dataStore.data.map { it.toSettings() }
+    val settings: Flow<Settings> = dataStore.data.map { it.toSettings() }
 
     suspend fun setThemePreference(value: ThemePreference) = edit { it[Keys.THEME] = value.name }
     suspend fun setHaptics(value: Boolean) = edit { it[Keys.HAPTICS] = value }
@@ -84,7 +97,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
-        context.dataStore.edit(block)
+        dataStore.edit(block)
     }
 }
 

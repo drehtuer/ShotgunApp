@@ -1,10 +1,9 @@
 package de.drehtuer.shotgun
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import de.drehtuer.shotgun.data.DrawHistory
 import de.drehtuer.shotgun.data.DrawPoint
 import de.drehtuer.shotgun.data.DrawRecord
+import de.drehtuer.shotgun.data.settings.IsolatedSettingsStore
 import de.drehtuer.shotgun.data.settings.RevealTiming
 import de.drehtuer.shotgun.data.settings.SettingsRepository
 import de.drehtuer.shotgun.draw.DrawOutcome
@@ -15,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -23,7 +23,9 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
@@ -39,21 +41,34 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ShotgunViewModelTest {
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
+    @get:Rule
+    val tempFolder = TemporaryFolder()
+
     private lateinit var history: FakeHistory
+    private lateinit var store: IsolatedSettingsStore
     private lateinit var repository: SettingsRepository
     private lateinit var viewModel: ShotgunViewModel
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        // One scheduler for everything: `runTest` adopts the scheduler behind
+        // `Dispatchers.Main`, and the settings store is given the same one, so
+        // a write and the read waiting for it share a clock. The store the app
+        // uses would run on `Dispatchers.IO` instead - real threads under a
+        // virtual clock, which is what hung this class in CI once.
+        val dispatcher = UnconfinedTestDispatcher(TestCoroutineScheduler())
+        Dispatchers.setMain(dispatcher)
         history = FakeHistory()
-        repository = SettingsRepository(context)
+        store = IsolatedSettingsStore(dispatcher, tempFolder.newFolder())
+        repository = store.repository()
         viewModel = ShotgunViewModel(repository, history)
     }
 
     @After
-    fun tearDown() = Dispatchers.resetMain()
+    fun tearDown() {
+        store.close()
+        Dispatchers.resetMain()
+    }
 
     // ---- what a draw meant ---------------------------------------------------
 
