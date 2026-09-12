@@ -33,6 +33,11 @@ authoritatively, in the design export itself.
       confirmed present by running the image. Nobody has rebuilt the workspace
       container and checked the extension actually resolves it - Gradle reads
       `JAVA_HOME` and never cared either way, which is why this went unnoticed.
+- [ ] **Switch off SonarCloud's Automatic Analysis.** It is enabled on
+      `drehtuer_ShotgunApp` and reports no coverage, because it does not run
+      the tests - and while it is on, SonarCloud refuses the CI analysis that
+      does. *Administration > Analysis Method* in the project. Until this is
+      done, the two README coverage badges read *metric not found*.
 - [ ] **`connect-device.sh discover` scans a guessed range.** 30000-50000 covers
       what Android has picked so far, but the port is only documented as
       ephemeral. A phone that lands outside the range fails with "no open ports"
