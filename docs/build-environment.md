@@ -325,16 +325,22 @@ That report covers the **JVM tests only**. The instrumented half is measured
 separately - see below.
 
 **Read the figure per layer, not overall.** The app is a Compose UI over a small
-pure core. `codecov.yml` declares them as components so both are reported:
+pure core, and one blended percentage describes neither half:
 
-| Component | Tested by | Where |
+| Layer | Tested by | Where |
 | --- | --- | --- |
-| `logic` - `draw/`, `result/`, `data/` | plain JVM unit tests | `app/src/test/` |
-| `ui` - `ui/` | Robolectric, also on the JVM | `app/src/test/` |
+| `draw/`, `result/`, `data/` | plain JVM unit tests | `app/src/test/` |
+| `ui/` | Robolectric, also on the JVM | `app/src/test/` |
 
-Generated Room sources (`*_Impl.kt`) are excluded: they are written from the DAO
-and database declarations, are not in the repository, and a test for them would
-be a test of Room.
+SonarQube has no equivalent of Codecov's components on this plan, so the split
+is read by drilling into the directories in
+[*Measures > Coverage*](https://sonarcloud.io/component_measures?id=drehtuer_ShotgunApp&metric=coverage)
+rather than being reported as two numbers.
+
+Nothing is excluded, and nothing needs to be. Room's generated sources - written
+from the DAO and database declarations, and not in the repository - live under
+`app/build/generated`, while the scanner analyses `app/src/main/` only, so
+generated code is outside the analysis rather than excluded from it.
 
 ### Robolectric
 
@@ -393,20 +399,47 @@ Two more limits worth knowing before writing a test that cannot pass:
   the file. Put the test in another package, or alias the import
   (`import org.junit.Rule as JUnitRule`). `ComponentRenderTest` does both.
 
-#### Codecov
+#### SonarQube Cloud
 
-Coverage is uploaded to [Codecov](https://codecov.io/gh/drehtuer/ShotgunApp),
-which hosts the README badge and comments diff coverage on pull requests.
+Coverage and static analysis go to
+[SonarQube Cloud](https://sonarcloud.io/project/overview?id=drehtuer_ShotgunApp),
+which hosts the two README coverage badges and decorates pull requests.
 
-It needs a `CODECOV_TOKEN` repository secret. **Without it the upload step is
-skipped, not failed** - the workflow checks for the token in a preceding step,
-because a step's own `env:` is not in scope for its own `if:`, and because a
-fork's pull request cannot read secrets at all. Until the token is added the
-badge reads *unknown*.
+The scan runs from Gradle, not from a scanner action:
 
-To set it up: sign in to Codecov with the GitHub account, add the repository,
-copy the upload token, and save it as `CODECOV_TOKEN` under
-*Settings > Secrets and variables > Actions*.
+```bash
+./gradlew testDebugUnitTest createDebugUnitTestCoverageReport sonar
+```
+
+`sonar` needs the compiled classes and the JaCoCo XML, so it goes *after* the
+two tasks that produce them - in CI they are separate steps in the same job and
+the same workspace. The keys live in the root `build.gradle.kts`
+(`drehtuer_ShotgunApp` in organisation `drehtuer`, against `sonarcloud.io`); the
+token does not, and comes from the `SONAR_TOKEN` repository secret.
+
+Four things are easy to get wrong, and three of them fail quietly:
+
+- **The JaCoCo report path is set by hand.** AGP's
+  `createDebugUnitTestCoverageReport` is not a `JacocoReport` task, so the
+  scanner's auto-detection does not find it. Without
+  `sonar.coverage.jacoco.xmlReportPaths` in `app/build.gradle.kts`, the analysis
+  succeeds and reports **0%**.
+- **The checkout needs `fetch-depth: 0`.** SonarQube dates each line from git
+  blame, and the default shallow clone leaves every line looking new - which is
+  what decides what counts as *new code* on a pull request.
+- **Automatic Analysis must be off.** SonarCloud enables it when a repository is
+  imported, and it refuses a CI analysis while it is on: *"You are running CI
+  analysis while Automatic Analysis is enabled"*. Turn it off under
+  *Administration > Analysis Method*. It was on here and failed the first run -
+  while reporting a green check of its own that measured no coverage, because
+  Automatic Analysis does not run the tests.
+- **Without the token the step is skipped, not failed** - the workflow checks
+  for it in a preceding step, because a step's own `env:` is not in scope for
+  its own `if:`, and because a fork's pull request cannot read secrets at all.
+
+The badges are served by shields.io rather than by SonarQube's own badge API:
+that API accepts only `coverage`, and the two numbers worth showing separately -
+`line_coverage` and `branch_coverage` - are not in its list.
 
 ## Emulator
 

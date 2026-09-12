@@ -28,6 +28,77 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-09-12 — Coverage moved from Codecov to SonarQube Cloud
+
+Same JaCoCo report, a different service reading it. Codecov is gone: no
+`codecov.yml`, no upload step, no badge. SonarQube Cloud analyses the project
+instead, and the README now carries **two** coverage badges - line and branch -
+rather than one blended figure.
+
+### How it is wired
+
+The scan runs from Gradle (`org.sonarqube` 7.5.0.8588, applied at the root), not
+from a scanner action, because the plugin already knows where an Android
+variant's sources, classes and test sources are. The PR workflow's test job
+gained one guarded step, `./gradlew sonar`, after the step that produces the
+classes and the coverage XML.
+
+Keys are in `build.gradle.kts` - project `drehtuer_ShotgunApp`, organisation
+`drehtuer` - and the token is the `SONAR_TOKEN` repository secret. Absent it the
+step is skipped rather than failed, the same shape the Codecov upload had, so a
+fork's pull request still goes green.
+
+### Three things that would have failed quietly
+
+- **The JaCoCo path has to be given by hand.** AGP's
+  `createDebugUnitTestCoverageReport` is not a `JacocoReport` task, so the
+  scanner's auto-detection finds nothing and the analysis reports 0% while
+  succeeding. `sonar.coverage.jacoco.xmlReportPaths` is set explicitly in
+  `app/build.gradle.kts`.
+- **The checkout was shallow.** SonarQube dates lines from git blame, and that
+  is what decides what counts as *new code* on a pull request; with the default
+  single-commit clone every line looks new. `fetch-depth: 0` now.
+- **The exclusions were written, then deleted.** `codecov.yml` ignored Room's
+  generated `*_Impl` sources, so the same list went into the Sonar config - and
+  then a property dump (`-Dsonar.scanner.internal.dumpToFile`) showed
+  `sonar.sources` is `src/main/{java,res,AndroidManifest.xml}` and nothing else.
+  Generated code was never in the analysis to exclude. Config that does nothing
+  is worse than no config: it claims a problem is handled.
+
+### Automatic Analysis had to be switched off, and it failed the first run
+
+SonarCloud turns Automatic Analysis on when it imports a repository, and it
+**refuses a CI analysis while that is on**: *"You are running CI analysis while
+Automatic Analysis is enabled."* The first run failed on exactly that, after the
+tests had passed.
+
+It is worth knowing what the automatic one was reporting in the meantime,
+because it looked like it was working: a green *SonarCloud Code Analysis* check
+on the pull request, `ncloc` counted - and **no coverage metric at all**, since
+it never runs the tests. A green check that measures nothing is the failure mode
+to watch for here.
+
+Switched off under *Administration > Analysis Method*, the CI analysis went
+through on a re-run.
+
+### The numbers, and how they were checked
+
+**Line 94.6%, branch 76.2%**, overall 89.3%. The line figure is the same 94.6%
+the last coverage pass recorded through Codecov, which is the check that
+matters: both services are reading the same JaCoCo report, and they agree.
+
+Before CI, in the dev container: `assembleDebug`, `lint`, `testDebugUnitTest`,
+`createDebugUnitTestCoverageReport` and `assembleRelease` all green, and
+`./gradlew sonar` resolving against AGP 9 with the right variant, sources and
+binaries. On the pull request: all seven checks green, coverage on the dashboard.
+
+The badges are served by shields.io, not by SonarQube's own badge API, which
+accepts only `coverage` - neither `line_coverage` nor `branch_coverage` is in
+its list. They read *metric not found* until this merges, because they are
+pinned to `main` and only the pull request has been analysed so far.
+
+---
+
 ## 2026-09-08 — HAPTICS is the only switch
 
 A decision, made against what the last change recorded as deliberate.
