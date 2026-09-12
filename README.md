@@ -1,3 +1,5 @@
+<img src="assets/logo/shotgun-lockup-dark.png" alt="Shotgun! — fingers decide" width="560">
+
 # Shotgun!
 
 [![PR](https://github.com/drehtuer/ShotgunApp/actions/workflows/pr.yml/badge.svg?branch=main)](https://github.com/drehtuer/ShotgunApp/actions/workflows/pr.yml)

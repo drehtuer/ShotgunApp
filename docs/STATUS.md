@@ -71,6 +71,42 @@ it was written to catch.
 
 ---
 
+## 2026-09-12 — The lockup at the top of the README
+
+`assets/logo/shotgun-lockup-dark.png` now opens `README.md`, above the `#
+Shotgun!` heading. The exported lockup is used as it is: the dark plate carries
+its own clear space, so the brand don'ts - no rounded corners, no third colour,
+no drop shadow - are respected by not touching it. Nothing new was drawn, and
+nothing was recoloured; there is one lockup in the export and this is it.
+
+**The heading stays.** It is tempting to drop it, since the lockup already reads
+SHOTGUN! - but `jekyll-titles-from-headings` takes the page title from the first
+heading, and without the `<h1>` the site title would become *Status*, the next
+heading down. It is also the only text form of the name for a screen reader, so
+the image carries an `alt` and the heading stays where it is.
+
+An `<img>` tag rather than `![]()`, for the `width="560"` alone: the export is
+1668px wide and would otherwise fill the column. `assets/css/site.css` already
+has `img { max-width: 100% }`, so it still scales down on a phone.
+
+### Verified against the real toolchain, not by eye
+
+The path is relative, which had to work in two places at once - GitHub resolves
+it from the repository root, the site from `/ShotgunApp/`. Rather than reason
+about it, the site was built with the same `ghcr.io/actions/jekyll-build-pages`
+image CI uses:
+
+- `<title>Shotgun!</title>` - titles-from-headings unaffected
+- the `<img>` rendered with the relative `src` intact
+- `_site/assets/logo/shotgun-lockup-dark.png` published, 62 KB
+- `<h1 id="shotgun">Shotgun!</h1>` still present
+
+`assets/` is not in the `_config.yml` exclude list, and the live site already
+served this exact file - the favicon and `site.css` come from the same tree - so
+the relative link is the correct one here rather than an absolute GitHub URL.
+
+---
+
 ## 2026-09-12 — Coverage moved from Codecov to SonarQube Cloud
 
 Same JaCoCo report, a different service reading it. Codecov is gone: no
