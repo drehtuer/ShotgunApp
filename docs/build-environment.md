@@ -430,7 +430,9 @@ Four things are easy to get wrong, and three of them fail quietly:
 - **Automatic Analysis must be off.** SonarCloud enables it when a repository is
   imported, and it refuses a CI analysis while it is on: *"You are running CI
   analysis while Automatic Analysis is enabled"*. Turn it off under
-  *Administration > Analysis Method*.
+  *Administration > Analysis Method*. It was on here and failed the first run -
+  while reporting a green check of its own that measured no coverage, because
+  Automatic Analysis does not run the tests.
 - **Without the token the step is skipped, not failed** - the workflow checks
   for it in a preceding step, because a step's own `env:` is not in scope for
   its own `if:`, and because a fork's pull request cannot read secrets at all.

@@ -65,24 +65,37 @@ fork's pull request still goes green.
   Generated code was never in the analysis to exclude. Config that does nothing
   is worse than no config: it claims a problem is handled.
 
-### What is not verified here, and one manual step
+### Automatic Analysis had to be switched off, and it failed the first run
 
-The analysis itself has not run - the token is a repository secret, so the first
-real scan is the one on this pull request. Everything up to it was checked
-against the dev container: `assembleDebug`, `lint`, `testDebugUnitTest`,
+SonarCloud turns Automatic Analysis on when it imports a repository, and it
+**refuses a CI analysis while that is on**: *"You are running CI analysis while
+Automatic Analysis is enabled."* The first run failed on exactly that, after the
+tests had passed.
+
+It is worth knowing what the automatic one was reporting in the meantime,
+because it looked like it was working: a green *SonarCloud Code Analysis* check
+on the pull request, `ncloc` counted - and **no coverage metric at all**, since
+it never runs the tests. A green check that measures nothing is the failure mode
+to watch for here.
+
+Switched off under *Administration > Analysis Method*, the CI analysis went
+through on a re-run.
+
+### The numbers, and how they were checked
+
+**Line 94.6%, branch 76.2%**, overall 89.3%. The line figure is the same 94.6%
+the last coverage pass recorded through Codecov, which is the check that
+matters: both services are reading the same JaCoCo report, and they agree.
+
+Before CI, in the dev container: `assembleDebug`, `lint`, `testDebugUnitTest`,
 `createDebugUnitTestCoverageReport` and `assembleRelease` all green, and
-`./gradlew sonar` configures and resolves against AGP 9 with the right variant,
-sources and binaries.
+`./gradlew sonar` resolving against AGP 9 with the right variant, sources and
+binaries. On the pull request: all seven checks green, coverage on the dashboard.
 
-**SonarCloud's Automatic Analysis has to be switched off by hand.** It is on -
-one such analysis already ran, against `b98a03c`, and it reports `ncloc` but no
-coverage at all, because it does not run tests. While it stays on, SonarCloud
-rejects the CI analysis outright. *Administration > Analysis Method*, in the
-project on sonarcloud.io.
-
-The two badges read *metric not found* until that first CI analysis lands. They
-are served by shields.io, not by SonarQube's own badge API, which accepts only
-`coverage` - neither `line_coverage` nor `branch_coverage` is in its list.
+The badges are served by shields.io, not by SonarQube's own badge API, which
+accepts only `coverage` - neither `line_coverage` nor `branch_coverage` is in
+its list. They read *metric not found* until this merges, because they are
+pinned to `main` and only the pull request has been analysed so far.
 
 ---
 
