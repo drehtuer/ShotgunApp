@@ -52,6 +52,16 @@ authoritatively, in the design export itself.
       rule and would be lost by a re-export: the haptics change and the
       HAPTICS/DIM MODE toggle copy. They need making in the Design project
       itself. `DesignTokenTest` covers the palette, not copy.
+- [ ] **Decide on Gradle dependency verification.** SonarQube raises two
+      findings for it (`kotlin:S6474`, `text:S8569`) and they are the only
+      security findings left open. Generating
+      `gradle/verification-metadata.xml` was measured: 3,745 lines, 536
+      components, 42s. The blocker is not the file, it is that any dependency
+      change invalidates it and Dependabot cannot regenerate it - every weekly
+      Gradle PR would go red until someone regenerated it by hand, against the
+      grouping in `dependabot.yml` that exists to keep those PRs green. Worth
+      revisiting if the dependency set settles. **Until then the two findings
+      want marking won't-fix in SonarCloud**, which needs the project account.
 - [ ] Consider `actions/attest-build-provenance` on release artifacts. It pairs
       with immutable releases - the release cannot change, and the attestation
       says which workflow and commit produced it - but it is not needed until
