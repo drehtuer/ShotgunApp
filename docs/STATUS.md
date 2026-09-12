@@ -10,7 +10,7 @@ See [`TODO.md`](TODO.md) for what is still open.
 
 **Built, verified on the phone, and released.** All four screens work, the draw
 history and settings persist, and seven rounds of device feedback settled the
-timing, the reveal, the dim level and the haptics. `v0.1.0` is published and the
+timing, the reveal, the dim level and the haptics. `v0.1.3` is published and the
 documentation site is live. What is left is a fourth draw mode and polish.
 
 | Area | State |
@@ -21,10 +21,51 @@ documentation site is live. What is left is a fourth draw mode and polish.
 | Draw history database, settings persistence | done |
 | Identity: name, logo, launcher icon | done |
 | Devcontainer: SDK, emulator, adb over Wi-Fi | done |
-| CI: build, unit tests, lint | done |
-| Release: signed artifacts on a `v*` tag | `v0.1.0` published |
+| CI: build, unit tests, lint, coverage to SonarQube | done |
+| Release: signed artifacts on a `v*` tag | `v0.1.3` published |
 | Documentation site | live at [drehtuer.github.io/ShotgunApp](https://drehtuer.github.io/ShotgunApp/) |
 | COLOURS draw mode | not started - blocked on one decision |
+
+---
+
+## 2026-09-12 — Release 0.1.3
+
+`appVersion` 0.1.2 → 0.1.3, so `versionCode` derives to **103**. One value
+changed; the tag has to match it or `release.yml` refuses the build.
+
+Everything since 0.1.2, in the order it landed:
+
+- **The starter buzz was never played.** Android classified it as touch
+  feedback and dropped it on any phone with *Touch feedback* switched off - so
+  the one buzz that announces the result was silent for those users. Cut into
+  steps so the classifier no longer recognises it, identical to the hand.
+- **HAPTICS is the only switch.** The per-finger tick went the same way, after
+  the first fix deliberately left it to the system setting. Two phones were
+  behaving differently with nothing on screen to explain why; now HAPTICS on
+  gives ticks *and* buzzes, off gives neither.
+- **The app no longer backs itself up.** `allowBackup="false"`, from
+  SonarQube's security findings. Nothing recorded carries a name or an
+  identifier, so this is not about a secret - it is that backup copies the
+  draw history into a cloud account and into reach of `adb backup`. It costs
+  what it costs: **replacing the phone starts the fairness field from empty.**
+- **Clear-text traffic is explicitly refused**, which only states what was
+  already true - the app asks for no INTERNET permission.
+- **Supply chain tightened.** Third-party actions pinned to commit SHAs rather
+  than moving tags, and the Pages write permissions scoped to the single job
+  that publishes instead of the whole workflow.
+- **Coverage went 68% to 94.6% line, 76.2% branch**, and moved from Codecov to
+  SonarQube Cloud, which reports the two figures separately.
+- **Back no longer empties the graph.** Backing out twice from a stack one
+  deep used to pop the last destination and leave a live, blank window;
+  `popSafely` guards it, and seven navigation tests hold it there.
+- The lockup now opens the README, and `keystore.properties` moved in beside
+  the keystores it names.
+
+### What a user actually gets
+
+Two haptics fixes and one behaviour change. The rest is tests, tooling and
+documentation - worth a patch release because the haptics bugs were silent
+ones, and a phone that never buzzed gave no sign that anything was wrong.
 
 ---
 
