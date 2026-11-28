@@ -28,6 +28,29 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-11-28 — Robolectric 4.18.1, and a red lint job that was not lint
+
+Dependabot's bump of Robolectric from 4.17 to 4.18.1 (#75) came back with the
+unit tests green and **Static analysis** red. The lint step died after 20s
+without writing a report; a real lint run takes two minutes. The log shows why:
+lint never ran. Generating the unit-test lint model needs the test classpath,
+and Maven Central refused one jar:
+
+```
+Could not download nativeruntime-dist-compat-1.0.20.jar
+Received status code 429 from server: Too Many Requests
+```
+
+Dependabot had opened six PRs within one minute, each running three jobs
+against Maven Central at once; the unit-test job of the same run downloaded the
+same jar without trouble. So the failure was rate limiting, not the upgrade.
+Lesson for the next red Dependabot PR: read the log before suspecting the
+bump - a lint job that fails in seconds with no report never got to lint.
+
+4.18 drops SDK 23; `robolectric.properties` pins `sdk=34`, so nothing changes
+there. Verified locally with `assembleDebug`, `testDebugUnitTest` and
+`lintDebug` under `--rerun-tasks`, all green, on top of current `main`.
+
 ## 2026-10-05 — Release 0.1.4
 
 `appVersion` 0.1.3 → 0.1.4, so `versionCode` derives to **104**.
