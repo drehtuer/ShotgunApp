@@ -59,7 +59,14 @@ plugins {
 
 android {
     namespace = "de.drehtuer.shotgun"
-    compileSdk = 37
+    // API 37 platforms carry a minor version. Compose 1.13 (BOM 2026.11.01)
+    // requires compiling against 37.1 or later; `compileSdk = 37` means 37.0.
+    // targetSdk stays 37 - compileSdk only decides which APIs are visible.
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "de.drehtuer.shotgun"

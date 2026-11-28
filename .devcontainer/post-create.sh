@@ -9,10 +9,14 @@ AVDMANAGER="${CMDLINE_TOOLS:-/opt/android-cmdline-tools}/latest/bin/avdmanager"
 
 # Keep these in step with app/build.gradle.kts and gradle/libs.versions.toml.
 # API 37 platforms use Android's minor-version scheme (37.0, 37.1, ...), so the
-# platform and system-image ids carry the minor while compileSdk stays 37.
-COMPILE_SDK=37.0
+# platform and system-image ids carry the minor. COMPILE_SDK matches
+# compileSdk's minorApiLevel in app/build.gradle.kts (Compose 1.13 needs 37.1).
+# The emulator image is pinned separately: it is the OS the app runs on, not
+# the APIs it compiles against, and the existing AVD was built from 37.0.
+COMPILE_SDK=37.1
 BUILD_TOOLS=37.0.0
-SYSTEM_IMAGE="system-images;android-${COMPILE_SDK};google_apis;x86_64"
+SYSTEM_IMAGE_API=37.0
+SYSTEM_IMAGE="system-images;android-${SYSTEM_IMAGE_API};google_apis;x86_64"
 # The target device is a Pixel 10a on Android 17 (API 37). It has no profile in
 # the emulator's device catalogue yet, so pixel_9a is the closest hardware
 # match; the API level matches the phone exactly.
