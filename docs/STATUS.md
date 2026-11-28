@@ -28,6 +28,47 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-11-28 — Robolectric 4.18.1, and a red lint job that was not lint
+
+Dependabot's bump of Robolectric from 4.17 to 4.18.1 (#75) came back with the
+unit tests green and **Static analysis** red. The lint step died after 20s
+without writing a report; a real lint run takes two minutes. The log shows why:
+lint never ran. Generating the unit-test lint model needs the test classpath,
+and Maven Central refused one jar:
+
+```
+Could not download nativeruntime-dist-compat-1.0.20.jar
+Received status code 429 from server: Too Many Requests
+```
+
+Dependabot had opened six PRs within one minute, each running three jobs
+against Maven Central at once; the unit-test job of the same run downloaded the
+same jar without trouble. So the failure was rate limiting, not the code.
+
+It was not a one-off, though. Re-applied on current `main` as #77, the same jar
+got the same 429 with only two PRs running. The jar is **157 MB**; 4.17's
+1.0.19 copy lived in `main`'s Gradle cache, so no CI run had downloaded it in
+weeks. The bump makes every PR run fetch 1.0.20 twice at once - unit tests and
+lint start together - and the second request is refused. The test job won both
+times. Merged as it was, the same race would have turned `main` red on the push
+too, until a successful run cached the new jar.
+
+Gradle *does* retry a 429, but only 3 attempts, 1s then 2s apart. That is now
+5 attempts from 5s, doubling, through two internal system properties in
+`gradle.properties` (see
+[Download retries](build-environment.md#download-retries)). Before relying on
+them they were checked two ways: in Gradle 9.9.2's own bytecode (408 and 429 are
+the client errors it treats as transient), and against a throwaway server that
+answers everything with 429 - with defaults Gradle gave up after requests at
++0/+1/+3s, with the properties set it kept backing off exactly as configured.
+
+Lesson for the next red Dependabot PR: read the log before suspecting the
+bump - a lint job that fails in seconds with no report never got to lint.
+
+4.18 drops SDK 23; `robolectric.properties` pins `sdk=34`, so nothing changes
+there. Verified locally with `assembleDebug`, `testDebugUnitTest` and
+`lintDebug` under `--rerun-tasks`, all green, on top of current `main`.
+
 ## 2026-10-05 — Release 0.1.4
 
 `appVersion` 0.1.3 → 0.1.4, so `versionCode` derives to **104**.

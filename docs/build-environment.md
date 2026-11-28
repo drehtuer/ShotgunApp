@@ -573,6 +573,25 @@ or pull requests:
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
+### Download retries
+
+`gradle.properties` raises Gradle's retry budget for repository downloads to
+**5 attempts, starting 5s apart and doubling** (up to 75s of waiting), through
+the internal `org.gradle.internal.repository.max.tentatives` and
+`org.gradle.internal.repository.initial.backoff` system properties. Gradle
+already retries 408, 429 and 5xx on its own, but its default - 3 attempts, 1s
+then 2s - gives up long before Maven Central lifts a rate limit.
+
+It is there because CI hit it: a dependency that brings in a large artifact the
+Gradle cache does not have yet is downloaded by the unit-test and lint jobs at
+the same time, and the second one got `429 Too Many Requests`. The lint job then
+fails in ~20s *without a report*, which looks like a lint error but is not - read
+the log for `Received status code 429`.
+
+These properties are internal, so a Gradle major upgrade could rename them
+without a warning. They were checked against Gradle 9.9.2's own classes
+(`ErrorHandlingModuleComponentRepository`); re-check after an upgrade.
+
 ### Why the release is drafted first
 
 **A published release is immutable: its assets cannot be added to, replaced or
@@ -683,6 +702,7 @@ serve it from that path rather than opening the files directly.
 | `failed to connect to '<ip>:5555'` | Android 11+ picks a random connect port. `connect-device.sh discover <ip>`. |
 | Device stuck `offline` after pairing | Connected to the pairing port. Disconnect it and use the Wireless debugging port. |
 | `adb mdns services` lists nothing | Expected under bridge networking; mDNS does not cross the NAT. Use `discover`. |
+| CI: lint fails in ~20s with no report; log shows `Received status code 429` | Maven Central rate-limited a download, usually a large new artifact fetched by two jobs at once. Not a lint finding. See [Download retries](#download-retries); re-run the job. |
 | CI: `Warning: Failed to find package 'tools'`, then `sdkmanager` exits 1 | `android-actions/setup-android` older than v4.0.2. Google removed the obsolete `tools` package from the SDK repository; the action still asked for it. Merge Dependabot's bump. |
 
 ## The design export
