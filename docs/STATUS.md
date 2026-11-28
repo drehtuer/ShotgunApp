@@ -28,6 +28,37 @@ documentation site is live. What is left is a fourth draw mode and polish.
 
 ---
 
+## 2026-11-28 — Compose BOM 2026.11.01, and compileSdk 37.1
+
+Dependabot's bump of the Compose BOM from 2026.09.00 to 2026.11.01 (#72)
+failed CI at the first step, `assembleDebug`. Compose 1.13.0, which the BOM
+brings in, refuses to build against anything older than **API 37.1**:
+
+```
+Dependency 'androidx.compose.ui:ui-android:1.13.0' requires libraries and
+applications that depend on it to compile against version 37.1 or later of
+the Android APIs.
+:app is currently compiled against android-37.0.
+```
+
+API 37 platforms carry a minor version, and `compileSdk = 37` means **37.0**.
+The fix is AGP 9's `compileSdk { version = release(37) { minorApiLevel = 1 } }`.
+`targetSdk` stays 37: compileSdk only decides which APIs the compiler can see,
+so the app's runtime behaviour on the phone does not change.
+
+`post-create.sh` derived the emulator's system image from the same
+`COMPILE_SDK` variable, so raising it to 37.1 would have quietly changed which
+OS the AVD runs as well. The image is now pinned on its own (`SYSTEM_IMAGE_API`,
+still 37.0). CI needs nothing: AGP downloads the missing platform itself.
+
+Verified with `assembleDebug`, `lintDebug`, `testDebugUnitTest` and
+`assembleRelease`, all green, built in the devcontainer image. Not checked on
+the phone - nothing in the draw path changed beyond the library version.
+
+The toolchain table in [`build-environment.md`](build-environment.md) had
+drifted too (Gradle 9.7.1, Kotlin 2.4.10, BOM 2026.08.00); it now says what
+`libs.versions.toml` says.
+
 ## 2026-11-28 — Robolectric 4.18.1, and a red lint job that was not lint
 
 Dependabot's bump of Robolectric from 4.17 to 4.18.1 (#75) came back with the

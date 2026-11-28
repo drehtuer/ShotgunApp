@@ -194,8 +194,9 @@ The documentation site is published from this Markdown, unchanged - see
 
 ## Requirements
 
-- minSdk 26, compileSdk / targetSdk 37 (Android 17)
-- AGP 9.4.0 on Gradle 9.7.1, JDK 21. AGP 9 has built-in Kotlin support, so
+- minSdk 26, targetSdk 37 (Android 17), compileSdk 37.1 - Compose 1.13 needs
+  the 37.1 platform's APIs, which does not change the runtime target
+- AGP 9.4.0 on Gradle 9.9.2, JDK 21. AGP 9 has built-in Kotlin support, so
   there is deliberately **no `kotlin-android` plugin** - applying it fails.
 - Portrait only, and a touchscreen with distinct multi-touch
 

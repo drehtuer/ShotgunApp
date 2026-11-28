@@ -9,12 +9,13 @@ How to build, test and run Shotgun!. The short version lives in
 | | Version | Note |
 | --- | --- | --- |
 | AGP | 9.4.0 | |
-| Gradle | 9.7.1 | via the wrapper |
-| Kotlin / Compose plugin | 2.4.10 | |
+| Gradle | 9.9.2 | via the wrapper |
+| Kotlin / Compose plugin | 2.4.21 | |
 | JDK | 21 | |
-| compileSdk / targetSdk | 37 (Android 17) | matches the target phone exactly |
+| compileSdk | 37.1 | `release(37) { minorApiLevel = 1 }` - Compose 1.13 requires 37.1 |
+| targetSdk | 37 (Android 17) | matches the target phone exactly |
 | minSdk | 26 | |
-| Compose BOM | 2026.08.00 | |
+| Compose BOM | 2026.11.01 | Compose 1.13 |
 
 **AGP 9 has built-in Kotlin support, so there is deliberately no
 `kotlin-android` plugin.** Adding it fails the build with *"no longer required
@@ -57,7 +58,7 @@ without the complications host networking brings.
 
 ### Building without the devcontainer
 
-You need JDK 21 and an Android SDK with `platforms;android-37.0` and
+You need JDK 21 and an Android SDK with `platforms;android-37.1` and
 `build-tools;37.0.0`. Point Gradle at it with either `ANDROID_HOME` or a
 `local.properties` containing `sdk.dir=/path/to/sdk`. `local.properties` is
 gitignored.
@@ -695,6 +696,7 @@ serve it from that path rather than opening the files directly.
 | `The 'org.jetbrains.kotlin.android' plugin is no longer required` | Someone re-added the plugin. Remove it. |
 | `NoClassDefFoundError: ProjectTypeBinding` on any task | Gradle is older than 9. Use the wrapper. |
 | `requires ... compile against version 37 or later` | `compileSdk` was lowered, or AndroidX was bumped past the toolchain. |
+| `requires ... compile against version 37.1 or later` / `:app is currently compiled against android-37.0` | An AndroidX library needs a newer *minor* API level. Raise `minorApiLevel` in `compileSdk { version = release(37) { ... } }` - `compileSdk = 37` means 37.0 - and `COMPILE_SDK` in `post-create.sh` with it. targetSdk does not change. |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Debug keystore changed. `adb uninstall de.drehtuer.shotgun`, then reinstall. |
 | `x86_64 emulation currently requires hardware acceleration` | `/dev/kvm` missing or not writable. |
 | Emulator says `Unknown AVD name` | `ANDROID_AVD_HOME` is not set; the AVD lives in the SDK volume. |
