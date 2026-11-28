@@ -43,7 +43,25 @@ Received status code 429 from server: Too Many Requests
 
 Dependabot had opened six PRs within one minute, each running three jobs
 against Maven Central at once; the unit-test job of the same run downloaded the
-same jar without trouble. So the failure was rate limiting, not the upgrade.
+same jar without trouble. So the failure was rate limiting, not the code.
+
+It was not a one-off, though. Re-applied on current `main` as #77, the same jar
+got the same 429 with only two PRs running. The jar is **157 MB**; 4.17's
+1.0.19 copy lived in `main`'s Gradle cache, so no CI run had downloaded it in
+weeks. The bump makes every PR run fetch 1.0.20 twice at once - unit tests and
+lint start together - and the second request is refused. The test job won both
+times. Merged as it was, the same race would have turned `main` red on the push
+too, until a successful run cached the new jar.
+
+Gradle *does* retry a 429, but only 3 attempts, 1s then 2s apart. That is now
+5 attempts from 5s, doubling, through two internal system properties in
+`gradle.properties` (see
+[Download retries](build-environment.md#download-retries)). Before relying on
+them they were checked two ways: in Gradle 9.9.2's own bytecode (408 and 429 are
+the client errors it treats as transient), and against a throwaway server that
+answers everything with 429 - with defaults Gradle gave up after requests at
++0/+1/+3s, with the properties set it kept backing off exactly as configured.
+
 Lesson for the next red Dependabot PR: read the log before suspecting the
 bump - a lint job that fails in seconds with no report never got to lint.
 
